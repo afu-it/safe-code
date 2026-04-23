@@ -1,7 +1,7 @@
+---
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 7 continuity docs inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go. Use /safe-code save to checkpoint and commit the current session."
-metadata:
-  version: "1.9"
+version: "1.9.1"
 ---
 
 # Safe Code
