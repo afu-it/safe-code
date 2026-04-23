@@ -2,6 +2,41 @@
 
 A collection of agent skills for safe code maintenance — dead code removal, controlled refactoring, and repo continuity doc sync.
 
+Works with **Codex, Claude Code, Cursor, Windsurf, and 40+ other agents** via `npx skills`.
+
+---
+
+## Install
+
+### Recommended — npx skills (one command)
+
+```bash
+# Install all skills into your current project
+npx skills add afu-it/safe-code
+
+# Install globally (available in all your projects)
+npx skills add afu-it/safe-code -g
+
+# Install only specific skills
+npx skills add afu-it/safe-code --skill codebase-pruner
+npx skills add afu-it/safe-code --skill safe-refactor-code
+npx skills add afu-it/safe-code --skill repo-hygiene
+
+# See what skills are available before installing
+npx skills add afu-it/safe-code --list
+```
+
+### Manual install
+
+```bash
+git clone https://github.com/afu-it/safe-code.git
+cp -r safe-code/skills/codebase-pruner ~/.codex/skills/
+cp -r safe-code/skills/safe-refactor-code ~/.codex/skills/
+cp -r safe-code/skills/repo-hygiene ~/.codex/skills/
+```
+
+---
+
 ## Skills
 
 ### `codebase-pruner`
@@ -38,22 +73,8 @@ Full hygiene pass in one go — orchestrates `codebase-pruner` then `safe-refact
 Use $repo-hygiene on this repo
 ```
 
-## Install
+---
 
-Copy the skill folder(s) you want into your agent's skills directory.
+## New to skills?
 
-**Global (all projects):**
-```
-~/.codex/skills/codebase-pruner/
-~/.codex/skills/safe-refactor-code/
-~/.codex/skills/repo-hygiene/
-```
-
-**Per-project:**
-```
-your-project/.codex/skills/codebase-pruner/
-your-project/.codex/skills/safe-refactor-code/
-your-project/.codex/skills/repo-hygiene/
-```
-
-Each folder contains one `SKILL.md` file. No other dependencies required.
+Read [TUTORIAL.md](./TUTORIAL.md) for a beginner-friendly step-by-step guide.
