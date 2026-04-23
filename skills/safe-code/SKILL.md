@@ -1,51 +1,73 @@
 ---
 name: safe-code
-description: "Full repo hygiene in one pass. Detects the active agent, initializes continuity doc structure, audits and removes dead code, refactors in safe slices, and keeps all docs in sync inside the agent's own folder. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
+description: "Full repo hygiene in one pass. Detects the active agent, initializes continuity doc structure inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
 metadata:
-  version: "1.2"
+  version: "1.4"
 ---
 
 # Safe Code
 
-Run a complete hygiene pass on the repo in the correct order. Always initialize docs first, then scan, then clean.
+Run a complete hygiene pass on the repo in the correct order. Always initialize docs first, then scan, then show the plan, then wait for user approval before deleting anything.
+
+## Scope Rule (Read This First)
+
+**Everything in this skill operates inside the current project root only.**
+
+- Never read from or write to the user's home directory (`~/`, `~/.codex/`, `~/.claude/`, etc.)
+- Never read from or write to any path outside the current project root
+- All file paths are relative to the project root
+- The project root is the directory where the agent was invoked
+
+```
+CORRECT paths (inside project):
+  <project-root>/.codex/memory/MEMORY.md
+  <project-root>/.claude/memory/MEMORY.md
+  <project-root>/AGENTS.md
+
+WRONG paths (outside project — never use these):
+  ~/.codex/memory/MEMORY.md
+  ~/.claude/memory/MEMORY.md
+  ~/AGENTS.md
+```
+
+---
 
 ## Step 0: Detect Active Agent
 
-Check which agent folder exists in the repo root:
+Inside the **project root**, check which agent folder exists:
 
 ```
-if .codex/ exists    → agent = codex,     doc folder = .codex/memory/
-if .claude/ exists   → agent = claude,    doc folder = .claude/memory/
-if .cursor/ exists   → agent = cursor,    doc folder = .cursor/memory/
-if .windsurf/ exists → agent = windsurf,  doc folder = .windsurf/memory/
-if none found        → doc folder = repo root
+if <project-root>/.codex/ exists    → doc folder = <project-root>/.codex/memory/
+if <project-root>/.claude/ exists   → doc folder = <project-root>/.claude/memory/
+if <project-root>/.cursor/ exists   → doc folder = <project-root>/.cursor/memory/
+if <project-root>/.windsurf/ exists → doc folder = <project-root>/.windsurf/memory/
+if none detected                    → create <project-root>/.codex/memory/ and use it
 ```
+
+**Never fall back to the project root itself as the doc folder.**
+**Never use any path outside the project root.**
+
+If no agent folder is detected, create `<project-root>/.codex/memory/` and continue. Do not ask the user — just proceed.
 
 If multiple agent folders exist, prefer the one matching the current running agent.
-
-Record the detected agent and doc folder path — use it for all subsequent steps.
 
 ---
 
 ## Step 1: Initialize Doc Structure
 
-Create the doc folder and all required files **before scanning the codebase**. Do this even if the repo is brand new and has no existing docs.
+Create the doc folder and all required files **before reading the codebase or making any changes**.
 
 ### 1a. Create the memory folder
 
-```
-<agent-folder>/memory/
-```
-
-Create this folder if it does not exist.
+Create `<project-root>/<agent-folder>/memory/` if it does not exist.
 
 ### 1b. Check and create each doc file
 
-For each file below, check if it exists. If it does, leave it untouched. If it does not exist, create it using the template provided.
+For each file — check if it exists first. If it exists, **leave it completely untouched**. If it does not exist, create it with the template below.
 
 ---
 
-**`AGENTS.md`** — always at repo root
+**`<project-root>/AGENTS.md`** — project root only. Do not create this anywhere else.
 
 ```md
 # AGENTS.md
@@ -74,7 +96,7 @@ For each file below, check if it exists. If it does, leave it untouched. If it d
 
 ---
 
-**`<agent-folder>/memory/MEMORY.md`**
+**`<project-root>/<agent-folder>/memory/MEMORY.md`**
 
 ```md
 # MEMORY.md
@@ -97,23 +119,23 @@ For each file below, check if it exists. If it does, leave it untouched. If it d
 
 ---
 
-**`<agent-folder>/memory/CHANGELOG.md`**
+**`<project-root>/<agent-folder>/memory/CHANGELOG.md`**
 
 ```md
 # CHANGELOG.md
 
-<!-- Record meaningful code changes by date. Format: -->
-<!--                                                  -->
-<!-- ## [YYYY-MM-DD]                                  -->
-<!-- ### Added                                        -->
-<!-- ### Changed                                      -->
-<!-- ### Fixed                                        -->
-<!-- ### Removed                                      -->
+<!-- Record meaningful code changes by date. Format:  -->
+<!--                                                   -->
+<!-- ## [YYYY-MM-DD]                                   -->
+<!-- ### Added                                         -->
+<!-- ### Changed                                       -->
+<!-- ### Fixed                                         -->
+<!-- ### Removed                                       -->
 ```
 
 ---
 
-**`<agent-folder>/memory/safe-refactor-code.md`**
+**`<project-root>/<agent-folder>/memory/safe-refactor-code.md`**
 
 ```md
 # safe-refactor-code.md
@@ -142,32 +164,36 @@ For each file below, check if it exists. If it does, leave it untouched. If it d
 
 ### 1c. Confirm initialization
 
-Before proceeding, report:
+Report before proceeding:
 
 ```
+Project root: <absolute path to project root>
 Agent detected: <agent>
-Doc folder: <agent-folder>/memory/
-Files initialized:
-  ✓ AGENTS.md (repo root)
-  ✓ MEMORY.md
-  ✓ CHANGELOG.md
-  ✓ safe-refactor-code.md
-```
+Doc folder: <project-root>/<agent-folder>/memory/
 
-Mark each file as either `created` (new) or `exists` (already present).
+Files:
+  AGENTS.md (project root)        — <created | already exists>
+  MEMORY.md                       — <created | already exists>
+  CHANGELOG.md                    — <created | already exists>
+  safe-refactor-code.md           — <created | already exists>
+
+All paths are inside the project. Ready to scan.
+```
 
 ---
 
 ## Step 2: Read Existing Docs
 
-Read all four docs to load context from previous sessions before touching any code:
+Read all four docs from inside the project to load context from previous sessions:
 
-- `AGENTS.md` — understand repo state and known blockers
-- `MEMORY.md` — load current architecture snapshot
-- `CHANGELOG.md` — understand what changed recently
-- `safe-refactor-code.md` — load repo rules, flagged dead code, and pitfalls
+- `<project-root>/AGENTS.md`
+- `<project-root>/<agent-folder>/memory/MEMORY.md`
+- `<project-root>/<agent-folder>/memory/CHANGELOG.md`
+- `<project-root>/<agent-folder>/memory/safe-refactor-code.md`
 
-If any doc has content, use it to inform the scan and refactor decisions in the steps below.
+Do not read any file from outside the project root.
+
+Use this context to inform all decisions below.
 
 ---
 
@@ -175,80 +201,101 @@ If any doc has content, use it to inform the scan and refactor decisions in the 
 
 Invoke `$codebase-pruner` in `Audit` mode.
 
-- Map all live entrypoints.
-- Build the reference graph.
+- Map all live entrypoints inside the project.
+- Build the reference graph from imports, config files, and runtime wiring.
 - Produce a dead code inventory with confidence and blast radius for each candidate.
-- Cross-reference with any candidates already flagged in `safe-refactor-code.md` — do not re-flag what is already known unless status has changed.
-- Do not delete anything yet.
+- Cross-reference with candidates already flagged in `safe-refactor-code.md`.
+- Do not delete or modify any file in this step.
 
 ---
 
-## Step 4: Review and Plan Removal
+## Step 4: Show Plan and Wait for Approval
 
-Invoke `$codebase-pruner` in `Dry-Run` mode.
+**Mandatory. Do not skip. Do not proceed to Step 5 without explicit user approval.**
 
-- Generate the ordered removal plan with rollback points and verification commands.
-- Flag Medium and Low confidence candidates — do not auto-delete them.
-- Stop here and show the plan to the user if they want to review before execution.
+Invoke `$codebase-pruner` in `Dry-Run` mode and show the plan:
+
+```
+=== Dead Code Removal Plan ===
+
+Project root: <path>
+Agent: <agent>
+Doc folder: <project-root>/<agent-folder>/memory/
+
+Proposed removals:
+  Slice 1 — <description>
+    Files: <list>
+    Confidence: High
+    Verification: <command>
+    Rollback: git checkout -- <files>
+
+  Slice 2 — ...
+
+Flagged but NOT in plan (manual review needed):
+  - <file:function> — <reason>
+
+Reply "yes" or "approve" to execute, or tell me what to skip.
+```
+
+Wait for explicit user approval before continuing.
 
 ---
 
 ## Step 5: Execute Dead Code Removal
 
+Only after user approval in Step 4.
+
 Invoke `$codebase-pruner` in `Execute` mode.
 
-- Delete High confidence candidates only, one slice at a time.
-- Verify after each slice with the narrowest available check.
-- Roll back and report on failure — do not continue past a failing slice.
-- After execution, update `safe-refactor-code.md` with any newly flagged candidates that were not removed.
+- Delete only approved slices, one at a time.
+- Verify after each slice.
+- Roll back on failure — do not continue past a failing slice.
+- Save newly flagged candidates to `<project-root>/<agent-folder>/memory/safe-refactor-code.md`.
 
 ---
 
 ## Step 6: Refactor and Sync Docs
 
-Invoke `$safe-refactor-code` on the affected areas.
+Invoke `$safe-refactor-code` on affected areas only.
 
-- Refactor any code made messy by the removal.
-- Run a final hygiene pass: unused imports, stale helpers, outdated doc references.
-- Update all four docs with the results of this session:
+Update all four docs inside the project:
 
 | File | What to update |
 |---|---|
-| `AGENTS.md` | Current state, decisions made, where to start next session |
-| `MEMORY.md` | Updated architecture snapshot, new workarounds, follow-up items |
-| `CHANGELOG.md` | Add today's dated section with Added / Changed / Fixed / Removed |
-| `safe-refactor-code.md` | New flagged candidates, updated rules, new pitfalls discovered |
+| `<project-root>/AGENTS.md` | Current state, decisions, where to start next |
+| `<project-root>/<agent-folder>/memory/MEMORY.md` | Architecture snapshot, follow-up items |
+| `<project-root>/<agent-folder>/memory/CHANGELOG.md` | Today's dated section |
+| `<project-root>/<agent-folder>/memory/safe-refactor-code.md` | Flagged candidates, rules, pitfalls |
 
 ---
 
 ## Step 7: Final Summary
 
-Report everything that happened in this session:
-
 ```
 === safe-code session complete ===
 
+Project root: <path>
 Agent: <agent>
-Doc folder: <agent-folder>/memory/
+Doc folder: <project-root>/<agent-folder>/memory/
 
 Initialization:
-  AGENTS.md         — <created / already existed>
-  MEMORY.md         — <created / already existed>
-  CHANGELOG.md      — <created / already existed>
-  safe-refactor-code.md — <created / already existed>
+  AGENTS.md             — <created | already existed>
+  MEMORY.md             — <created | already existed>
+  CHANGELOG.md          — <created | already existed>
+  safe-refactor-code.md — <created | already existed>
 
 Dead code removed:
-  <list of files/functions removed>
+  <list>
 
 Dead code flagged (not removed):
-  <list with reasons>
+  <list — saved to safe-refactor-code.md>
 
 Refactors applied:
   <summary>
 
 Docs updated:
-  AGENTS.md, MEMORY.md, CHANGELOG.md, safe-refactor-code.md
+  All paths inside <project-root>/<agent-folder>/memory/
 
-Follow-up items for next session:
+Follow-up items:
   <list>
 ```
