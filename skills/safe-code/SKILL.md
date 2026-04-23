@@ -1,7 +1,7 @@
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 7 continuity docs inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go. Use /safe-code save to checkpoint and commit the current session."
 metadata:
-  version: "1.8"
+  version: "1.9"
 ---
 
 # Safe Code
@@ -32,83 +32,74 @@ WRONG:   ~/.codex/agents/ACTIVE.md
 ├── CHANGELOG.md        <- Release history (update on release only)
 └── .codex/
     └── agents/
-        ├── MEMORY.md            <- Architecture snapshot
-        ├── safe-refactor-code.md <- Refactor rules & flagged code
         ├── ACTIVE.md            <- What is happening RIGHT NOW + session state
         ├── BACKLOG.md           <- What is coming next
-        └── LOG.md               <- Append-only diary
+        ├── LOG.md               <- Append-only diary (auto-trimmed)
+        ├── MEMORY.md            <- Architecture snapshot
+        └── safe-refactor-code.md <- Refactor rules & flagged code
 ```
 
-**Same structure applies for other agents:**
-- `.claude/agents/` for Claude Code
-- `.cursor/agents/` for Cursor
-- `.windsurf/agents/` for Windsurf
+Same structure for other agents: `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`
 
 ---
 
 ## Command: `/safe-code`
 
-Run a full hygiene pass. Auto-detects if a previous saved session exists in `ACTIVE.md` and resumes from it.
+Run a full hygiene pass. Auto-detects saved session in `ACTIVE.md` and resumes if found.
 
 ## Command: `/safe-code save`
 
-Checkpoint the current session. Updates all docs with a session summary, then commits everything:
+Checkpoint the current session:
 
 ```
-1. Update ACTIVE.md with ## Last Session block
-2. Update MEMORY.md, LOG.md, safe-refactor-code.md
-3. Update root CHANGELOG.md if any releasable changes were made
-4. Run: git add -A
-5. Run: git commit -m "safe-code: <YYYY-MM-DD> - <one-line summary of what was done>"
-6. Report: commit hash + what was saved
+1. Update ACTIVE.md — Last Session block + current state
+2. Append to LOG.md — session summary (newest at top)
+3. Update MEMORY.md — if architecture changed
+4. Update CHANGELOG.md (root) — only if releasable changes were made
+5. Auto-trim LOG.md if needed (see LOG.md Trim Rule below)
+6. git add -A
+7. git commit -m "safe-code: <YYYY-MM-DD> - <one-line summary>"
+8. Report commit hash
 ```
 
-This does NOT end the session - work can continue after saving.
+Does NOT end the session — work can continue after saving.
 
 ---
 
-## How to Make Decisions (Read Before Every Step)
+## How to Make Decisions
 
-Before taking any action, reason through it explicitly. Do not guess. Do not skip this.
+Before every action, reason explicitly. Do not guess. Do not skip this.
 
 ### Decision Framework
 
-For every decision in this skill, ask:
+1. What are the 2-3 options?
+2. What does each risk or preserve?
+3. Which is safest given what I know?
+4. Can this be undone?
 
-1. **What are the 2-3 options here?**
-2. **What does each option risk or preserve?**
-3. **Which option is safest given what I know?**
-4. **Can this be undone if I'm wrong?**
+If (4) = no → stop, show options to user before acting.
+If (4) = yes → proceed with safest option, log reasoning.
 
-If the answer to (4) is "no" - stop and show the user the options before acting.
-If the answer to (4) is "yes" - proceed with the safest option and log your reasoning.
-
-### When to Act Autonomously
-
-Act without asking when:
-- The action is reversible (git tracked, or file can be restored)
+### Act Autonomously When
+- Action is reversible (git tracked)
 - Confidence is High (zero references, no dynamic risk)
-- The decision is technical, not about user intent
-- The answer is discoverable from the codebase itself
+- Decision is technical, not about user intent
+- Answer is discoverable from the codebase
 
-### When to Stop and Ask
-
-Stop and ask the user when:
-- The action is irreversible (no git, no backup)
+### Stop and Ask When
+- Action is irreversible (no git, no backup)
 - Confidence is Low
-- Something unexpected is found that changes the scope significantly (new subsystem affected, blast radius > 10 files)
+- Unexpected scope change (blast radius > 10 files)
 
-**Do NOT ask the user about Medium confidence candidates** - apply the auto-promotion rule below instead.
+**Never ask about Medium confidence candidates** — apply auto-promotion rule instead.
 
 ### Reasoning Format
 
-Before each significant action, write a short reasoning block:
-
 ```
 Reasoning:
-  Options considered: <list>
-  Risk of each: <list>
-  Decision: <chosen option>
+  Options: <list>
+  Risk: <list>
+  Decision: <chosen>
   Why: <one sentence>
   Reversible: yes/no
 ```
@@ -116,8 +107,6 @@ Reasoning:
 ---
 
 ## Step 0: Detect Active Agent
-
-Inside the **project root**, check which agent folder exists:
 
 ```
 if <project-root>/.codex/ exists    -> agents folder = <project-root>/.codex/agents/
@@ -127,38 +116,24 @@ if <project-root>/.windsurf/ exists -> agents folder = <project-root>/.windsurf/
 if none detected                    -> create <project-root>/.codex/agents/ and use it
 ```
 
-Never fall back to the project root itself as the agents folder.
-Never use any path outside the project root.
-
-If multiple agent folders exist - reason through which one matches the current running agent. Do not ask the user.
+Multiple folders found → reason which matches current agent. Do not ask user.
 
 ---
 
 ## Step 1: Initialize Doc Structure
 
-Create the agents folder and all required files **before reading the codebase**.
-
-### 1a. Create the agents folder
-
-```
-<project-root>/<agent-folder>/agents/
-```
-
-Create if it does not exist.
-
-### 1b. Check and create each file
-
-For each file - **if it exists, leave it completely untouched.** If it does not exist, create it with the template below.
+Create agents folder + all files **before** reading the codebase.
+**If a file exists — leave it untouched. Create only if missing.**
 
 ---
 
-**`<project-root>/AGENTS.md`** - project root, auto-read by agent on load.
+### `<project-root>/AGENTS.md`
 
 ```md
 # AGENTS.md
 
 ## Project Overview
-<!-- One paragraph: what this project does, its purpose, and target users -->
+<!-- What this project does, purpose, target users -->
 
 ## Tech Stack
 - Runtime:
@@ -167,23 +142,23 @@ For each file - **if it exists, leave it completely untouched.** If it does not 
 - Other:
 
 ## Coding Standards
-- Style: <!-- e.g. 2-space indent, single quotes, semicolons -->
-- Naming: <!-- e.g. camelCase for vars, PascalCase for classes -->
+- Style:
+- Naming:
 - Comments: English only, inline for complex logic only
 
 ## Project Structure
 <!-- Brief folder tree or key modules -->
 
 ## Key Rules for AI
-- Always read ACTIVE.md before starting any task
-- Always update ACTIVE.md and LOG.md after completing any significant change
+- Read ACTIVE.md before starting any task
+- Update ACTIVE.md and append to LOG.md after any significant change
 - Do NOT modify CHANGELOG.md unless explicitly asked to release
 - Never read or write files outside the project root
-- When in doubt, ask - do not assume
+- When in doubt, ask — do not assume
 
 ## Environment
 - Node version:
-- Package manager: <!-- npm / yarn / pnpm / bun -->
+- Package manager:
 - Dev command:
 - Build command:
 - Test command:
@@ -191,13 +166,13 @@ For each file - **if it exists, leave it completely untouched.** If it does not 
 
 ---
 
-**`<project-root>/CHANGELOG.md`** - project root, public release history.
+### `<project-root>/CHANGELOG.md`
 
 ```md
 # CHANGELOG.md
 
-All notable changes to this project will be documented here.
-Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+All notable changes documented here.
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
@@ -206,34 +181,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Project initialized
 
 ---
-<!-- Add new versions above this line -->
 <!-- ## [X.Y.Z] - YYYY-MM-DD -->
 <!-- ### Added / Changed / Deprecated / Removed / Fixed / Security -->
 ```
 
 ---
 
-**`<project-root>/<agent-folder>/agents/ACTIVE.md`** - current session state.
+### `<agents-folder>/ACTIVE.md` — compact, terminal-scannable
 
 ```md
 # ACTIVE.md
+_<DATE>_
 
-_Last updated: <!-- DATE -->_
+## Now
+<one sentence — what is actively being built or fixed>
 
-## Current Task
-<!-- One sentence: what is actively being built or fixed right now -->
+## Todo
+- [ ] <subtask>
 
-## In Progress
-- [ ] <!-- subtask -->
+## Blocked
+none
 
-## Context / Notes
-<!-- Important context the AI needs for this session -->
-
-## Blockers
-<!-- Anything blocking progress -->
-
-## Next Steps
-<!-- 2-3 bullet points of what comes after current task -->
+## Next
+- <what comes after current task>
 
 ---
 
@@ -247,161 +217,146 @@ next_action: none
 
 ---
 
-**`<project-root>/<agent-folder>/agents/BACKLOG.md`** - future tasks queue.
+### `<agents-folder>/BACKLOG.md`
 
 ```md
 # BACKLOG.md
+_<DATE>_
 
-_Last updated: <!-- DATE -->_
+## High
+- [ ] <task>
 
-## Priority: High
-- [ ] <!-- task -->
+## Medium
+- [ ] <task>
 
-## Priority: Medium
-- [ ] <!-- task -->
+## Low / Nice to Have
+- [ ] <task>
 
-## Priority: Low / Nice to Have
-- [ ] <!-- task -->
-
-## Ideas / Exploration
-- <!-- not yet committed, just capturing -->
+## Ideas
+- <not committed yet>
 
 ---
-> Move items to ACTIVE.md when starting them. Mark done items with [x] and date.
+> Move to ACTIVE.md when starting. Mark done with [x] + date.
 ```
 
 ---
 
-**`<project-root>/<agent-folder>/agents/LOG.md`** - append-only diary.
+### `<agents-folder>/LOG.md`
 
 ```md
 # LOG.md
-
-> Append-only. Never delete entries. Newest at top.
+> Append-only. Newest at top. Auto-trimmed when > 200 lines.
 
 ---
 
-## <!-- DATE TIME -->
-### Session: Project initialized
-- Created doc scaffold (AGENTS.md, CHANGELOG.md, ACTIVE.md, BACKLOG.md, LOG.md, MEMORY.md, safe-refactor-code.md)
+## <DATE TIME>
+### init: project scaffold created
+- AGENTS.md, CHANGELOG.md, ACTIVE.md, BACKLOG.md, LOG.md, MEMORY.md, safe-refactor-code.md
 
 ---
 ```
 
 ---
 
-**`<project-root>/<agent-folder>/agents/MEMORY.md`** - architecture snapshot.
+### `<agents-folder>/MEMORY.md`
 
 ```md
 # MEMORY.md
+_<DATE>_
 
-## Active Architecture Snapshot
+## Architecture
 <!-- Current structure of the codebase -->
 
 ## Source of Truth Files
-<!-- Files that define the core behavior -->
+<!-- Files that define core behavior -->
 
 ## Active Workarounds
-<!-- Temporary fixes or hacks that are still in place -->
+<!-- Temporary fixes still in place -->
 
-## Follow-up Items
+## Follow-up
 <!-- Things that still need to be done -->
-
-## Last Updated
-<!-- Date -->
 ```
 
 ---
 
-**`<project-root>/<agent-folder>/agents/safe-refactor-code.md`** - refactor rules.
+### `<agents-folder>/safe-refactor-code.md`
 
 ```md
 # safe-refactor-code.md
 
-## Safe Areas to Touch
-<!-- Modules or files that are safe to refactor freely -->
+## Safe to Touch
+<!-- Modules or files safe to refactor freely -->
 
-## Dangerous Files / Generated Outputs
+## Dangerous / Generated
 <!-- Files that should not be edited directly -->
 
-## Required Verification Commands
-<!-- Commands to run after each change, e.g. npm run lint, npm test -->
+## Verification Commands
+<!-- e.g. npm run lint, npm test -->
 
-## Cleanup Conventions
-<!-- Naming conventions, import order, file structure rules -->
+## Conventions
+<!-- Naming, import order, file structure rules -->
 
-## Flagged Dead Code (not yet removed)
-<!-- Format: [date] path/to/file:functionName - reason for flagging -->
+## Flagged Dead Code
+<!-- [date] path/to/file:functionName - reason -->
 
-## Recurring Pitfalls
+## Pitfalls
 <!-- Things that broke before or are easy to get wrong -->
 ```
 
 ---
 
-### 1c. Confirm initialization
+### 1c. Confirm Initialization
 
 ```
-Project root: <absolute path>
+Project root: <path>
 Agent: <agent>
 Agents folder: <project-root>/<agent-folder>/agents/
 
-Root files:
-  AGENTS.md             - <created | already exists>
-  CHANGELOG.md          - <created | already exists>
+Root:  AGENTS.md - <created|exists>  |  CHANGELOG.md - <created|exists>
+Agent: ACTIVE.md - <created|exists>  |  BACKLOG.md - <created|exists>
+       LOG.md - <created|exists>     |  MEMORY.md - <created|exists>
+       safe-refactor-code.md - <created|exists>
 
-Agent files:
-  ACTIVE.md             - <created | already exists>
-  BACKLOG.md            - <created | already exists>
-  LOG.md                - <created | already exists>
-  MEMORY.md             - <created | already exists>
-  safe-refactor-code.md - <created | already exists>
-
-All paths confirmed inside project root. Proceeding.
+All paths inside project root. Proceeding.
 ```
 
 ---
 
-## Step 2: Read Context + Auto-Detect Saved Session
+## Step 2: Read Context + Auto-Detect Session
 
 ### 2a. Read AGENTS.md
+Load project rules, stack, standards. Apply for the rest of this session.
 
-Read `<project-root>/AGENTS.md` to load project rules, tech stack, coding standards, and AI instructions. Apply these rules for the rest of the session.
-
-### 2b. Read ACTIVE.md and detect saved session
-
-Read `<project-root>/<agent-folder>/agents/ACTIVE.md` and check the `## Last Session` block:
+### 2b. Read ACTIVE.md — detect saved session
 
 ```
 if status = "saved":
   -> Print: "Resuming saved session from <saved_at>"
-  -> Print: "Completed: <completed>"
-  -> Print: "Pending: <pending>"
-  -> Print: "Next action: <next_action>"
-  -> Skip audit for already-completed slices
-  -> Resume from <next_action> directly
+  -> Print: "Pending: <pending> | Next: <next_action>"
+  -> Skip audit for completed slices
+  -> Resume from next_action directly
 
 if status = "none" or block missing:
-  -> Print: "No saved session found. Starting fresh."
+  -> Print: "No saved session. Starting fresh."
   -> Continue to Step 3
 ```
 
-Do not ask the user whether to resume or start fresh - auto-detect and decide.
+Auto-detect only. Do not ask user.
 
-### Last Session block format (written by `/safe-code save`)
+### Last Session block (written by `/safe-code save`)
 
 ```md
 ## Last Session
 status: saved
 saved_at: <ISO timestamp>
 completed:
-  - <slice description>
+  - <slice>
 pending:
-  - <slice description>
-next_action: <what to do when resuming>
+  - <slice>
+next_action: <what to do on resume>
 ```
 
-When all pending slices are done, reset the block:
+After all pending done, reset to:
 
 ```md
 ## Last Session
@@ -414,26 +369,43 @@ next_action: none
 
 ---
 
-## Step 3: Assess Repo State and Check Git
+## LOG.md Trim Rule
+
+Check LOG.md line count on every `/safe-code save`.
 
 ```
-Check git status:
-  if git repo exists AND has commits -> rollback available -> proceed to Execute mode after plan
-  if git repo exists BUT no commits  -> no rollback -> plan only, warn user before executing
-  if no git repo                     -> no rollback -> plan only, require explicit user approval
+if LOG.md > 200 lines:
+  -> Collect all entries older than 7 days
+  -> Summarize them into one block at the bottom:
 
-Check worktree:
-  if dirty (uncommitted changes) -> note this, do not overwrite user changes
-  if clean -> safe to proceed
+  ## Archived Summary [<oldest date> - <7 days ago>]
+  - <bullet summary of what happened in that period>
+
+  -> Keep last 7 days of entries as-is above the archive block
+  -> Never delete any information — only compress old entries
+  -> Append new entries above everything as usual
 ```
 
-Reasoning:
+This keeps LOG.md scannable without losing history.
+
+---
+
+## Step 3: Assess Repo + Git State
+
+```
+if git repo exists AND has commits -> rollback available -> auto-execute after plan
+if git repo exists BUT no commits  -> warn user, plan only before executing
+if no git repo                     -> require explicit user approval before executing
+
+if worktree dirty -> note it, do not overwrite user changes
+if worktree clean -> safe to proceed
+```
 
 ```
 Reasoning:
   Git state: <found | not found | found but no commits>
   Rollback available: yes/no
-  Decision: <proceed to auto-execute | require manual approval>
+  Decision: <proceed | require approval>
   Why: <one sentence>
 ```
 
@@ -443,47 +415,39 @@ Reasoning:
 
 Invoke `$codebase-pruner` in `Audit` mode.
 
-- Reason through every High vs Medium classification explicitly
-- Cross-reference with candidates already flagged in `safe-refactor-code.md`
-- Do not delete or modify any file in this step
+- Classify every candidate explicitly (High vs Medium)
+- Cross-reference `safe-refactor-code.md` for previously flagged items
+- Do not delete or modify anything in this step
 
-### Medium Confidence Auto-Promotion Rule
+### Medium Auto-Promotion Rule
 
 ```
-if ALL of these are true:
-  1. Same subsystem as a confirmed High candidate
+if ALL true:
+  1. Same subsystem as confirmed High candidate
   2. Zero static references outside that subsystem
-  3. Subsystem is confirmed dead (no live route or config points to it)
-THEN:
-  -> promote to High, include in auto-execute plan
-  -> log: "Promoted to High: shares orphaned subsystem with <High candidate>"
+  3. Subsystem confirmed dead (no live route or config)
+-> promote to High, log reason
 
-if ANY condition is false:
-  -> keep as Medium, flag in safe-refactor-code.md, skip silently
+if ANY false:
+-> keep Medium, flag in safe-refactor-code.md, skip silently
 ```
 
 ---
 
-## Step 5: Plan and Decide Execution Mode
+## Step 5: Plan + Execution Mode
 
 ```
 Reasoning:
-  High confidence candidates found: <count>
-  Rollback available: yes/no
-  Risk level: low/medium/high
-  Options:
-    A) Auto-execute High confidence slices, show results after
-    B) Show full plan, wait for approval, then execute
-    C) Show plan only (Dry-Run), no execution this session
-  Decision: <A | B | C>
+  High candidates: <count>
+  Rollback: yes/no
+  Risk: low/medium/high
+  Decision: A / B / C
   Why: <one sentence>
 ```
 
-**Choose A** when: git clean, rollback available, all High confidence, no surprises.
-**Choose B** when: git dirty, borderline candidates, or larger scope than expected.
-**Choose C** when: no git, no rollback, or user asked for plan only.
-
-If B or C, show the plan and wait/stop accordingly.
+- **A** — git clean + rollback + all High + no surprises → auto-execute
+- **B** — git dirty / borderline / large scope → show plan, wait for approval
+- **C** — no git / no rollback / plan-only asked → show plan only
 
 ---
 
@@ -491,27 +455,25 @@ If B or C, show the plan and wait/stop accordingly.
 
 Run `$codebase-pruner` in `Execute` mode.
 
-- Delete only approved candidates
+- Delete approved candidates only
 - Verify after each slice
 - Roll back only the failing slice if verification fails
-- Save newly flagged candidates to `safe-refactor-code.md`
+- Save new flagged candidates to `safe-refactor-code.md`
 
 ---
 
-## Step 7: Refactor and Sync Docs
+## Step 7: Refactor + Sync Docs
 
 Run `$safe-refactor-code` on affected areas.
 
-Update docs:
-
-| File | What to update |
+| File | When to update |
 |---|---|
 | `AGENTS.md` | Only if project rules or stack changed |
-| `CHANGELOG.md` | Only if changes are releasable to users |
-| `ACTIVE.md` | Current task, progress, next steps |
-| `LOG.md` | Append today's session summary (newest at top) |
-| `MEMORY.md` | Updated architecture snapshot |
-| `safe-refactor-code.md` | Flagged candidates, new rules, pitfalls |
+| `CHANGELOG.md` | Only if changes are releasable |
+| `ACTIVE.md` | Every session — current task, progress, next steps |
+| `LOG.md` | Every session — append summary, newest at top |
+| `MEMORY.md` | When architecture changes |
+| `safe-refactor-code.md` | Flagged candidates, pitfalls, new rules |
 | `BACKLOG.md` | Move completed items, add newly discovered tasks |
 
 ---
@@ -523,31 +485,21 @@ Update docs:
 
 Project root: <path>
 Agent: <agent>
-Agents folder: <project-root>/<agent-folder>/agents/
-Execution mode used: <A | B | C>
+Agents folder: <agents-folder>
+Execution mode: <A | B | C>
+Session type: <fresh | resumed from <saved_at>>
 
-Session type: <fresh start | resumed from <saved_at>>
+Files:
+  Root:  AGENTS.md <created|existed>  CHANGELOG.md <created|existed>
+  Agent: ACTIVE.md <created|existed>  BACKLOG.md <created|existed>
+         LOG.md <created|existed>     MEMORY.md <created|existed>
+         safe-refactor-code.md <created|existed>
 
-Files initialized this session:
-  Root:  AGENTS.md - <created | existed>  |  CHANGELOG.md - <created | existed>
-  Agent: ACTIVE.md - <created | existed>  |  BACKLOG.md - <created | existed>
-         LOG.md - <created | existed>     |  MEMORY.md - <created | existed>
-         safe-refactor-code.md - <created | existed>
+Decisions: <list>
+Removed:   <list>
+Flagged:   <list>
+Refactors: <summary>
+Follow-up: <list>
 
-Decisions made:
-  <list with brief reasoning>
-
-Dead code removed:
-  <list>
-
-Dead code flagged (not removed):
-  <list - saved to safe-refactor-code.md>
-
-Refactors applied:
-  <summary>
-
-Follow-up items:
-  <list>
-
-To save and commit this session, run: /safe-code save
+Run /safe-code save to commit this session.
 ```
