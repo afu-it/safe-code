@@ -2,33 +2,75 @@
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, initializes continuity doc structure inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
 metadata:
-  version: "1.4"
+  version: "1.5"
 ---
 
 # Safe Code
 
-Run a complete hygiene pass on the repo in the correct order. Always initialize docs first, then scan, then show the plan, then wait for user approval before deleting anything.
+Run a complete repo hygiene pass autonomously. Think before acting. Make decisions independently. Only ask the user when a decision cannot be reversed or when intent is genuinely unclear.
 
 ## Scope Rule (Read This First)
 
-**Everything in this skill operates inside the current project root only.**
+**Everything operates inside the current project root only.**
 
-- Never read from or write to the user's home directory (`~/`, `~/.codex/`, `~/.claude/`, etc.)
-- Never read from or write to any path outside the current project root
-- All file paths are relative to the project root
+- Never read from or write to paths outside the current project root
+- Never use `~/`, `~/.codex/`, `~/.claude/`, or any home directory path
+- All paths are relative to the project root
 - The project root is the directory where the agent was invoked
 
 ```
-CORRECT paths (inside project):
-  <project-root>/.codex/memory/MEMORY.md
-  <project-root>/.claude/memory/MEMORY.md
-  <project-root>/AGENTS.md
-
-WRONG paths (outside project — never use these):
-  ~/.codex/memory/MEMORY.md
-  ~/.claude/memory/MEMORY.md
-  ~/AGENTS.md
+CORRECT: <project-root>/.codex/memory/MEMORY.md
+WRONG:   ~/.codex/memory/MEMORY.md
 ```
+
+---
+
+## How to Make Decisions (Read Before Every Step)
+
+Before taking any action, reason through it explicitly. Do not guess. Do not skip this.
+
+### Decision Framework
+
+For every decision in this skill, ask:
+
+1. **What are the 2-3 options here?**
+2. **What does each option risk or preserve?**
+3. **Which option is safest given what I know?**
+4. **Can this be undone if I'm wrong?**
+
+If the answer to (4) is "no" — stop and show the user the options before acting.
+If the answer to (4) is "yes" — proceed with the safest option and log your reasoning.
+
+### When to Act Autonomously
+
+Act without asking when:
+- The action is reversible (git tracked, or file can be restored)
+- Confidence is High (zero references, no dynamic risk)
+- The decision is technical, not about user intent
+- The answer is discoverable from the codebase itself
+
+### When to Stop and Ask
+
+Stop and ask the user when:
+- The action is irreversible (no git, no backup)
+- Confidence is Medium or Low
+- Two options have equal trade-offs and the choice depends on user preference
+- Something unexpected is found that changes the scope significantly
+
+### Reasoning Format
+
+Before each significant action, write a short reasoning block:
+
+```
+Reasoning:
+  Options considered: <list>
+  Risk of each: <list>
+  Decision: <chosen option>
+  Why: <one sentence>
+  Reversible: yes/no
+```
+
+This keeps decisions transparent and auditable without requiring user input for every step.
 
 ---
 
@@ -44,30 +86,32 @@ if <project-root>/.windsurf/ exists → doc folder = <project-root>/.windsurf/me
 if none detected                    → create <project-root>/.codex/memory/ and use it
 ```
 
-**Never fall back to the project root itself as the doc folder.**
-**Never use any path outside the project root.**
+Never fall back to the project root itself as the doc folder.
+Never use any path outside the project root.
 
-If no agent folder is detected, create `<project-root>/.codex/memory/` and continue. Do not ask the user — just proceed.
-
-If multiple agent folders exist, prefer the one matching the current running agent.
+If multiple agent folders exist — reason through which one matches the current running agent. Do not ask the user.
 
 ---
 
 ## Step 1: Initialize Doc Structure
 
-Create the doc folder and all required files **before reading the codebase or making any changes**.
+Create the memory folder and all required files **before reading the codebase**.
 
 ### 1a. Create the memory folder
 
-Create `<project-root>/<agent-folder>/memory/` if it does not exist.
+```
+<project-root>/<agent-folder>/memory/
+```
+
+Create if it does not exist.
 
 ### 1b. Check and create each doc file
 
-For each file — check if it exists first. If it exists, **leave it completely untouched**. If it does not exist, create it with the template below.
+For each file — if it exists, leave it completely untouched. If it does not exist, create it with the template below.
 
 ---
 
-**`<project-root>/AGENTS.md`** — project root only. Do not create this anywhere else.
+**`<project-root>/AGENTS.md`** — project root only.
 
 ```md
 # AGENTS.md
@@ -164,11 +208,9 @@ For each file — check if it exists first. If it exists, **leave it completely 
 
 ### 1c. Confirm initialization
 
-Report before proceeding:
-
 ```
-Project root: <absolute path to project root>
-Agent detected: <agent>
+Project root: <absolute path>
+Agent: <agent>
 Doc folder: <project-root>/<agent-folder>/memory/
 
 Files:
@@ -177,14 +219,14 @@ Files:
   CHANGELOG.md                    — <created | already exists>
   safe-refactor-code.md           — <created | already exists>
 
-All paths are inside the project. Ready to scan.
+All paths confirmed inside project root. Proceeding.
 ```
 
 ---
 
 ## Step 2: Read Existing Docs
 
-Read all four docs from inside the project to load context from previous sessions:
+Read all four docs to load context from previous sessions:
 
 - `<project-root>/AGENTS.md`
 - `<project-root>/<agent-folder>/memory/MEMORY.md`
@@ -193,83 +235,129 @@ Read all four docs from inside the project to load context from previous session
 
 Do not read any file from outside the project root.
 
-Use this context to inform all decisions below.
+Apply the context — if previous sessions flagged dead code candidates or noted pitfalls, carry that forward into this session's decisions.
 
 ---
 
-## Step 3: Audit Dead Code
+## Step 3: Assess Repo State and Check Git
+
+Before scanning, assess risk level:
+
+```
+Check git status:
+  if git repo exists AND has commits → rollback available → proceed to Execute mode after plan
+  if git repo exists BUT no commits  → no rollback → plan only, warn user before executing
+  if no git repo                     → no rollback → plan only, require explicit user approval
+
+Check worktree:
+  if dirty (uncommitted changes) → note this, do not overwrite user changes
+  if clean → safe to proceed
+```
+
+Reasoning:
+
+```
+Reasoning:
+  Git state: <found | not found | found but no commits>
+  Rollback available: yes/no
+  Decision: <proceed to auto-execute | require manual approval>
+  Why: <one sentence>
+```
+
+---
+
+## Step 4: Audit Dead Code
 
 Invoke `$codebase-pruner` in `Audit` mode.
 
-- Map all live entrypoints inside the project.
-- Build the reference graph from imports, config files, and runtime wiring.
-- Produce a dead code inventory with confidence and blast radius for each candidate.
-- Cross-reference with candidates already flagged in `safe-refactor-code.md`.
-- Do not delete or modify any file in this step.
+During audit, apply the decision framework actively:
+
+- When classifying a candidate as High vs Medium confidence — reason through it explicitly
+- When blast radius is unclear — widen the scan before classifying, do not guess
+- Cross-reference with candidates already flagged in `safe-refactor-code.md`
+- Do not delete or modify any file in this step
 
 ---
 
-## Step 4: Show Plan and Wait for Approval
+## Step 5: Plan and Decide Execution Mode
 
-**Mandatory. Do not skip. Do not proceed to Step 5 without explicit user approval.**
+After audit, reason through the execution approach:
 
-Invoke `$codebase-pruner` in `Dry-Run` mode and show the plan:
+```
+Reasoning:
+  High confidence candidates found: <count>
+  Rollback available: yes/no
+  Risk level: low/medium/high
+  Options:
+    A) Auto-execute High confidence slices, show results after
+    B) Show full plan, wait for approval, then execute
+    C) Show plan only (Dry-Run), no execution this session
+  Decision: <A | B | C>
+  Why: <one sentence>
+```
+
+**Choose A** when: git is clean, rollback available, all candidates are High confidence, no surprises found in audit.
+
+**Choose B** when: git is dirty, or some candidates are borderline, or scope is larger than expected.
+
+**Choose C** when: no git, no rollback, or user explicitly asked for plan only.
+
+If choosing B or C, show the plan:
 
 ```
 === Dead Code Removal Plan ===
 
 Project root: <path>
 Agent: <agent>
-Doc folder: <project-root>/<agent-folder>/memory/
+Execution mode: <A | B | C> — <reason>
 
 Proposed removals:
   Slice 1 — <description>
     Files: <list>
     Confidence: High
     Verification: <command>
-    Rollback: git checkout -- <files>
+    Rollback: <git command or manual note>
 
   Slice 2 — ...
 
-Flagged but NOT in plan (manual review needed):
+Flagged but NOT in plan:
   - <file:function> — <reason>
-
-Reply "yes" or "approve" to execute, or tell me what to skip.
 ```
 
-Wait for explicit user approval before continuing.
+If B: append `Reply "yes" to execute, or tell me what to skip.` and wait.
+If C: append `Plan only — no files will be changed this session.`
 
 ---
 
-## Step 5: Execute Dead Code Removal
+## Step 6: Execute Dead Code Removal
 
-Only after user approval in Step 4.
+Run `$codebase-pruner` in `Execute` mode.
 
-Invoke `$codebase-pruner` in `Execute` mode.
-
-- Delete only approved slices, one at a time.
-- Verify after each slice.
-- Roll back on failure — do not continue past a failing slice.
-- Save newly flagged candidates to `<project-root>/<agent-folder>/memory/safe-refactor-code.md`.
+For each slice:
+- Delete only approved candidates
+- Verify with the narrowest available check
+- If verification fails — reason through whether it is a false alarm or a real breakage before rolling back
+- Roll back only the failing slice, not the whole session
+- Save newly flagged candidates to `safe-refactor-code.md`
 
 ---
 
-## Step 6: Refactor and Sync Docs
+## Step 7: Refactor and Sync Docs
 
-Invoke `$safe-refactor-code` on affected areas only.
+Run `$safe-refactor-code` on affected areas.
 
-Update all four docs inside the project:
+Update all four docs:
 
 | File | What to update |
 |---|---|
-| `<project-root>/AGENTS.md` | Current state, decisions, where to start next |
-| `<project-root>/<agent-folder>/memory/MEMORY.md` | Architecture snapshot, follow-up items |
+| `<project-root>/AGENTS.md` | Current state, decisions made this session, where to start next |
+| `<project-root>/<agent-folder>/memory/MEMORY.md` | Updated architecture snapshot, follow-up items |
 | `<project-root>/<agent-folder>/memory/CHANGELOG.md` | Today's dated section |
-| `<project-root>/<agent-folder>/memory/safe-refactor-code.md` | Flagged candidates, rules, pitfalls |
+| `<project-root>/<agent-folder>/memory/safe-refactor-code.md` | Flagged candidates, new rules, pitfalls discovered |
 
 ---
 
-## Step 7: Final Summary
+## Step 8: Final Summary
 
 ```
 === safe-code session complete ===
@@ -277,12 +365,16 @@ Update all four docs inside the project:
 Project root: <path>
 Agent: <agent>
 Doc folder: <project-root>/<agent-folder>/memory/
+Execution mode used: <A | B | C>
 
 Initialization:
   AGENTS.md             — <created | already existed>
   MEMORY.md             — <created | already existed>
   CHANGELOG.md          — <created | already existed>
   safe-refactor-code.md — <created | already existed>
+
+Decisions made this session:
+  <list of key decisions with brief reasoning>
 
 Dead code removed:
   <list>
@@ -294,7 +386,7 @@ Refactors applied:
   <summary>
 
 Docs updated:
-  All paths inside <project-root>/<agent-folder>/memory/
+  All inside <project-root>/<agent-folder>/memory/
 
 Follow-up items:
   <list>
