@@ -2,7 +2,7 @@
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, initializes continuity doc structure inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
 metadata:
-  version: "1.5"
+  version: "1.6"
 ---
 
 # Safe Code
@@ -53,9 +53,10 @@ Act without asking when:
 
 Stop and ask the user when:
 - The action is irreversible (no git, no backup)
-- Confidence is Medium or Low
-- Two options have equal trade-offs and the choice depends on user preference
-- Something unexpected is found that changes the scope significantly
+- Confidence is Low
+- Something unexpected is found that changes the scope significantly (new subsystem affected, blast radius > 10 files)
+
+**Do NOT ask the user about Medium confidence candidates** — apply the auto-promotion rule below instead.
 
 ### Reasoning Format
 
@@ -276,6 +277,34 @@ During audit, apply the decision framework actively:
 - When blast radius is unclear — widen the scan before classifying, do not guess
 - Cross-reference with candidates already flagged in `safe-refactor-code.md`
 - Do not delete or modify any file in this step
+
+### Medium Confidence Auto-Promotion Rule
+
+After audit, check every Medium confidence candidate against this rule:
+
+```
+if ALL of these are true:
+  1. The Medium candidate belongs to the same subsystem as a confirmed High candidate
+     (same directory, same dependency chain, or same named feature)
+  2. The Medium candidate has zero static references outside that subsystem
+  3. The subsystem itself is confirmed dead (no live route or config points to it)
+THEN:
+  → promote Medium to High
+  → include in auto-execute plan
+  → log: "Promoted to High: shares orphaned subsystem with <High candidate>"
+
+if ANY condition above is false:
+  → keep as Medium
+  → flag in safe-refactor-code.md
+  → do not ask the user — just skip and note it
+```
+
+Examples of same subsystem:
+- All files in `components/pdf/` when `components/pdf/` has no live route import
+- All files prefixed `pdfme-` when the pdfme entrypoint is confirmed dead
+- All CSS selectors namespaced `.pdfme-*` when the pdfme components are removed
+
+This rule means the agent reasons its way to a decision instead of asking the user.
 
 ---
 
