@@ -1,8 +1,7 @@
----
 name: safe-code
-description: "Full repo hygiene in one pass. Detects the active agent, initializes continuity doc structure inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
+description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from AGENTS.md, initializes continuity doc structure inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go. Use /safe-code save to checkpoint and commit the current session."
 metadata:
-  version: "1.6"
+  version: "1.7"
 ---
 
 # Safe Code
@@ -25,6 +24,26 @@ WRONG:   ~/.codex/memory/MEMORY.md
 
 ---
 
+## Command: `/safe-code`
+
+Run a full hygiene pass. Auto-detects if a previous saved session exists and resumes from it.
+
+## Command: `/safe-code save`
+
+Checkpoint the current session. Updates all docs with a session summary, then commits everything:
+
+```
+1. Update AGENTS.md with ## Last Session block (see template below)
+2. Update MEMORY.md, CHANGELOG.md, safe-refactor-code.md
+3. Run: git add -A
+4. Run: git commit -m "safe-code: <YYYY-MM-DD> - <one-line summary of what was done>"
+5. Report: commit hash + what was saved
+```
+
+This does NOT end the session - work can continue after saving.
+
+---
+
 ## How to Make Decisions (Read Before Every Step)
 
 Before taking any action, reason through it explicitly. Do not guess. Do not skip this.
@@ -38,8 +57,8 @@ For every decision in this skill, ask:
 3. **Which option is safest given what I know?**
 4. **Can this be undone if I'm wrong?**
 
-If the answer to (4) is "no" — stop and show the user the options before acting.
-If the answer to (4) is "yes" — proceed with the safest option and log your reasoning.
+If the answer to (4) is "no" - stop and show the user the options before acting.
+If the answer to (4) is "yes" - proceed with the safest option and log your reasoning.
 
 ### When to Act Autonomously
 
@@ -56,7 +75,7 @@ Stop and ask the user when:
 - Confidence is Low
 - Something unexpected is found that changes the scope significantly (new subsystem affected, blast radius > 10 files)
 
-**Do NOT ask the user about Medium confidence candidates** — apply the auto-promotion rule below instead.
+**Do NOT ask the user about Medium confidence candidates** - apply the auto-promotion rule below instead.
 
 ### Reasoning Format
 
@@ -80,17 +99,17 @@ This keeps decisions transparent and auditable without requiring user input for 
 Inside the **project root**, check which agent folder exists:
 
 ```
-if <project-root>/.codex/ exists    → doc folder = <project-root>/.codex/memory/
-if <project-root>/.claude/ exists   → doc folder = <project-root>/.claude/memory/
-if <project-root>/.cursor/ exists   → doc folder = <project-root>/.cursor/memory/
-if <project-root>/.windsurf/ exists → doc folder = <project-root>/.windsurf/memory/
-if none detected                    → create <project-root>/.codex/memory/ and use it
+if <project-root>/.codex/ exists    -> doc folder = <project-root>/.codex/memory/
+if <project-root>/.claude/ exists   -> doc folder = <project-root>/.claude/memory/
+if <project-root>/.cursor/ exists   -> doc folder = <project-root>/.cursor/memory/
+if <project-root>/.windsurf/ exists -> doc folder = <project-root>/.windsurf/memory/
+if none detected                    -> create <project-root>/.codex/memory/ and use it
 ```
 
 Never fall back to the project root itself as the doc folder.
 Never use any path outside the project root.
 
-If multiple agent folders exist — reason through which one matches the current running agent. Do not ask the user.
+If multiple agent folders exist - reason through which one matches the current running agent. Do not ask the user.
 
 ---
 
@@ -108,11 +127,11 @@ Create if it does not exist.
 
 ### 1b. Check and create each doc file
 
-For each file — if it exists, leave it completely untouched. If it does not exist, create it with the template below.
+For each file - if it exists, leave it completely untouched. If it does not exist, create it with the template below.
 
 ---
 
-**`<project-root>/AGENTS.md`** — project root only.
+**`<project-root>/AGENTS.md`** - project root only.
 
 ```md
 # AGENTS.md
@@ -135,8 +154,12 @@ For each file — if it exists, leave it completely untouched. If it does not ex
 ## Where to Start
 <!-- Point future agents to the right entry file or module -->
 
-## Last Updated
-<!-- Date and summary of last agent session -->
+## Last Session
+status: none
+saved_at: -
+completed: []
+pending: []
+next_action: none
 ```
 
 ---
@@ -199,7 +222,7 @@ For each file — if it exists, leave it completely untouched. If it does not ex
 
 ## Flagged Dead Code (not yet removed)
 <!-- Candidates that were found but not deleted due to uncertainty -->
-<!-- Format: [date] path/to/file:functionName — reason for flagging -->
+<!-- Format: [date] path/to/file:functionName - reason for flagging -->
 
 ## Recurring Pitfalls
 <!-- Things that broke before or are easy to get wrong -->
@@ -215,28 +238,60 @@ Agent: <agent>
 Doc folder: <project-root>/<agent-folder>/memory/
 
 Files:
-  AGENTS.md (project root)        — <created | already exists>
-  MEMORY.md                       — <created | already exists>
-  CHANGELOG.md                    — <created | already exists>
-  safe-refactor-code.md           — <created | already exists>
+  AGENTS.md (project root)        - <created | already exists>
+  MEMORY.md                       - <created | already exists>
+  CHANGELOG.md                    - <created | already exists>
+  safe-refactor-code.md           - <created | already exists>
 
 All paths confirmed inside project root. Proceeding.
 ```
 
 ---
 
-## Step 2: Read Existing Docs
+## Step 2: Auto-Detect Saved Session
 
-Read all four docs to load context from previous sessions:
+Read `<project-root>/AGENTS.md` and check the `## Last Session` block:
 
-- `<project-root>/AGENTS.md`
-- `<project-root>/<agent-folder>/memory/MEMORY.md`
-- `<project-root>/<agent-folder>/memory/CHANGELOG.md`
-- `<project-root>/<agent-folder>/memory/safe-refactor-code.md`
+```
+if status = "saved":
+  -> Print: "Resuming saved session from <saved_at>"
+  -> Print: "Completed: <completed>"
+  -> Print: "Pending: <pending>"
+  -> Print: "Next action: <next_action>"
+  -> Skip Step 3 (git check) and Step 4 (audit) for already-completed slices
+  -> Resume from <next_action> directly
 
-Do not read any file from outside the project root.
+if status = "none" or block missing:
+  -> Print: "No saved session found. Starting fresh."
+  -> Continue to Step 3
+```
 
-Apply the context — if previous sessions flagged dead code candidates or noted pitfalls, carry that forward into this session's decisions.
+Do not ask the user whether to resume or start fresh - auto-detect and decide.
+
+### Last Session block format (written by `/safe-code save`)
+
+```md
+## Last Session
+status: saved
+saved_at: <ISO timestamp>
+completed:
+  - <slice description>
+  - <slice description>
+pending:
+  - <slice description>
+next_action: <what to do when resuming>
+```
+
+When resuming, after all pending slices are done - reset the block:
+
+```md
+## Last Session
+status: completed
+saved_at: <ISO timestamp>
+completed: all
+pending: []
+next_action: none
+```
 
 ---
 
@@ -246,13 +301,13 @@ Before scanning, assess risk level:
 
 ```
 Check git status:
-  if git repo exists AND has commits → rollback available → proceed to Execute mode after plan
-  if git repo exists BUT no commits  → no rollback → plan only, warn user before executing
-  if no git repo                     → no rollback → plan only, require explicit user approval
+  if git repo exists AND has commits -> rollback available -> proceed to Execute mode after plan
+  if git repo exists BUT no commits  -> no rollback -> plan only, warn user before executing
+  if no git repo                     -> no rollback -> plan only, require explicit user approval
 
 Check worktree:
-  if dirty (uncommitted changes) → note this, do not overwrite user changes
-  if clean → safe to proceed
+  if dirty (uncommitted changes) -> note this, do not overwrite user changes
+  if clean -> safe to proceed
 ```
 
 Reasoning:
@@ -273,8 +328,8 @@ Invoke `$codebase-pruner` in `Audit` mode.
 
 During audit, apply the decision framework actively:
 
-- When classifying a candidate as High vs Medium confidence — reason through it explicitly
-- When blast radius is unclear — widen the scan before classifying, do not guess
+- When classifying a candidate as High vs Medium confidence - reason through it explicitly
+- When blast radius is unclear - widen the scan before classifying, do not guess
 - Cross-reference with candidates already flagged in `safe-refactor-code.md`
 - Do not delete or modify any file in this step
 
@@ -289,14 +344,14 @@ if ALL of these are true:
   2. The Medium candidate has zero static references outside that subsystem
   3. The subsystem itself is confirmed dead (no live route or config points to it)
 THEN:
-  → promote Medium to High
-  → include in auto-execute plan
-  → log: "Promoted to High: shares orphaned subsystem with <High candidate>"
+  -> promote Medium to High
+  -> include in auto-execute plan
+  -> log: "Promoted to High: shares orphaned subsystem with <High candidate>"
 
 if ANY condition above is false:
-  → keep as Medium
-  → flag in safe-refactor-code.md
-  → do not ask the user — just skip and note it
+  -> keep as Medium
+  -> flag in safe-refactor-code.md
+  -> do not ask the user - just skip and note it
 ```
 
 Examples of same subsystem:
@@ -338,23 +393,23 @@ If choosing B or C, show the plan:
 
 Project root: <path>
 Agent: <agent>
-Execution mode: <A | B | C> — <reason>
+Execution mode: <A | B | C> - <reason>
 
 Proposed removals:
-  Slice 1 — <description>
+  Slice 1 - <description>
     Files: <list>
     Confidence: High
     Verification: <command>
     Rollback: <git command or manual note>
 
-  Slice 2 — ...
+  Slice 2 - ...
 
 Flagged but NOT in plan:
-  - <file:function> — <reason>
+  - <file:function> - <reason>
 ```
 
 If B: append `Reply "yes" to execute, or tell me what to skip.` and wait.
-If C: append `Plan only — no files will be changed this session.`
+If C: append `Plan only - no files will be changed this session.`
 
 ---
 
@@ -365,7 +420,7 @@ Run `$codebase-pruner` in `Execute` mode.
 For each slice:
 - Delete only approved candidates
 - Verify with the narrowest available check
-- If verification fails — reason through whether it is a false alarm or a real breakage before rolling back
+- If verification fails - reason through whether it is a false alarm or a real breakage before rolling back
 - Roll back only the failing slice, not the whole session
 - Save newly flagged candidates to `safe-refactor-code.md`
 
@@ -396,11 +451,13 @@ Agent: <agent>
 Doc folder: <project-root>/<agent-folder>/memory/
 Execution mode used: <A | B | C>
 
+Session type: <fresh start | resumed from <saved_at>>
+
 Initialization:
-  AGENTS.md             — <created | already existed>
-  MEMORY.md             — <created | already existed>
-  CHANGELOG.md          — <created | already existed>
-  safe-refactor-code.md — <created | already existed>
+  AGENTS.md             - <created | already existed>
+  MEMORY.md             - <created | already existed>
+  CHANGELOG.md          - <created | already existed>
+  safe-refactor-code.md - <created | already existed>
 
 Decisions made this session:
   <list of key decisions with brief reasoning>
@@ -409,7 +466,7 @@ Dead code removed:
   <list>
 
 Dead code flagged (not removed):
-  <list — saved to safe-refactor-code.md>
+  <list - saved to safe-refactor-code.md>
 
 Refactors applied:
   <summary>
@@ -419,4 +476,6 @@ Docs updated:
 
 Follow-up items:
   <list>
+
+To save and commit this session, run: /safe-code save
 ```
