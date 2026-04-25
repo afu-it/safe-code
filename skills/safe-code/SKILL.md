@@ -1,7 +1,7 @@
 ---
 name: safe-code
-description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 7 continuity docs inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go. Use /safe-code save to checkpoint and commit the current session."
-version: "1.9.1"
+description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Supports lazy loading — only essential files are loaded on every session, others load on-demand. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go. Use /safe-code save to checkpoint and commit the current session."
+version: "2.0"
 ---
 
 # Safe Code
@@ -28,18 +28,54 @@ WRONG:   ~/.codex/agents/ACTIVE.md
 
 ```
 <project-root>/
-├── AGENTS.md           <- Rules for AI (set once, update rarely)
-├── CHANGELOG.md        <- Release history (update on release only)
+├── AGENTS.md              <- Rules for AI (set once, update rarely)
+├── CHANGELOG.md           <- Release history (update on release only)
 └── .codex/
     └── agents/
-        ├── ACTIVE.md            <- What is happening RIGHT NOW + session state
-        ├── BACKLOG.md           <- What is coming next
-        ├── LOG.md               <- Append-only diary (auto-trimmed)
-        ├── MEMORY.md            <- Architecture snapshot
-        └── safe-refactor-code.md <- Refactor rules & flagged code
+        ├── ACTIVE.md            <- Persistent state + resume point     [TIER 1]
+        ├── SESSION.md           <- Working memory RAM (wipe on save)    [TIER 1]
+        ├── LOG.md               <- Append-only diary (auto-trimmed)     [TIER 1]
+        ├── BACKLOG.md           <- Task queue                           [TIER 2]
+        ├── MEMORY.md            <- Architecture snapshot                [TIER 2]
+        └── safe-refactor-code.md <- Refactor rules & flagged code       [TIER 2]
 ```
 
 Same structure for other agents: `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`
+
+---
+
+## Loading Tiers
+
+### Tier 1 — Always Load (every session)
+
+```
+AGENTS.md              <- project rules + stack
+ACTIVE.md             <- persistent state + session resume point
+SESSION.md            <- working memory from previous session (if any)
+LOG.md                <- last few entries for context
+```
+
+### Tier 2 — On-Demand Only
+
+```
+MEMORY.md             <- load when: Step 4 (audit) or Step 7 (refactor) starts
+safe-refactor-code.md <- load when: Step 6 (execute) starts
+BACKLOG.md            <- load when: user asks about task queue
+CHANGELOG.md          <- load when: releasable changes exist
+```
+
+Do NOT load Tier 2 files unless their trigger condition is met. This preserves context window for actual codebase analysis.
+
+---
+
+## ACTIVE.md vs SESSION.md
+
+| | ACTIVE.md | SESSION.md |
+|---|---|---|
+| **Persists** | Yes, across sessions | No — wiped on `/safe-code save` |
+| **Contains** | Overall progress, next_action, resume point | Mid-step notes, temp decisions, working vars |
+| **Updated** | On `/safe-code save` only | Freely throughout session |
+| **Analogy** | Hard disk | RAM |
 
 ---
 
@@ -52,14 +88,17 @@ Run a full hygiene pass. Auto-detects saved session in `ACTIVE.md` and resumes i
 Checkpoint the current session:
 
 ```
-1. Update ACTIVE.md — Last Session block + current state
-2. Append to LOG.md — session summary (newest at top)
-3. Update MEMORY.md — if architecture changed
-4. Update CHANGELOG.md (root) — only if releasable changes were made
-5. Auto-trim LOG.md if needed (see LOG.md Trim Rule below)
-6. git add -A
-7. git commit -m "safe-code: <YYYY-MM-DD> - <one-line summary>"
-8. Report commit hash
+1. Migrate SESSION.md — extract important decisions into ACTIVE.md
+2. Update ACTIVE.md — Last Session block + current state
+3. Append to LOG.md — session summary (newest at top)
+4. Update MEMORY.md — if architecture changed
+5. Update CHANGELOG.md (root) — only if releasable changes were made
+6. Auto-trim LOG.md if needed (see LOG.md Trim Rule below)
+7. Reset SESSION.md — empty template (wipe working memory)
+8. git add -A
+9. git commit -m "safe-code: <YYYY-MM-DD> - <one-line summary>"
+10. Push based on remote bucket (see Step 3b)
+11. Report commit hash + push status
 ```
 
 Does NOT end the session — work can continue after saving.
@@ -187,7 +226,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
-### `<agents-folder>/ACTIVE.md` — compact, terminal-scannable
+### `<agents-folder>/ACTIVE.md` — persistent state only
 
 ```md
 # ACTIVE.md
@@ -213,6 +252,29 @@ saved_at: -
 completed: []
 pending: []
 next_action: none
+```
+
+---
+
+### `<agents-folder>/SESSION.md` — working memory RAM (wipe on save)
+
+```md
+# SESSION.md
+_<DATE> <TIME>_
+> Temporary working memory. Auto-wiped on /safe-code save.
+> Do NOT rely on this for persistent state — use ACTIVE.md.
+
+## Working Now
+<!-- What is being actively processed this moment -->
+
+## Temp Decisions
+<!-- Decisions made mid-session, not yet committed to ACTIVE.md -->
+
+## Mid-Step Notes
+<!-- Notes for current step only — discard after step completes -->
+
+## Carry Forward
+<!-- Important findings to migrate into ACTIVE.md on save -->
 ```
 
 ---
@@ -251,7 +313,7 @@ _<DATE>_
 
 ## <DATE TIME>
 ### init: project scaffold created
-- AGENTS.md, CHANGELOG.md, ACTIVE.md, BACKLOG.md, LOG.md, MEMORY.md, safe-refactor-code.md
+- AGENTS.md, CHANGELOG.md, ACTIVE.md, SESSION.md, BACKLOG.md, LOG.md, MEMORY.md, safe-refactor-code.md
 
 ---
 ```
@@ -313,21 +375,27 @@ Agent: <agent>
 Agents folder: <project-root>/<agent-folder>/agents/
 
 Root:  AGENTS.md - <created|exists>  |  CHANGELOG.md - <created|exists>
-Agent: ACTIVE.md - <created|exists>  |  BACKLOG.md - <created|exists>
-       LOG.md - <created|exists>     |  MEMORY.md - <created|exists>
-       safe-refactor-code.md - <created|exists>
+Agent: ACTIVE.md - <created|exists>  |  SESSION.md - <created|exists>
+       BACKLOG.md - <created|exists>  |  LOG.md - <created|exists>
+       MEMORY.md - <created|exists>   |  safe-refactor-code.md - <created|exists>
 
 All paths inside project root. Proceeding.
 ```
 
 ---
 
-## Step 2: Read Context + Auto-Detect Session
+## Step 2: Load Context + Auto-Detect Session
 
-### 2a. Read AGENTS.md
-Load project rules, stack, standards. Apply for the rest of this session.
+### 2a. Load Tier 1 files (always)
 
-### 2b. Read ACTIVE.md — detect saved session
+```
+1. AGENTS.md      — apply project rules, stack, standards for this session
+2. ACTIVE.md      — check for saved session (see 2b)
+3. SESSION.md     — restore working memory if previous session was not saved cleanly
+4. LOG.md         — read last 3 entries for recent context only
+```
+
+### 2b. Detect saved session from ACTIVE.md
 
 ```
 if status = "saved":
@@ -390,7 +458,9 @@ This keeps LOG.md scannable without losing history.
 
 ---
 
-## Step 3: Assess Repo + Git State
+## Step 3: Git + Remote Check
+
+### 3a. Check git repo state
 
 ```
 if git repo exists AND has commits -> rollback available -> auto-execute after plan
@@ -401,9 +471,39 @@ if worktree dirty -> note it, do not overwrite user changes
 if worktree clean -> safe to proceed
 ```
 
+### 3b. Detect remote platform
+
+Run `git remote -v` and classify into one of three buckets:
+
+```
+BUCKET A — Git-native platforms
+  Matches: github.com, gitlab.com, bitbucket.org,
+           dev.azure.com, codeberg.org,
+           self-hosted GitLab/Gitea (custom domain),
+           SSH custom URLs, HTTPS custom URLs
+  Action:  git commit + git push
+
+BUCKET B — Git + external deploy platforms
+  Matches: vercel.com, netlify.com, pages.cloudflare.com,
+           any platform that auto-deploys on push
+  Action:  git commit + git push
+  Note:    "Auto-deploy may trigger on push — confirm intent if needed"
+
+BUCKET C — Local only
+  Matches: no remote configured
+  Action:  git commit only — no push attempt
+  Note:    "No remote detected. Push manually when ready."
+```
+
+Do NOT ask user which platform they use — detect from URL only.
+
+### 3c. Reasoning output
+
 ```
 Reasoning:
   Git state: <found | not found | found but no commits>
+  Remote: <URL | none>
+  Bucket: <A | B | C>
   Rollback available: yes/no
   Decision: <proceed | require approval>
   Why: <one sentence>
@@ -412,6 +512,8 @@ Reasoning:
 ---
 
 ## Step 4: Audit Dead Code
+
+> **Trigger:** Load `MEMORY.md` (Tier 2) now if not already loaded.
 
 Invoke `$codebase-pruner` in `Audit` mode.
 
@@ -453,6 +555,8 @@ Reasoning:
 
 ## Step 6: Execute Dead Code Removal
 
+> **Trigger:** Load `safe-refactor-code.md` (Tier 2) now if not already loaded.
+
 Run `$codebase-pruner` in `Execute` mode.
 
 - Delete approved candidates only
@@ -464,6 +568,8 @@ Run `$codebase-pruner` in `Execute` mode.
 
 ## Step 7: Refactor + Sync Docs
 
+> **Trigger:** Load `MEMORY.md` (Tier 2) now if not already loaded.
+
 Run `$safe-refactor-code` on affected areas.
 
 | File | When to update |
@@ -471,6 +577,7 @@ Run `$safe-refactor-code` on affected areas.
 | `AGENTS.md` | Only if project rules or stack changed |
 | `CHANGELOG.md` | Only if changes are releasable |
 | `ACTIVE.md` | Every session — current task, progress, next steps |
+| `SESSION.md` | Throughout session — wiped on save |
 | `LOG.md` | Every session — append summary, newest at top |
 | `MEMORY.md` | When architecture changes |
 | `safe-refactor-code.md` | Flagged candidates, pitfalls, new rules |
@@ -489,11 +596,18 @@ Agents folder: <agents-folder>
 Execution mode: <A | B | C>
 Session type: <fresh | resumed from <saved_at>>
 
+Git:    <repo found | not found> | <commit count> commits | branch: <branch>
+Remote: <URL | none>  [Bucket <A | B | C>]
+Push:   <auto on save | manual | not applicable>
+
 Files:
-  Root:  AGENTS.md <created|existed>  CHANGELOG.md <created|existed>
-  Agent: ACTIVE.md <created|existed>  BACKLOG.md <created|existed>
-         LOG.md <created|existed>     MEMORY.md <created|existed>
-         safe-refactor-code.md <created|existed>
+  Root:  AGENTS.md <created|existed>    CHANGELOG.md <created|existed>
+  Agent: ACTIVE.md <created|existed>    SESSION.md <created|existed>
+         BACKLOG.md <created|existed>   LOG.md <created|existed>
+         MEMORY.md <created|existed>    safe-refactor-code.md <created|existed>
+
+Loaded (Tier 1): AGENTS.md, ACTIVE.md, SESSION.md, LOG.md
+Loaded (Tier 2): <list of on-demand files loaded this session>
 
 Decisions: <list>
 Removed:   <list>
