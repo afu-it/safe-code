@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. Git push only occurs after the user explicitly runs /safe-code save — no autonomous push without user command. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.1"
+version: "2.2"
 ---
 
 # Safe Code
@@ -122,6 +122,10 @@ Before every action, reason explicitly. Do not guess. Do not skip this.
 2. What does each risk or preserve?
 3. Which is safest given what I know?
 4. Can this be undone?
+5. What am I assuming? → verify from codebase first; ask only if cannot verify
+
+If assumption is about user intent (not a technical fact) → verify from codebase first.
+If assumption cannot be verified from codebase → stop and ask.
 
 If (4) = no → stop, show options to user before acting.
 If (4) = yes → proceed with safest option, log reasoning.
@@ -148,6 +152,7 @@ Reasoning:
   Decision: <chosen>
   Why: <one sentence>
   Reversible: yes/no
+  Assumptions: <list — or "none">
 ```
 
 ---
@@ -376,6 +381,17 @@ _<DATE>_
 ## Conventions
 <!-- Naming, import order, file structure rules -->
 
+## Surgical Change Rules
+- Touch only lines that directly fix the task — nothing else
+- Match existing style: quotes, spacing, naming, indent — even if you'd do it differently
+- Do NOT add type hints, docstrings, or comments unless explicitly asked
+- Do NOT reformat adjacent code while fixing something
+- Do NOT refactor things that aren't broken
+- Unrelated issues found → log in BACKLOG.md, do not fix silently
+- Every changed line must trace back to the user's request
+
+Test: Can every diff line be justified by the task? If not, revert it.
+
 ## Flagged Dead Code
 <!-- Structured entries below. Requires explicit user approval before deletion in Execute mode. -->
 
@@ -570,11 +586,25 @@ if ANY false:
 
 ## Step 5: Plan + Execution Mode
 
+### Pre-Plan Check (run before deciding mode)
+
+Answer these before producing the execution plan:
+
+```
+- Multiple valid interpretations of "dead" for any candidate? → if yes, default Mode B
+- Blast radius > 10 files?                                   → stop, report first
+- Any candidate in a recently modified file (git log)?       → flag, extra caution
+- Can every planned step be verified with a command?         → if no, default Mode B
+```
+
+If any check raises doubt → default to Mode B.
+
 ```
 Reasoning:
   High candidates: <count>
   Rollback: yes/no
   Risk: low/medium/high
+  Pre-Plan flags: <list — or "none">
   Decision: A / B / C
   Why: <one sentence>
 ```
@@ -591,9 +621,24 @@ Reasoning:
 
 Run `$codebase-pruner` in `Execute` mode. Requires explicit user approval before deleting any candidate that is not High confidence.
 
-- Delete approved candidates only
-- Verify after each slice
+### Print Execution Plan Before Starting
+
+```
+Slice 1: <path/to/file>:<symbol>
+  action: delete
+  verify: <command> → expect: <zero results | tests pass>
+
+Slice 2: <path/to/file>:<symbol>
+  action: delete
+  verify: <command> → expect: <zero results | tests pass>
+```
+
+### Execution Rules
+
+- Execute one slice at a time — never batch
+- Verify after each slice before moving to the next
 - Roll back only the failing slice if verification fails
+- If verification command unavailable → flag as Medium, skip to next slice
 - Save new flagged candidates to `safe-refactor-code.md` using structured format
 
 ---
@@ -620,7 +665,7 @@ Run `$safe-refactor-code` on affected areas.
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.1 session complete ===
+=== safe-code v2.2 session complete ===
 
 Project root: <path>
 Agent: <agent>
