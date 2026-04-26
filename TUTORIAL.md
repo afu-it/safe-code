@@ -1,267 +1,260 @@
-# Tutorial: How to Use safe-code Skills
+# Tutorial: Cara Guna safe-code
 
-A beginner-friendly guide to installing, using, updating, and removing these skills with AI coding agents like Codex, Claude Code, Cursor, and others.
-
----
-
-## What Are Skills?
-
-Skills are instruction files that tell an AI agent *how* to do a specific task — like a recipe the agent follows. You install them once, then invoke them by name in any conversation.
+> **Untuk sesiapa yang baru je mula coding** — kita explain dari mula, step by step, dengan gambar.
 
 ---
 
-## Step 1: Install the Skills
+## 🤔 Apa Tu Skill?
 
-### Recommended — one command with npx
+Bayangkan kau ada **tukang masak AI**. Skill ni macam **resipi** yang kau bagi kat dia:
 
-You need Node.js installed. Then run:
+```
+  Kau         Skill (Resipi)      AI Agent
+  ───         ──────────────      ────────
+  "tolong      safe-code         "Okay, aku
+   kemas        SKILL.md    →     faham nak
+   kod aku"     (arahan)          buat apa"
+```
+
+Tanpa skill, AI agent tak tahu cara selamat nak kemas kod kau. Dengan skill, dia ikut prosedur yang betul — audit dulu, plan, verify, baru buang.
+
+---
+
+## ✅ Sebelum Mula — Semak 3 Benda Ni
+
+### 1. Ada Node.js ke?
+
+Buka **Terminal** (atau Command Prompt) dan taip:
 
 ```bash
-# Install all skills into your current project
+node --version
+```
+
+Kalau keluar nombor macam `v20.11.0` → ✅ ada.  
+Kalau keluar error → install dulu dari [nodejs.org](https://nodejs.org) (pilih LTS).
+
+> **Apa tu Terminal?**  
+> Terminal = kotak hitam untuk bagi arahan kat komputer pakai taip.  
+> Windows: cari "Command Prompt" atau "PowerShell"  
+> Mac: cari "Terminal" dalam Applications → Utilities
+
+### 2. Ada Git ke?
+
+```bash
+git --version
+```
+
+Kalau keluar nombor → ✅ ada.  
+Kalau error → install dari [git-scm.com](https://git-scm.com).
+
+### 3. Projek kau ada dalam folder dengan git?
+
+```bash
+cd nama-projek-kau
+git status
+```
+
+Kalau keluar sesuatu (walaupun error pasal "nothing to commit") → ✅ okay.  
+Kalau keluar `not a git repository` → jalankan `git init` dulu.
+
+---
+
+## 📦 Step 1 — Install Skill
+
+Buka terminal, pergi ke folder projek kau, lepas tu taip:
+
+```bash
 npx skills add afu-it/safe-code
-
-# Or install globally (works in all your projects)
-npx skills add afu-it/safe-code -g
 ```
 
-The CLI will auto-detect which agent you use (Codex, Claude Code, Cursor, etc.) and put the skills in the right place automatically.
+Tekan Enter. Tunggu. Dia akan:
 
-Want to see what's available before installing?
-
-```bash
-npx skills add afu-it/safe-code --list
+```
+⠋ Detecting your agent...
+✔ Found: Codex
+⠋ Installing safe-code...
+✔ Installed → ~/.codex/skills/safe-code
+⠋ Installing codebase-pruner...
+✔ Installed → ~/.codex/skills/codebase-pruner
+⠋ Installing safe-refactor-code...
+✔ Installed → ~/.codex/skills/safe-refactor-code
+✔ Done!
 ```
 
-Want only one specific skill?
+Skill terus masuk dalam folder agent kau secara automatic. **Kau tak perlu tahu folder mana** — dia cari sendiri.
 
-```bash
-npx skills add afu-it/safe-code --skill safe-code
-npx skills add afu-it/safe-code --skill codebase-pruner
-npx skills add afu-it/safe-code --skill safe-refactor-code
-```
+> **Nak install untuk semua projek sekaligus?**
+> ```bash
+> npx skills add afu-it/safe-code -g
+> ```
+> `-g` = global (semua projek)
+
+> **Nak tengok dulu apa yang akan diinstall?**
+> ```bash
+> npx skills add afu-it/safe-code --list
+> ```
 
 ---
 
-### Alternative — manual install
+## 🚀 Step 2 — Guna Skill
 
-```bash
-git clone https://github.com/afu-it/safe-code.git
+Buka projek kau dalam **AI agent** kau (Codex, Claude Code, Cursor, atau Windsurf).
 
-# For Codex (global):
-cp -r safe-code/skills/safe-code ~/.codex/skills/
-cp -r safe-code/skills/codebase-pruner ~/.codex/skills/
-cp -r safe-code/skills/safe-refactor-code ~/.codex/skills/
-
-# For Claude Code (global):
-cp -r safe-code/skills/safe-code ~/.claude/skills/
-cp -r safe-code/skills/codebase-pruner ~/.claude/skills/
-cp -r safe-code/skills/safe-refactor-code ~/.claude/skills/
-
-# For Cursor (global):
-cp -r safe-code/skills/safe-code ~/.cursor/skills/
-cp -r safe-code/skills/codebase-pruner ~/.cursor/skills/
-cp -r safe-code/skills/safe-refactor-code ~/.cursor/skills/
-```
-
-Or for one specific project only:
-
-```bash
-mkdir -p your-project/.agents/skills
-cp -r safe-code/skills/safe-code your-project/.agents/skills/
-cp -r safe-code/skills/codebase-pruner your-project/.agents/skills/
-cp -r safe-code/skills/safe-refactor-code your-project/.agents/skills/
-```
-
----
-
-## Step 2: Open Your Project
-
-Open your project in VS Code (or your preferred editor) with your AI agent active — Codex, Claude Code, Cursor, or whichever you use.
-
----
-
-## Step 3: Use the Skills
-
-### The main command — runs everything at once
+Lepas tu taip dalam chat:
 
 ```
 /safe-code
 ```
 
-That's it. This one command will:
+Tekan Enter. Agent akan buat semua ni secara automatic:
 
-1. Detect which agent you're using (Codex, Claude, Cursor, etc.)
-2. Audit the full codebase for dead code
-3. Show the deletion plan for your review
-4. Delete only high-confidence dead code, slice by slice
-5. Refactor any messy areas left behind
-6. Save all docs into your agent's own folder automatically:
-   - Codex → `.codex/memory/`
-   - Claude → `.claude/memory/`
-   - Cursor → `.cursor/memory/`
+```
+  /safe-code
+      │
+      ▼
+  ┌─────────────────────────────────────────┐
+  │  Step 0  Detect agent kau               │
+  │  Step 1  Buat 8 fail rekod projek       │
+  │  Step 2  Load context                   │
+  │  Step 3  Semak git & backup             │
+  │  Step 4  Scan kod mati dalam projek     │
+  │  Step 5  Plan kerja (tanya kau dulu)    │
+  │  Step 6  Buang kod mati satu-satu       │
+  │  Step 7  Refactor + update semua docs   │
+  │  Step 8  Print laporan                  │
+  └─────────────────────────────────────────┘
+```
 
-`AGENTS.md` is always kept at the repo root — all agents read it from there.
+**Kau tak perlu buat apa-apa** — tengok je sambil dia kerja. Kalau dia ragu-ragu tentang sesuatu, dia akan tanya kau dulu sebelum proceed.
 
 ---
 
-### Individual skills — when you want more control
+## 💾 Nak Save Progress?
 
-| What you want to do | Command |
-|---|---|
-| Full cleanup in one pass | `/safe-code` |
-| Find dead code only (no deletions) | `Use $codebase-pruner in Audit mode` |
-| See deletion plan only | `Use $codebase-pruner in Dry-Run mode` |
-| Delete dead code | `Use $codebase-pruner in Execute mode` |
-| Clean one folder only | `Use $codebase-pruner Targeted on src/folder/` |
-| Refactor + sync docs | `Use $safe-refactor-code` |
+Kalau kau nak stop kerja dan sambung esok, atau nak beralih projek lain:
+
+```
+/safe-code save
+```
+
+Dia akan buat **11 benda automatik** dalam masa beberapa saat:
+
+```
+  ✔  Simpan progress → ACTIVE.md
+  ✔  Catat dalam diari → LOG.md
+  ✔  Update architecture → MEMORY.md
+  ✔  Bersihkan working notes → SESSION.md
+  ✔  git add -A
+  ✔  git commit (dengan message auto)
+  ✔  git push
+  ✔  Print: commit hash + status
+```
+
+Lain kali kau jalankan `/safe-code` balik, dia **auto-detect** ada saved session dan sambung dari mana terhenti.
 
 ---
 
-### Real scenario examples
+## 📁 Fail Apa Yang Dibuat?
 
-**After changing a workflow and leaving old code behind:**
-```
-/safe-code
-```
-
-**Just want to see what's dead before touching anything:**
-```
-Use $codebase-pruner in Audit mode on this repo
-```
-
-**Refactored the auth module, want docs updated:**
-```
-Use $safe-refactor-code to clean up the auth module and keep AGENTS.md updated
-```
-
-**Clean up only the handlers folder:**
-```
-Use $codebase-pruner Targeted on src/handlers/ only
-```
-
----
-
-## Step 4: What Gets Created
-
-After running `/safe-code`, your project will have these files:
+Lepas first run, projek kau akan ada struktur macam ni:
 
 ```
 your-project/
-├── AGENTS.md                          ← at root, readable by all agents
-├── .codex/                            ← (or .claude/, .cursor/, etc.)
-│   └── memory/
-│       ├── MEMORY.md                  ← working snapshot of repo state
-│       ├── CHANGELOG.md               ← dated log of changes
-│       └── safe-refactor-code.md      ← repo-specific refactor rules
+├── AGENTS.md                    ← rules & standards projek kau
+├── CHANGELOG.md                 ← sejarah perubahan
+└── .codex/                      ← (atau .claude/ .cursor/ .windsurf/)
+    └── agents/
+        ├── ACTIVE.md            ← status semasa  (macam hard disk 💾)
+        ├── SESSION.md           ← working notes  (macam RAM 🧠)
+        ├── LOG.md               ← diari semua keputusan
+        ├── BACKLOG.md           ← senarai kerja tunggu
+        ├── MEMORY.md            ← gambar besar projek
+        └── safe-refactor-code.md ← rules refactor
 ```
 
-These help future agents resume work without rereading the whole codebase.
+> 💡 **ACTIVE.md** = macam hard disk — kekal even lepas kau tutup
+> 💡 **SESSION.md** = macam RAM — kosong balik setiap kali `/safe-code save`
 
 ---
 
-## Updating Skills
+## 🎛️ Command Lain (Optional)
 
-### Update to latest version
+Kalau kau nak lebih control:
+
+| Apa yang kau nak | Command |
+|---|---|
+| Buat full cleanup | `/safe-code` |
+| Save & push progress | `/safe-code save` |
+| Scan je, jangan buang apa-apa | `Use $codebase-pruner in Audit mode` |
+| Tengok plan je, tak buat lagi | `Use $codebase-pruner in Dry-Run mode` |
+| Buat deletion | `Use $codebase-pruner in Execute mode` |
+| Kemas satu folder je | `Use $codebase-pruner Targeted on src/folder/` |
+| Refactor + update docs | `Use $safe-refactor-code` |
+
+---
+
+## 🔄 Update Skill
+
+Bila ada versi baru:
 
 ```bash
-# Update all installed skills
+# Update semua skills
 npx skills update
 
-# Check if updates are available without updating
+# Semak ada update tak (tanpa install)
 npx skills check
-```
 
-### Update one specific skill
-
-```bash
+# Update satu skill je
 npx skills update --skill safe-code
-npx skills update --skill codebase-pruner
-npx skills update --skill safe-refactor-code
-```
-
-### Manual update
-
-```bash
-cd safe-code
-git pull origin master
-
-# Then re-copy the updated skill folders
-cp -r skills/safe-code ~/.codex/skills/
-cp -r skills/codebase-pruner ~/.codex/skills/
-cp -r skills/safe-refactor-code ~/.codex/skills/
 ```
 
 ---
 
-## Removing Skills
-
-### Remove via npx
+## 🗑️ Nak Buang Skill?
 
 ```bash
-# Remove one skill
-npx skills remove safe-code
-npx skills remove codebase-pruner
-npx skills remove safe-refactor-code
-
-# Remove all three
+# Buang semua
 npx skills remove safe-code codebase-pruner safe-refactor-code
+
+# Buang satu je
+npx skills remove safe-code
 ```
 
-### Manual removal
-
-```bash
-# Remove from global Codex skills
-rm -rf ~/.codex/skills/safe-code
-rm -rf ~/.codex/skills/codebase-pruner
-rm -rf ~/.codex/skills/safe-refactor-code
-
-# Remove from global Claude skills
-rm -rf ~/.claude/skills/safe-code
-rm -rf ~/.claude/skills/codebase-pruner
-rm -rf ~/.claude/skills/safe-refactor-code
-
-# Remove from a specific project
-rm -rf your-project/.agents/skills/safe-code
-rm -rf your-project/.agents/skills/codebase-pruner
-rm -rf your-project/.agents/skills/safe-refactor-code
-```
-
-> Note: Removing the skills does not delete the docs already created in your repo (`.codex/memory/`, `AGENTS.md`, etc.). Those stay unless you delete them manually.
+> **Nota:** Buang skill tak delete docs yang dah dibuat dalam projek kau (`AGENTS.md`, `.codex/` etc.). Kau kena delete sendiri kalau nak.
 
 ---
 
-## Listing Installed Skills
+## ❓ Soalan Biasa Orang Baru Tanya
 
+**"AI dia delete terus ke tanpa tanya?"**  
+Tidak. Dia akan tunjuk plan dulu dan tanya kau kalau ada benda yang dia tak sure. Kod yang dia confident je dia buang — dan setiap slice dia verify dulu sebelum teruskan.
+
+**"Kalau agent silap buang, macam mana?"**  
+Dia rollback automatik kalau ada slice yang fail verification. Plus, sebab kau ada git, kau boleh `git checkout -- filename` bila-bila masa untuk restore fail.
+
+**"Kena ada internet ke?"**  
+Hanya semasa install (`npx skills add ...`). Lepas tu, skill dah ada dalam komputer kau — tak perlu internet.
+
+**"Skill ni buang source code kita ke?"**  
+Sia buang **dead code** je — kod yang dah takde siapa guna dalam projek. Kod yang masih active, dia tak sentuh.
+
+**"Macam mana nak tahu skill dah installed?"**  
 ```bash
-# List all installed skills (project + global)
 npx skills list
-
-# List global skills only
-npx skills ls -g
-
-# List for a specific agent
-npx skills ls -a codex
-npx skills ls -a claude-code
 ```
 
 ---
 
-## Tips for Beginners
+## 💡 Tips Untuk Orang Baru
 
-**Always Audit before Execute.**
-Never jump straight to Execute on a project you haven't audited. The report helps you understand what will be deleted.
+**Mulakan dengan Audit mode dulu.**  
+Sebelum bagi agent buat kerja sebenar, guna `Audit mode` untuk tengok apa yang dia jumpa. Baca dulu, faham dulu, baru bagi proceed.
 
-**Medium and Low confidence candidates are never auto-deleted.**
-The agent flags them and asks you to review. You are always in control.
+**Pastikan git clean sebelum start.**  
+Jalankan `git status` dulu. Kalau ada perubahan belum commit, buat `git commit` dulu. Ni supaya kau ada backup sebelum agent buat kerja.
 
-**If something breaks, the agent rolls back.**
-Each deletion is one small slice. If verification fails, the agent restores that slice and stops — it does not continue blindly.
+**Bila ragu-ragu, guna Dry-Run.**  
+`Dry-Run mode` tunjuk plan lengkap tanpa buat apa-apa. Macam preview — kau tengok dulu apa yang akan jadi.
 
-**Skills work best on git repos.**
-Make sure your project is a git repo (`git init`) before running Execute mode. This gives you a safety net — you can always run `git checkout -- filename` to restore any file.
-
-**Start with a clean git state.**
-Before running `/safe-code`, make sure you have no uncommitted changes. Run `git status` first. If there are changes, commit or stash them before proceeding.
-
-**Docs go into your agent's folder automatically.**
-You don't need to configure anything. The skill detects whether you're using Codex, Claude, or Cursor and saves docs into the right place.
+**Jangan takut.**  
+Skill ni direka untuk selamat. Agent akan tanya kau bila ada keraguan. Kau sentiasa in control.
