@@ -1,7 +1,7 @@
 ---
 name: safe-code
-description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code, refactors in safe slices, and keeps all docs in sync. Supports lazy loading — only essential files are loaded on every session, others load on-demand. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go. Use /safe-code save to checkpoint and commit the current session."
-version: "2.0"
+description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. Git push only occurs after the user explicitly runs /safe-code save — no autonomous push without user command. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
+version: "2.1"
 ---
 
 # Safe Code
@@ -44,27 +44,34 @@ Same structure for other agents: `.claude/agents/`, `.cursor/agents/`, `.windsur
 
 ---
 
-## Loading Tiers
+## Loading Layers
 
-### Tier 1 — Always Load (every session)
-
-```
-AGENTS.md              <- project rules + stack
-ACTIVE.md             <- persistent state + session resume point
-SESSION.md            <- working memory from previous session (if any)
-LOG.md                <- last few entries for context
-```
-
-### Tier 2 — On-Demand Only
+### Layer 1 — Index (every session, always load first)
 
 ```
-MEMORY.md             <- load when: Step 4 (audit) or Step 7 (refactor) starts
-safe-refactor-code.md <- load when: Step 6 (execute) starts
-BACKLOG.md            <- load when: user asks about task queue
-CHANGELOG.md          <- load when: releasable changes exist
+AGENTS.md      — project rules + stack
+ACTIVE.md      — Before/Current/Next blocks only
+SESSION.md     — Carry Forward block only
+LOG.md         — last 3 typed entries only
 ```
 
-Do NOT load Tier 2 files unless their trigger condition is met. This preserves context window for actual codebase analysis.
+### Layer 2 — Context (auto, if saved session detected)
+
+```
+LOG.md         — full content
+SESSION.md     — full content
+```
+
+### Layer 3 — Detail (auto, by step trigger only)
+
+```
+MEMORY.md             — Step 4 (audit) or Step 7 (refactor + sync docs)
+safe-refactor-code.md — Step 6 (execute dead code removal)
+BACKLOG.md            — Step 7 (sync docs)
+CHANGELOG.md          — Step 7 (sync docs, if releasable changes exist)
+```
+
+Do NOT load Layer 2 or Layer 3 files unless their trigger condition is met. This preserves context window for actual codebase analysis. No user action required — agent loads automatically.
 
 ---
 
@@ -90,7 +97,7 @@ Checkpoint the current session:
 ```
 1. Migrate SESSION.md — extract important decisions into ACTIVE.md
 2. Update ACTIVE.md — Last Session block + current state
-3. Append to LOG.md — session summary (newest at top)
+3. Append to LOG.md — typed session summary (newest at top)
 4. Update MEMORY.md — if architecture changed
 5. Update CHANGELOG.md (root) — only if releasable changes were made
 6. Auto-trim LOG.md if needed (see LOG.md Trim Rule below)
@@ -232,11 +239,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 # ACTIVE.md
 _<DATE>_
 
-## Now
-<one sentence — what is actively being built or fixed>
+## Before
+last_saved: -
+completed_last: none
 
-## Todo
-- [ ] <subtask>
+## Current
+task: init
+step: step 1 — initialize doc structure
+mode: -
 
 ## Blocked
 none
@@ -308,12 +318,20 @@ _<DATE>_
 ```md
 # LOG.md
 > Append-only. Newest at top. Auto-trimmed when > 200 lines.
+> Each entry uses typed format: type, scope, topic, before, change, why, after.
+
+Valid types: init | decision | refactor | bugfix | risk | blocked | verify
 
 ---
 
 ## <DATE TIME>
-### init: project scaffold created
-- AGENTS.md, CHANGELOG.md, ACTIVE.md, SESSION.md, BACKLOG.md, LOG.md, MEMORY.md, safe-refactor-code.md
+type: init
+scope: project root
+topic: scaffold
+before: no doc structure existed
+change: created AGENTS.md, CHANGELOG.md, ACTIVE.md, SESSION.md, BACKLOG.md, LOG.md, MEMORY.md, safe-refactor-code.md
+why: first run of /safe-code — initializing continuity docs
+after: all 8 docs created, proceeding to Step 2
 
 ---
 ```
@@ -359,10 +377,22 @@ _<DATE>_
 <!-- Naming, import order, file structure rules -->
 
 ## Flagged Dead Code
-<!-- [date] path/to/file:functionName - reason -->
+<!-- Structured entries below. Requires explicit user approval before deletion in Execute mode. -->
 
 ## Pitfalls
 <!-- Things that broke before or are easy to get wrong -->
+```
+
+**Flagged Dead Code entry format:**
+
+```md
+### [<DATE>] <path/to/file>:<functionOrModule>
+scope: file | module | subsystem
+topic: <e.g. routing, auth, billing>
+confidence: High | Medium | Low
+reason: <why it is suspected dead>
+risk: Zero | Local | Cross-module | External
+action: auto-delete | manual review | skip
 ```
 
 ---
@@ -386,25 +416,27 @@ All paths inside project root. Proceeding.
 
 ## Step 2: Load Context + Auto-Detect Session
 
-### 2a. Load Tier 1 files (always)
+### 2a. Load Layer 1 (always, every session)
 
 ```
-1. AGENTS.md      — apply project rules, stack, standards for this session
-2. ACTIVE.md      — check for saved session (see 2b)
-3. SESSION.md     — restore working memory if previous session was not saved cleanly
-4. LOG.md         — read last 3 entries for recent context only
+1. AGENTS.md      — apply project rules, stack, standards
+2. ACTIVE.md      — read Before/Current/Next blocks only
+3. SESSION.md     — read Carry Forward block only
+4. LOG.md         — read last 3 typed entries only
 ```
 
 ### 2b. Detect saved session from ACTIVE.md
 
 ```
-if status = "saved":
+if Last Session.status = "saved":
+  -> Load Layer 2: LOG.md full + SESSION.md full
   -> Print: "Resuming saved session from <saved_at>"
   -> Print: "Pending: <pending> | Next: <next_action>"
   -> Skip audit for completed slices
   -> Resume from next_action directly
 
-if status = "none" or block missing:
+if Last Session.status = "none" or block missing:
+  -> Stay on Layer 1 only
   -> Print: "No saved session. Starting fresh."
   -> Continue to Step 3
 ```
@@ -513,7 +545,7 @@ Reasoning:
 
 ## Step 4: Audit Dead Code
 
-> **Trigger:** Load `MEMORY.md` (Tier 2) now if not already loaded.
+> **Layer 3 Trigger:** Load `MEMORY.md` now if not already loaded.
 
 Invoke `$codebase-pruner` in `Audit` mode.
 
@@ -531,7 +563,7 @@ if ALL true:
 -> promote to High, log reason
 
 if ANY false:
--> keep Medium, flag in safe-refactor-code.md, skip silently
+-> keep Medium, flag in safe-refactor-code.md using structured format, skip silently
 ```
 
 ---
@@ -555,20 +587,20 @@ Reasoning:
 
 ## Step 6: Execute Dead Code Removal
 
-> **Trigger:** Load `safe-refactor-code.md` (Tier 2) now if not already loaded.
+> **Layer 3 Trigger:** Load `safe-refactor-code.md` now if not already loaded.
 
-Run `$codebase-pruner` in `Execute` mode.
+Run `$codebase-pruner` in `Execute` mode. Requires explicit user approval before deleting any candidate that is not High confidence.
 
 - Delete approved candidates only
 - Verify after each slice
 - Roll back only the failing slice if verification fails
-- Save new flagged candidates to `safe-refactor-code.md`
+- Save new flagged candidates to `safe-refactor-code.md` using structured format
 
 ---
 
 ## Step 7: Refactor + Sync Docs
 
-> **Trigger:** Load `MEMORY.md` (Tier 2) now if not already loaded.
+> **Layer 3 Trigger:** Load `MEMORY.md`, `BACKLOG.md`, and `CHANGELOG.md` now if not already loaded.
 
 Run `$safe-refactor-code` on affected areas.
 
@@ -576,11 +608,11 @@ Run `$safe-refactor-code` on affected areas.
 |---|---|
 | `AGENTS.md` | Only if project rules or stack changed |
 | `CHANGELOG.md` | Only if changes are releasable |
-| `ACTIVE.md` | Every session — current task, progress, next steps |
+| `ACTIVE.md` | Every session — Before/Current/Next + Last Session |
 | `SESSION.md` | Throughout session — wiped on save |
-| `LOG.md` | Every session — append summary, newest at top |
+| `LOG.md` | Every session — append typed entry, newest at top |
 | `MEMORY.md` | When architecture changes |
-| `safe-refactor-code.md` | Flagged candidates, pitfalls, new rules |
+| `safe-refactor-code.md` | Flagged candidates (structured format), pitfalls, new rules |
 | `BACKLOG.md` | Move completed items, add newly discovered tasks |
 
 ---
@@ -588,7 +620,7 @@ Run `$safe-refactor-code` on affected areas.
 ## Step 8: Final Summary
 
 ```
-=== safe-code session complete ===
+=== safe-code v2.1 session complete ===
 
 Project root: <path>
 Agent: <agent>
@@ -598,7 +630,7 @@ Session type: <fresh | resumed from <saved_at>>
 
 Git:    <repo found | not found> | <commit count> commits | branch: <branch>
 Remote: <URL | none>  [Bucket <A | B | C>]
-Push:   <auto on save | manual | not applicable>
+Push:   <auto on /safe-code save | manual | not applicable>
 
 Files:
   Root:  AGENTS.md <created|existed>    CHANGELOG.md <created|existed>
@@ -606,8 +638,9 @@ Files:
          BACKLOG.md <created|existed>   LOG.md <created|existed>
          MEMORY.md <created|existed>    safe-refactor-code.md <created|existed>
 
-Loaded (Tier 1): AGENTS.md, ACTIVE.md, SESSION.md, LOG.md
-Loaded (Tier 2): <list of on-demand files loaded this session>
+Loaded (Layer 1): AGENTS.md, ACTIVE.md (index), SESSION.md (carry forward), LOG.md (last 3)
+Loaded (Layer 2): <full context files if resumed session, else: none>
+Loaded (Layer 3): <on-demand files loaded this session>
 
 Decisions: <list>
 Removed:   <list>
