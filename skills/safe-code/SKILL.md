@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. Git push only occurs after the user explicitly runs /safe-code save — no autonomous push without user command. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.3"
+version: "2.4"
 ---
 
 # Safe Code
@@ -230,8 +230,94 @@ Generated blocks must be preserved. Append project-specific sections after them.
 - Test command:
 ```
 
-When populating an effectively empty `AGENTS.md`, scan the current project first and fill in the template with real project details before proceeding.
-This is mandatory on the first useful run. Do not skip `AGENTS.md` setup merely because the file already exists.
+When populating an effectively empty `AGENTS.md`, **do not fill the template blindly**. Follow the authoring rules below first.
+
+---
+
+#### AGENTS.md authoring rules (first-run + updates)
+
+When creating or updating `AGENTS.md`, follow these rules instead of improvising. The goal is a compact, high-signal instruction file that lets future agents ramp up quickly and avoid common mistakes.
+
+**Decision test for every line**
+
+- Every line must answer: "Would an agent likely miss this without help?" If not, leave it out.
+- Prefer a smaller but accurate file over a long, vague one.
+
+**What to read before writing**
+
+Always investigate the repo before editing `AGENTS.md`. Read these in roughly this order, stopping when you have enough signal:
+
+- `README*`, root manifests, workspace config, and lockfiles
+  (for example: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `nx.json`, `pnpm-lock.yaml`, `bun.lockb`).
+- Build / test / lint / formatter / typecheck / codegen config
+  (for example: `next.config.*`, `vite.config.*`, `tsconfig.json`, `eslint*`, `prettier*`, `tailwind.config.*`, `postcss.config.*`).
+- CI workflows and task runners
+  (for example: `.github/workflows`, `justfile`, `Makefile`, `flake.nix`, Git hooks, monorepo task tools).
+- Existing instruction files
+  (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, `.cursorrules`, `.github/copilot-instructions.md`, `opencode.json` instructions or equivalents).
+- Repo-local config for agents or tools that affect workflow.
+
+If architecture is still unclear, skim a **small** number of representative source files to find real entrypoints, package boundaries, and execution flow. Prioritise "wiring" files (app shells, routers, main services) over random leaf components.
+
+**Source-of-truth rule**
+
+- Prefer executable sources over prose. If docs conflict with scripts or config, trust the executable source.
+- Do not document anything you could not verify directly from the repo or from clearly trustworthy instruction files.
+
+**What to extract into AGENTS.md**
+
+Focus on high-signal facts that materially change how an agent should work in this repo:
+
+- Exact developer commands, especially non-obvious ones
+  (dev, build, lint, typecheck, unit tests, integration tests, migrations, codegen, seeding).
+- How to run a single test, a single package, or a focused verification step.
+- Required command order when it matters (for example: `lint → typecheck → test`).
+- Monorepo or multi-package layout: package boundaries, major directories, and real app/library entrypoints.
+- Framework or toolchain quirks: generated code, migrations, codegen outputs, build artefacts, special env loading, dev server behaviour, infra deploy flow.
+- Repo-specific style or workflow conventions that differ from common defaults.
+- Testing quirks: fixtures, integration test prerequisites, required services, snapshot workflows, slow or flaky suites.
+- Important constraints from existing instruction files that are still correct and useful.
+
+Good AGENTS.md content is hard-earned context that usually required reading multiple files to infer.
+
+**What to exclude**
+
+Do **not** put these into `AGENTS.md`:
+
+- Generic language or framework advice.
+- Long tutorials, how-tos, or exhaustive file trees.
+- Obvious conventions that any competent developer or model would already know.
+- Speculative statements, guesses, or anything not verified from the repo.
+- Content that belongs in another dedicated document already referenced from config.
+
+When in doubt, omit.
+
+**Behaviour when AGENTS.md is missing vs existing**
+
+- If `AGENTS.md` is **missing** or effectively empty (only generated comment blocks, warnings, or trivial boilerplate):
+  - Create or repopulate it using the template in this skill.
+  - Fill every section with real, verified project details from the investigation above.
+  - Preserve any existing generated comment blocks at the top and append your sections after them.
+- If `AGENTS.md` already contains real project context:
+  - Improve it in place rather than rewriting blindly.
+  - Preserve guidance that is still correct and high-signal.
+  - Delete or rewrite content that is clearly stale, generic, or contradicted by the current codebase.
+  - Reconcile differences in favour of executable sources (config, scripts, CI) while keeping any still-valid nuance from older instructions.
+
+**Questions to the user**
+
+- Only ask the user questions if the repo genuinely cannot answer something important:
+  - Undocumented team conventions or policies.
+  - Branch / PR / release expectations.
+  - Setup or test prerequisites that are known but not written down.
+- Ask at most one short batch of questions if needed.
+- Do **not** ask about anything the repo already makes clear.
+
+**Length and density**
+
+- For small repos, keep `AGENTS.md` short but ensure all critical commands, structure, and constraints are covered.
+- For larger repos, aim for 150–200 lines but density matters more than length. Avoid padding sections just to hit a line target.
+- Prefer short sections and bullets over long paragraphs.
 
 ---
 
@@ -683,7 +769,7 @@ Run `$safe-refactor-code` on affected areas.
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.3 session complete ===
+=== safe-code v2.4 session complete ===
 
 Project root: <path>
 Agent: <agent>
