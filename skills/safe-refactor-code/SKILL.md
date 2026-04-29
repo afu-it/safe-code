@@ -2,7 +2,7 @@
 name: safe-refactor-code
 description: "Refactor code safely in small verified slices while keeping repo continuity docs in sync inside the active agent's own folder. Use when an agent is asked to refactor, restructure, clean up, remove or replace code, modernize modules, or do follow-up hygiene in a repo."
 metadata:
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Safe Refactor Code
@@ -50,13 +50,54 @@ Doc file locations:
 | `CHANGELOG.md` | `<agent-folder>/memory/CHANGELOG.md` |
 | `safe-refactor-code.md` | `<agent-folder>/memory/safe-refactor-code.md` |
 
+## Step 0.5: Assess and Write AGENTS.md
+
+This step is **mandatory**. Run it before reading or touching any code.
+
+### Detect if AGENTS.md is effectively empty
+
+Treat `AGENTS.md` as effectively empty if it contains **only**:
+- HTML comment blocks `<!-- BEGIN:xxx --> ... <!-- END:xxx -->`
+- Blank lines
+- Auto-generated rules injected by tooling
+
+Do not treat generated blocks as agent or human-written state. They are tooling artifacts, not project context.
+
+### Detect project freshness
+
+```
+if AGENTS.md is missing OR effectively empty
+    → fresh = true   (full project scan required)
+
+if AGENTS.md has existing agent-written or human-written state sections
+    → fresh = false  (update affected sections only)
+```
+
+### Write AGENTS.md — no skipping allowed
+
+Regardless of `fresh` value, always update `AGENTS.md` before touching any code. This is not optional.
+
+**If `fresh = true`**, scan the project and write a full orientation snapshot:
+
+- **Stack** — languages, frameworks, major dependencies with versions if available
+- **Folder structure** — key directories and what they own
+- **Key files** — entry points, config files, critical modules
+- **Conventions** — naming patterns, coding style, file organisation rules
+- **Gotchas** — anything non-obvious a future agent must know before editing
+
+Preserve any existing generated blocks (`<!-- BEGIN:xxx -->`). Append the orientation snapshot after them — do not replace or remove tooling-injected content.
+
+**If `fresh = false`**, update only the sections relevant to the upcoming refactor. Preserve all existing content outside those sections.
+
+> `AGENTS.md` is the primary handoff document for any future agent entering this repo in a new context. Never skip this step.
+
 ## Workflow
 
 ### 1. Read Continuity Files First
 
-Before editing code, inspect these files when present:
+After writing `AGENTS.md`, inspect these files when present:
 
-- `AGENTS.md` at repo root
+- `AGENTS.md` at repo root (already written in Step 0.5)
 - `<agent-folder>/memory/safe-refactor-code.md`
 - `<agent-folder>/memory/MEMORY.md`
 - `<agent-folder>/memory/CHANGELOG.md`
