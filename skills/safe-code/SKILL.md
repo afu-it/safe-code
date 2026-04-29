@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. Git push only occurs after the user explicitly runs /safe-code save — no autonomous push without user command. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.2"
+version: "2.3"
 ---
 
 # Safe Code
@@ -174,7 +174,22 @@ Multiple folders found → reason which matches current agent. Do not ask user.
 ## Step 1: Initialize Doc Structure
 
 Create agents folder + all files **before** reading the codebase.
-**If a file exists — leave it untouched. Create only if missing.**
+
+For most files:
+- If a file exists, leave it untouched
+- Create only if missing
+
+For `AGENTS.md` only:
+- If missing, create it from the template below
+- If it exists but is effectively empty, populate it from the template below
+- If it exists and already has real project context, preserve it and update only the relevant sections later
+
+Treat `AGENTS.md` as effectively empty if it contains only:
+- HTML comment blocks like `<!-- BEGIN:xxx --> ... <!-- END:xxx -->`
+- Blank lines
+- Auto-generated warnings or tool-injected rules without any project-specific overview, stack, structure, or environment details
+
+Generated blocks must be preserved. Append project-specific sections after them. Do not delete or replace tooling-injected content.
 
 ---
 
@@ -214,6 +229,9 @@ Create agents folder + all files **before** reading the codebase.
 - Build command:
 - Test command:
 ```
+
+When populating an effectively empty `AGENTS.md`, scan the current project first and fill in the template with real project details before proceeding.
+This is mandatory on the first useful run. Do not skip `AGENTS.md` setup merely because the file already exists.
 
 ---
 
@@ -420,10 +438,10 @@ Project root: <path>
 Agent: <agent>
 Agents folder: <project-root>/<agent-folder>/agents/
 
-Root:  AGENTS.md - <created|exists>  |  CHANGELOG.md - <created|exists>
-Agent: ACTIVE.md - <created|exists>  |  SESSION.md - <created|exists>
-       BACKLOG.md - <created|exists>  |  LOG.md - <created|exists>
-       MEMORY.md - <created|exists>   |  safe-refactor-code.md - <created|exists>
+Root:  AGENTS.md - <created|exists|populated>  |  CHANGELOG.md - <created|exists>
+Agent: ACTIVE.md - <created|exists>            |  SESSION.md - <created|exists>
+       BACKLOG.md - <created|exists>           |  LOG.md - <created|exists>
+       MEMORY.md - <created|exists>            |  safe-refactor-code.md - <created|exists>
 
 All paths inside project root. Proceeding.
 ```
@@ -651,7 +669,7 @@ Run `$safe-refactor-code` on affected areas.
 
 | File | When to update |
 |---|---|
-| `AGENTS.md` | Only if project rules or stack changed |
+| `AGENTS.md` | Update when project rules, stack, structure, environment, or first-run project orientation is missing or changed |
 | `CHANGELOG.md` | Only if changes are releasable |
 | `ACTIVE.md` | Every session — Before/Current/Next + Last Session |
 | `SESSION.md` | Throughout session — wiped on save |
@@ -665,7 +683,7 @@ Run `$safe-refactor-code` on affected areas.
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.2 session complete ===
+=== safe-code v2.3 session complete ===
 
 Project root: <path>
 Agent: <agent>
@@ -678,10 +696,10 @@ Remote: <URL | none>  [Bucket <A | B | C>]
 Push:   <auto on /safe-code save | manual | not applicable>
 
 Files:
-  Root:  AGENTS.md <created|existed>    CHANGELOG.md <created|existed>
-  Agent: ACTIVE.md <created|existed>    SESSION.md <created|existed>
-         BACKLOG.md <created|existed>   LOG.md <created|existed>
-         MEMORY.md <created|existed>    safe-refactor-code.md <created|existed>
+  Root:  AGENTS.md <created|existed|populated>    CHANGELOG.md <created|existed>
+  Agent: ACTIVE.md <created|existed>              SESSION.md <created|existed>
+         BACKLOG.md <created|existed>             LOG.md <created|existed>
+         MEMORY.md <created|existed>              safe-refactor-code.md <created|existed>
 
 Loaded (Layer 1): AGENTS.md, ACTIVE.md (index), SESSION.md (carry forward), LOG.md (last 3)
 Loaded (Layer 2): <full context files if resumed session, else: none>
