@@ -2,7 +2,7 @@
 
 > **One command. Full repo hygiene.** Dead code removed, refactored, docs synced — all in one autonomous pass.
 
-[![version](https://img.shields.io/badge/version-2.2-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-2.4-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -18,7 +18,7 @@ You run one command. The agent does everything else:
 
 ```
  Step 0  →  Detect active agent (Codex / Claude / Cursor / Windsurf)
- Step 1  →  Create 8 continuity docs (skip if already exist)
+ Step 1  →  Create 8 continuity docs + populate AGENTS.md with real project context
  Step 2  →  Load context, auto-resume saved session if found
  Step 3  →  Check git state + detect remote platform
  Step 4  →  Audit codebase — find dead code candidates
@@ -76,6 +76,15 @@ your-project/
 
 > **ACTIVE.md** persists across sessions (like a hard disk).  
 > **SESSION.md** is wiped on every `/safe-code save` (like RAM).  
+
+### How AGENTS.md is populated
+
+On first run (or if `AGENTS.md` is empty/thin), safe-code **investigates the repo first** before writing anything:
+
+- Reads `README*`, manifests, lockfiles, CI workflows, existing instruction files
+- Extracts only high-signal facts: exact commands, stack quirks, folder structure, conventions
+- Improves in place if the file already exists — never overwrites blindly
+- Every line must answer: *"Would an agent miss this without help?"* — if not, it's left out
 
 ---
 
@@ -137,6 +146,22 @@ The agent picks the right mode automatically:
 
 ---
 
+## What's New in v2.4
+
+**① AGENTS.md authoring rules (OpenCode `/init` style)** — safe-code now investigates the repo before writing `AGENTS.md`. It reads manifests, configs, CI, and existing instruction files first, then extracts only high-signal, verifiable facts. No more generic placeholder content.
+
+**② Smarter AGENTS.md detection** — treats a file as effectively empty if it only contains generated comment blocks, tooling warnings, or boilerplate — and repopulates it with real project context.
+
+**③ Improve in place, not overwrite** — if `AGENTS.md` already has real content, safe-code preserves what's still correct, removes stale claims, and reconciles with the current codebase.
+
+---
+
+## What's New in v2.3
+
+**① AGENTS.md skip fix** — previously, safe-code would skip `AGENTS.md` setup if the file already existed, even if it was effectively empty (e.g. only Next.js generated blocks). Now it detects this and populates the file properly.
+
+---
+
 ## What's New in v2.2
 
 **① Assumption surfacing** — before every decision, the agent lists what it's assuming and verifies against the codebase. No silent guessing.
@@ -168,4 +193,6 @@ Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
 
 ## New to skills?
 
-Read [TUTORIAL.md](./TUTORIAL.md) for a step-by-step setup guide.
+Read the tutorial for a step-by-step setup guide:
+- [English tutorial](./TUTORIAL-EN.md)
+- [Tutorial Bahasa Melayu](./TUTORIAL-BM.md)

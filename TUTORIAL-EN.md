@@ -112,20 +112,29 @@ Hit Enter. The agent will do all of this automatically:
   /safe-code
       │
       ▼
-  ┌─────────────────────────────────────────┐
-  │  Step 0  Detect which agent you use     │
-  │  Step 1  Create 8 project record files  │
-  │  Step 2  Load context                   │
-  │  Step 3  Check git & backup             │
-  │  Step 4  Scan for dead code             │
-  │  Step 5  Show plan (asks you first)     │
-  │  Step 6  Delete dead code slice by slice│
-  │  Step 7  Refactor + update all docs     │
-  │  Step 8  Print final report             │
-  └─────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────┐
+  │  Step 0  Detect which agent you use                     │
+  │  Step 1  Create 8 project docs + populate AGENTS.md     │
+  │  Step 2  Load context                                   │
+  │  Step 3  Check git & backup                             │
+  │  Step 4  Scan for dead code                             │
+  │  Step 5  Show plan (asks you first)                     │
+  │  Step 6  Delete dead code slice by slice                │
+  │  Step 7  Refactor + update all docs                     │
+  │  Step 8  Print final report                             │
+  └─────────────────────────────────────────────────────────┘
 ```
 
 **You don't need to do anything** — just watch it work. If it's unsure about something, it will ask you before proceeding.
+
+### What happens to AGENTS.md?
+
+On first run, safe-code scans your repo **before** writing `AGENTS.md`:
+
+- It reads your `README`, config files, CI workflows, package manager files, and any existing instruction files
+- It extracts real, verified facts — exact commands, your stack, folder structure, quirks
+- If `AGENTS.md` already exists but is mostly empty or just auto-generated boilerplate, it fills it in properly
+- If it already has useful content, it improves it in place without overwriting anything good
 
 ---
 
@@ -160,7 +169,7 @@ After the first run, your project will have this structure:
 
 ```
 your-project/
-├── AGENTS.md                    ← project rules & standards
+├── AGENTS.md                    ← project rules, stack & real dev commands
 ├── CHANGELOG.md                 ← history of changes
 └── .codex/                      ← (or .claude/ .cursor/ .windsurf/)
     └── agents/
@@ -172,8 +181,9 @@ your-project/
         └── safe-refactor-code.md ← refactor rules
 ```
 
-> 💡 **ACTIVE.md** = like a hard drive — persists even after you close everything
-> 💡 **SESSION.md** = like RAM — cleared every time you run `/safe-code save`
+> 💡 **ACTIVE.md** = like a hard drive — persists even after you close everything  
+> 💡 **SESSION.md** = like RAM — cleared every time you run `/safe-code save`  
+> 💡 **AGENTS.md** = populated with real project context, not generic placeholders
 
 ---
 
@@ -237,6 +247,9 @@ Only during install (`npx skills add ...`). After that, the skills live on your 
 
 **"Will this delete my actual source code?"**  
 It only removes **dead code** — code that nothing in the project calls or uses anymore. All active code is untouched.
+
+**"Why does AGENTS.md look detailed after the first run?"**  
+Because safe-code scans your repo first before writing it. The goal is a file that any AI agent can read and immediately understand your project — your stack, your commands, your quirks — without asking.
 
 **"How do I know if the skill is installed?"**  
 ```bash

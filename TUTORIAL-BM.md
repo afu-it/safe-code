@@ -54,7 +54,7 @@ cd nama-projek-kau
 git status
 ```
 
-Kalau keluar sesuatu (walaupun error pasal "nothing to commit") → ✅ okay.  
+Kalau keluar sesuatu (walaupun "nothing to commit") → ✅ okay.  
 Kalau keluar `not a git repository` → jalankan `git init` dulu.
 
 ---
@@ -112,20 +112,29 @@ Tekan Enter. Agent akan buat semua ni secara automatic:
   /safe-code
       │
       ▼
-  ┌─────────────────────────────────────────┐
-  │  Step 0  Detect agent kau               │
-  │  Step 1  Buat 8 fail rekod projek       │
-  │  Step 2  Load context                   │
-  │  Step 3  Semak git & backup             │
-  │  Step 4  Scan kod mati dalam projek     │
-  │  Step 5  Plan kerja (tanya kau dulu)    │
-  │  Step 6  Buang kod mati satu-satu       │
-  │  Step 7  Refactor + update semua docs   │
-  │  Step 8  Print laporan                  │
-  └─────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────┐
+  │  Step 0  Detect agent kau                               │
+  │  Step 1  Buat 8 fail rekod + isi AGENTS.md sebenar      │
+  │  Step 2  Load context                                   │
+  │  Step 3  Semak git & backup                             │
+  │  Step 4  Scan kod mati dalam projek                     │
+  │  Step 5  Plan kerja (tanya kau dulu)                    │
+  │  Step 6  Buang kod mati satu-satu                       │
+  │  Step 7  Refactor + update semua docs                   │
+  │  Step 8  Print laporan                                  │
+  └─────────────────────────────────────────────────────────┘
 ```
 
 **Kau tak perlu buat apa-apa** — tengok je sambil dia kerja. Kalau dia ragu-ragu tentang sesuatu, dia akan tanya kau dulu sebelum proceed.
+
+### Apa yang jadi dengan AGENTS.md?
+
+Pada first run, safe-code **scan repo kau dulu** sebelum tulis apa-apa dalam `AGENTS.md`:
+
+- Dia baca `README`, config files, CI workflows, package manager files, dan instruction files lain yang sedia ada
+- Dia extract fakta sebenar yang boleh disahkan — command tepat, stack kau, struktur folder, quirks
+- Kalau `AGENTS.md` dah ada tapi kosong atau cuma auto-generated boilerplate, dia isi dengan betul
+- Kalau dah ada content berguna, dia improve in place tanpa overwrite benda yang masih betul
 
 ---
 
@@ -160,7 +169,7 @@ Lepas first run, projek kau akan ada struktur macam ni:
 
 ```
 your-project/
-├── AGENTS.md                    ← rules & standards projek kau
+├── AGENTS.md                    ← rules, stack & command sebenar projek kau
 ├── CHANGELOG.md                 ← sejarah perubahan
 └── .codex/                      ← (atau .claude/ .cursor/ .windsurf/)
     └── agents/
@@ -172,8 +181,9 @@ your-project/
         └── safe-refactor-code.md ← rules refactor
 ```
 
-> 💡 **ACTIVE.md** = macam hard disk — kekal even lepas kau tutup
-> 💡 **SESSION.md** = macam RAM — kosong balik setiap kali `/safe-code save`
+> 💡 **ACTIVE.md** = macam hard disk — kekal even lepas kau tutup  
+> 💡 **SESSION.md** = macam RAM — kosong balik setiap kali `/safe-code save`  
+> 💡 **AGENTS.md** = diisi dengan context projek sebenar, bukan placeholder generic
 
 ---
 
@@ -237,6 +247,9 @@ Hanya semasa install (`npx skills add ...`). Lepas tu, skill dah ada dalam kompu
 
 **"Skill ni buang source code kita ke?"**  
 Dia buang **dead code** je — kod yang dah takde siapa guna dalam projek. Kod yang masih active, dia tak sentuh.
+
+**"Kenapa AGENTS.md nampak detail lepas first run?"**  
+Kerana safe-code scan repo kau dulu sebelum tulis. Tujuannya supaya mana-mana AI agent baca file tu terus faham projek kau — stack kau, command kau, cara kerja kau — tanpa perlu tanya lagi.
 
 **"Macam mana nak tahu skill dah installed?"**  
 ```bash
