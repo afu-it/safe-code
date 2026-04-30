@@ -134,6 +134,7 @@ Pada setup, safe-code **scan repo kau dulu** sebelum decide nak buat apa dengan 
 - Dia baca `README`, config files, CI workflows, package manager files, dan instruction files lain yang sedia ada
 - Dia extract fakta sebenar yang boleh disahkan — command tepat, stack kau, struktur folder, quirks
 - Kalau `AGENTS.md` dah ada tapi kosong atau cuma auto-generated boilerplate, dia isi dengan betul
+- Kalau `AGENTS.md` pendek atau generic, dia kira sebagai thin dan upgrade jadi handoff file yang berguna
 - Kalau `AGENTS.md` dah ada content berguna, dia audit dan reconcile file itu in place tanpa overwrite benda yang masih betul
 
 ---
@@ -187,19 +188,16 @@ your-project/
 
 ---
 
-## 🎛️ Command Lain (Optional)
+## 🎛️ Dua Command Je
 
-Kalau kau nak lebih control:
+Kau cuma perlu dua ni:
 
 | Apa yang kau nak | Command |
 |---|---|
-| Buat full cleanup | `/safe-code` |
-| Save & push progress | `/safe-code save` |
-| Scan je, jangan buang apa-apa | `Use $codebase-pruner in Audit mode` |
-| Tengok plan je, tak buat lagi | `Use $codebase-pruner in Dry-Run mode` |
-| Buat deletion | `Use $codebase-pruner in Execute mode` |
-| Kemas satu folder je | `Use $codebase-pruner Targeted on src/folder/` |
-| Refactor + update docs | `Use $safe-refactor-code` |
+| Start atau sambung hygiene repo | `/safe-code` |
+| Save docs, commit, dan push bila dibenarkan | `/safe-code save` |
+
+safe-code pilih mode paling selamat secara automatic: orientation, audit, atau cleanup.
 
 ---
 
@@ -260,14 +258,11 @@ npx skills list
 
 ## 💡 Tips Untuk Orang Baru
 
-**Mulakan dengan Audit mode dulu.**  
-Sebelum bagi agent buat kerja sebenar, guna `Audit mode` untuk tengok apa yang dia jumpa. Baca dulu, faham dulu, baru bagi proceed.
+**Mulakan dengan `/safe-code`.**  
+Kalau repo baru, dirty, atau risky, dia akan kekal dalam mode audit/documentation secara natural.
 
 **Pastikan git clean sebelum start.**  
 Jalankan `git status` dulu. Kalau ada perubahan belum commit, buat `git commit` dulu. Ni supaya kau ada backup sebelum agent buat kerja.
-
-**Bila ragu-ragu, guna Dry-Run.**  
-`Dry-Run mode` tunjuk plan lengkap tanpa buat apa-apa. Macam preview — kau tengok dulu apa yang akan jadi.
 
 **Jangan takut.**  
 Skill ni direka untuk selamat. Agent akan tanya kau bila ada keraguan. Kau sentiasa in control.

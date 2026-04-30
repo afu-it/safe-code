@@ -134,6 +134,7 @@ On setup, safe-code scans your repo **before deciding what to do with `AGENTS.md
 - It reads your `README`, config files, CI workflows, package manager files, and any existing instruction files
 - It extracts real, verified facts — exact commands, your stack, folder structure, quirks
 - If `AGENTS.md` already exists but is mostly empty or just auto-generated boilerplate, it fills it in properly
+- If `AGENTS.md` is short or generic, it treats it as thin and upgrades it into a useful handoff file
 - If `AGENTS.md` already has useful content, it audits and reconciles the file in place without overwriting anything good
 
 ---
@@ -187,19 +188,16 @@ your-project/
 
 ---
 
-## 🎛️ Other Commands (Optional)
+## 🎛️ Only Two Commands
 
-If you want more control:
+You only need these:
 
 | What you want to do | Command |
 |---|---|
-| Full cleanup in one pass | `/safe-code` |
-| Save & push progress | `/safe-code save` |
-| Scan only, don't delete anything | `Use $codebase-pruner in Audit mode` |
-| See the plan without doing anything | `Use $codebase-pruner in Dry-Run mode` |
-| Execute the deletion | `Use $codebase-pruner in Execute mode` |
-| Clean one specific folder only | `Use $codebase-pruner Targeted on src/folder/` |
-| Refactor + update docs | `Use $safe-refactor-code` |
+| Start or continue safe repo hygiene | `/safe-code` |
+| Save docs, commit, and push when allowed | `/safe-code save` |
+
+safe-code chooses the safest internal mode automatically: orientation, audit, or cleanup.
 
 ---
 
@@ -260,14 +258,11 @@ npx skills list
 
 ## 💡 Tips for Beginners
 
-**Start with Audit mode.**  
-Before letting the agent do real work, use `Audit mode` to see what it finds. Read the report, understand what it flagged, then decide to proceed.
+**Start with `/safe-code`.**  
+If your repo is new, dirty, or risky, it will naturally stay in audit/documentation mode.
 
 **Make sure git is clean before starting.**  
 Run `git status` first. If you have uncommitted changes, do `git commit` before running the skill. This gives you a safety net.
-
-**When in doubt, use Dry-Run.**  
-`Dry-Run mode` shows you the full deletion plan without doing anything. Think of it as a preview — see what would happen before it actually happens.
 
 **Don't be afraid.**  
 This skill was designed to be safe. The agent asks you when it has doubts. You are always in control.

@@ -8,6 +8,23 @@
 
 ---
 
+## Install
+
+```bash
+# Install into your current project
+npx skills add afu-it/safe-code
+
+# Install globally (all projects)
+npx skills add afu-it/safe-code -g
+
+# Preview before installing
+npx skills add afu-it/safe-code --list
+```
+
+Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
+
+---
+
 ## What It Does
 
 You run one command. The agent does everything else:
@@ -148,60 +165,14 @@ The agent picks the right mode automatically:
 
 ---
 
-## What's New in v2.5
+## What's New
 
-**Patch 2.5.1** — short or generic `AGENTS.md` files are now treated as thin and must be upgraded to a complete compact handoff, not patched with a one-line note.
+**v2.5.1** — short or generic `AGENTS.md` files are now treated as thin and must be upgraded to a complete compact handoff, not patched with a one-line note.
 
-**① AGENTS.md reconciliation is mandatory** — safe-code now audits `AGENTS.md` every setup. Existing populated files are reconciled or explicitly marked `unchanged` only after checking them against current repo sources.
-
-**② Agent init behavior tightened** — missing, thin, and populated `AGENTS.md` files all follow the same compact, verified, high-signal authoring rules.
-
-**③ Smarter one-command flow** — `/safe-code` now infers an internal run profile: Orientation, Audit, or Cleanup. New/risky repos stay docs-and-audit only; stable repos with rollback can proceed to safe cleanup. No extra commands added.
-
----
-
-## What's New in v2.4
-
-**① AGENTS.md authoring rules (agent init style)** — safe-code now investigates the repo before writing `AGENTS.md`. It reads manifests, configs, CI, and existing instruction files first, then extracts only high-signal, verifiable facts. No more generic placeholder content.
-
-**② Smarter AGENTS.md detection** — treats a file as effectively empty if it only contains generated comment blocks, tooling warnings, or boilerplate — and repopulates it with real project context.
-
-**③ Improve in place, not overwrite** — if `AGENTS.md` already has real content, safe-code still audits it, preserves what's correct, removes stale claims, and reconciles it with the current codebase. It should not skip the file just because it is populated.
-
----
-
-## What's New in v2.3
-
-**① AGENTS.md skip fix** — previously, safe-code would skip `AGENTS.md` setup if the file already existed, even if it was effectively empty (e.g. only Next.js generated blocks). Now it detects this and populates the file properly.
-
----
-
-## What's New in v2.2
-
-**① Assumption surfacing** — before every decision, the agent lists what it's assuming and verifies against the codebase. No silent guessing.
-
-**② Verify-after-each-slice** — structured execution plan printed before any deletion. One slice at a time, verified before proceeding.
-
-**③ Pre-plan safety check** — before deciding to auto-run, the agent asks: too many files? recently modified? ambiguous candidates? If any flag raised → defaults to Mode B.
-
-**④ Surgical change rules** — the agent is now explicitly told: touch only what the task requires. No reformatting, no adding type hints, no "improving" adjacent code.
-
----
-
-## Install
-
-```bash
-# Install into your current project
-npx skills add afu-it/safe-code
-
-# Install globally (all projects)
-npx skills add afu-it/safe-code -g
-
-# Preview before installing
-npx skills add afu-it/safe-code --list
-```
-
-Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
+- `AGENTS.md` is audited every setup and only marked `unchanged` after checking it against current repo sources.
+- Missing, thin, and populated files all follow the same compact, verified, high-signal authoring rules.
+- `/safe-code` infers an internal profile: Orientation, Audit, or Cleanup. New/risky repos stay docs-and-audit only; stable repos with rollback can proceed to safe cleanup.
+- Still only two commands: `/safe-code` and `/safe-code save`.
 
 ---
 
