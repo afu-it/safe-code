@@ -2,7 +2,7 @@
 
 > **One command. Full repo hygiene.** Dead code removed, refactored, docs synced — all in one autonomous pass.
 
-[![version](https://img.shields.io/badge/version-2.5-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-2.5.1-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -84,6 +84,7 @@ On setup, safe-code **investigates the repo before deciding what to do with `AGE
 - Reads `README*`, manifests, lockfiles, CI workflows, existing instruction files
 - Extracts only high-signal facts: exact commands, stack quirks, folder structure, conventions
 - Creates or populates missing/thin files, and reconciles existing files in place
+- Treats short generic files as thin even if they contain a few project-specific lines
 - Treats an already populated file as `unchanged` only after auditing it against the current repo
 - Every line must answer: *"Would an agent miss this without help?"* — if not, it's left out
 
@@ -148,6 +149,8 @@ The agent picks the right mode automatically:
 ---
 
 ## What's New in v2.5
+
+**Patch 2.5.1** — short or generic `AGENTS.md` files are now treated as thin and must be upgraded to a complete compact handoff, not patched with a one-line note.
 
 **① AGENTS.md reconciliation is mandatory** — safe-code now audits `AGENTS.md` every setup. Existing populated files are reconciled or explicitly marked `unchanged` only after checking them against current repo sources.
 

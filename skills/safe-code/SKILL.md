@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. Git push only occurs after the user explicitly runs /safe-code save — no autonomous push without user command. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.5"
+version: "2.5.1"
 ---
 
 # Safe Code
@@ -182,7 +182,7 @@ For most files:
 For `AGENTS.md` only:
 - Never skip it just because it exists.
 - If missing, create it after investigating the repo using the authoring rules below.
-- If it exists but is effectively empty, populate it after investigating the repo using the authoring rules below.
+- If it exists but is effectively empty or thin, populate it after investigating the repo using the authoring rules below.
 - If it exists and already has real project context, audit and reconcile it now:
   - preserve guidance that is still verified, useful, and high-signal
   - delete or rewrite stale, generic, speculative, or contradicted content
@@ -193,6 +193,16 @@ Treat `AGENTS.md` as effectively empty if it contains only:
 - HTML comment blocks like `<!-- BEGIN:xxx --> ... <!-- END:xxx -->`
 - Blank lines
 - Auto-generated warnings or tool-injected rules without any project-specific overview, stack, structure, or environment details
+
+Treat `AGENTS.md` as thin if, after ignoring generated comment blocks, it lacks enough verified handoff value for another AI agent. Common thin-file signs:
+- fewer than 30 meaningful non-comment lines
+- missing exact local commands from manifests/config
+- missing real framework/runtime/database/auth/tooling facts
+- missing major entrypoints or package boundaries
+- missing repo-specific gotchas an agent would likely miss
+- mostly generic rules such as "follow best practices", "write clean code", or "ask if unsure"
+
+Thin files must be upgraded to a compact complete handoff, not merely amended with a small note.
 
 Generated blocks must be preserved. Append project-specific sections after them. Do not delete or replace tooling-injected content.
 
@@ -249,6 +259,8 @@ Create or update `AGENTS.md` for this repository.
 
 The goal is a compact instruction file that helps future agent sessions avoid mistakes and ramp up quickly. Follow these rules instead of improvising.
 
+If the user provides focus or constraints in the `/safe-code` request, honor them while still verifying facts from the repo. Examples: "focus on onboarding agents", "document test commands", "preserve Claude/Cursor rules", or "do not mention deployment".
+
 **Decision test for every line**
 
 - Every line must answer: "Would an agent likely miss this without help?" If not, leave it out.
@@ -262,8 +274,8 @@ Always investigate the repo before editing `AGENTS.md`. Read the highest-value s
   (for example: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `nx.json`, `pnpm-lock.yaml`, `bun.lockb`).
 - Build, test, lint, formatter, typecheck, and codegen config
   (for example: `next.config.*`, `vite.config.*`, `tsconfig.json`, `eslint*`, `prettier*`, `tailwind.config.*`, `postcss.config.*`).
-- CI workflows and task runners
-  (for example: `.github/workflows`, `justfile`, `Makefile`, `flake.nix`, Git hooks, monorepo task tools).
+- CI workflows, pre-commit hooks, and task runners
+  (for example: `.github/workflows`, `.husky/`, `.lintstagedrc*`, `lefthook.yml`, `justfile`, `Makefile`, `flake.nix`, Git hooks, monorepo task tools).
 - Existing instruction files
   (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, `.cursorrules`, `.github/copilot-instructions.md`, or equivalents).
 
@@ -299,15 +311,17 @@ Do **not** put these into `AGENTS.md`:
 - Obvious conventions that any competent developer or model would already know.
 - Speculative statements, guesses, or anything not verified from the repo.
 - Content that belongs in another dedicated document already referenced from config.
+- Tool-specific config files unless they matter to universal agent handoff.
 
 When in doubt, omit.
 
 **Behaviour when AGENTS.md is missing vs existing**
 
-- If `AGENTS.md` is **missing** or effectively empty (only generated comment blocks, warnings, or trivial boilerplate):
+- If `AGENTS.md` is **missing**, effectively empty, or thin:
   - Create or repopulate it using the authoring rules above and the template as a fallback shape.
   - Include only sections backed by real, verified project details from the investigation above.
   - Preserve any existing generated comment blocks at the top and append your sections after them.
+  - Ensure the result is useful as a first-read handoff for another AI agent without requiring it to inspect every config file first.
 - If `AGENTS.md` already contains real project context:
   - Improve it in place rather than rewriting blindly.
   - Preserve guidance that is still correct and high-signal.
@@ -315,6 +329,19 @@ When in doubt, omit.
   - Reconcile differences in favour of executable sources (config, scripts, CI) while keeping any still-valid nuance from older instructions.
   - Add missing high-signal facts discovered during investigation, even when the existing file is not empty.
   - Do not report "AGENTS.md already has real project context, so it was not rewritten" as the decision. The required decision is whether it was `reconciled` or audited and `unchanged`, with a short reason.
+
+**Minimum quality bar after writing**
+
+Before marking `AGENTS.md` done, verify it answers these for the current repo:
+
+- What is this project and who/what uses it?
+- What exact commands should an agent run for dev, build, lint, typecheck, tests, migrations, codegen, or seeds when those exist?
+- What are the true runtime/framework/database/auth/i18n/styling/package-manager facts?
+- What directories and files are real entrypoints or source-of-truth wiring?
+- What repo-specific gotchas would an agent likely miss without this file?
+- What existing instruction files or generated blocks must be preserved?
+
+If two or more answers are missing and discoverable from the repo, keep editing `AGENTS.md`; do not mark it `unchanged`, and do not finish with only a one-line reconciliation.
 
 **Questions to the user**
 
@@ -844,7 +871,7 @@ Run `$safe-refactor-code` on affected areas.
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.5 session complete ===
+=== safe-code v2.5.1 session complete ===
 
 Project root: <path>
 Agent: <agent>
