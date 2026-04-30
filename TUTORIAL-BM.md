@@ -129,12 +129,12 @@ Tekan Enter. Agent akan buat semua ni secara automatic:
 
 ### Apa yang jadi dengan AGENTS.md?
 
-Pada first run, safe-code **scan repo kau dulu** sebelum tulis apa-apa dalam `AGENTS.md`:
+Pada setup, safe-code **scan repo kau dulu** sebelum decide nak buat apa dengan `AGENTS.md`:
 
 - Dia baca `README`, config files, CI workflows, package manager files, dan instruction files lain yang sedia ada
 - Dia extract fakta sebenar yang boleh disahkan — command tepat, stack kau, struktur folder, quirks
 - Kalau `AGENTS.md` dah ada tapi kosong atau cuma auto-generated boilerplate, dia isi dengan betul
-- Kalau dah ada content berguna, dia improve in place tanpa overwrite benda yang masih betul
+- Kalau `AGENTS.md` dah ada content berguna, dia audit dan reconcile file itu in place tanpa overwrite benda yang masih betul
 
 ---
 

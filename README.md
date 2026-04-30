@@ -2,7 +2,7 @@
 
 > **One command. Full repo hygiene.** Dead code removed, refactored, docs synced — all in one autonomous pass.
 
-[![version](https://img.shields.io/badge/version-2.4-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-2.5-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -77,13 +77,14 @@ your-project/
 > **ACTIVE.md** persists across sessions (like a hard disk).  
 > **SESSION.md** is wiped on every `/safe-code save` (like RAM).  
 
-### How AGENTS.md is populated
+### How AGENTS.md is maintained
 
-On first run (or if `AGENTS.md` is empty/thin), safe-code **investigates the repo first** before writing anything:
+On setup, safe-code **investigates the repo before deciding what to do with `AGENTS.md`**:
 
 - Reads `README*`, manifests, lockfiles, CI workflows, existing instruction files
 - Extracts only high-signal facts: exact commands, stack quirks, folder structure, conventions
-- Improves in place if the file already exists — never overwrites blindly
+- Creates or populates missing/thin files, and reconciles existing files in place
+- Treats an already populated file as `unchanged` only after auditing it against the current repo
 - Every line must answer: *"Would an agent miss this without help?"* — if not, it's left out
 
 ---
@@ -146,13 +147,21 @@ The agent picks the right mode automatically:
 
 ---
 
+## What's New in v2.5
+
+**① AGENTS.md reconciliation is mandatory** — safe-code now audits `AGENTS.md` every setup. Existing populated files are reconciled or explicitly marked `unchanged` only after checking them against current repo sources.
+
+**② Agent init behavior tightened** — missing, thin, and populated `AGENTS.md` files all follow the same compact, verified, high-signal authoring rules.
+
+---
+
 ## What's New in v2.4
 
-**① AGENTS.md authoring rules (OpenCode `/init` style)** — safe-code now investigates the repo before writing `AGENTS.md`. It reads manifests, configs, CI, and existing instruction files first, then extracts only high-signal, verifiable facts. No more generic placeholder content.
+**① AGENTS.md authoring rules (agent init style)** — safe-code now investigates the repo before writing `AGENTS.md`. It reads manifests, configs, CI, and existing instruction files first, then extracts only high-signal, verifiable facts. No more generic placeholder content.
 
 **② Smarter AGENTS.md detection** — treats a file as effectively empty if it only contains generated comment blocks, tooling warnings, or boilerplate — and repopulates it with real project context.
 
-**③ Improve in place, not overwrite** — if `AGENTS.md` already has real content, safe-code preserves what's still correct, removes stale claims, and reconciles with the current codebase.
+**③ Improve in place, not overwrite** — if `AGENTS.md` already has real content, safe-code still audits it, preserves what's correct, removes stale claims, and reconciles it with the current codebase. It should not skip the file just because it is populated.
 
 ---
 

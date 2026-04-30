@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. Git push only occurs after the user explicitly runs /safe-code save — no autonomous push without user command. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.4"
+version: "2.5"
 ---
 
 # Safe Code
@@ -180,9 +180,14 @@ For most files:
 - Create only if missing
 
 For `AGENTS.md` only:
-- If missing, create it from the template below
-- If it exists but is effectively empty, populate it from the template below
-- If it exists and already has real project context, preserve it and update only the relevant sections later
+- Never skip it just because it exists.
+- If missing, create it after investigating the repo using the authoring rules below.
+- If it exists but is effectively empty, populate it after investigating the repo using the authoring rules below.
+- If it exists and already has real project context, audit and reconcile it now:
+  - preserve guidance that is still verified, useful, and high-signal
+  - delete or rewrite stale, generic, speculative, or contradicted content
+  - add missing high-signal facts found in executable sources
+- Record the result as `created`, `populated`, `reconciled`, or `unchanged` for the final summary.
 
 Treat `AGENTS.md` as effectively empty if it contains only:
 - HTML comment blocks like `<!-- BEGIN:xxx --> ... <!-- END:xxx -->`
@@ -191,9 +196,13 @@ Treat `AGENTS.md` as effectively empty if it contains only:
 
 Generated blocks must be preserved. Append project-specific sections after them. Do not delete or replace tooling-injected content.
 
+`AGENTS.md` is considered `unchanged` only after this audit confirms the existing file already matches the current repo and contains no stale, generic, or missing high-signal guidance.
+
 ---
 
 ### `<project-root>/AGENTS.md`
+
+Use this as a fallback shape for missing or thin files, not as mandatory filler. If a section would contain only generic or unknown content, omit that section until the repo provides verified signal.
 
 ```md
 # AGENTS.md
@@ -230,41 +239,42 @@ Generated blocks must be preserved. Append project-specific sections after them.
 - Test command:
 ```
 
-When populating an effectively empty `AGENTS.md`, **do not fill the template blindly**. Follow the authoring rules below first.
+When creating, populating, or reconciling `AGENTS.md`, **do not fill the template blindly**. Follow the authoring rules below first.
 
 ---
 
-#### AGENTS.md authoring rules (first-run + updates)
+#### AGENTS.md authoring rules (agent init style)
 
-When creating or updating `AGENTS.md`, follow these rules instead of improvising. The goal is a compact, high-signal instruction file that lets future agents ramp up quickly and avoid common mistakes.
+Create or update `AGENTS.md` for this repository.
+
+The goal is a compact instruction file that helps future agent sessions avoid mistakes and ramp up quickly. Follow these rules instead of improvising.
 
 **Decision test for every line**
 
 - Every line must answer: "Would an agent likely miss this without help?" If not, leave it out.
 - Prefer a smaller but accurate file over a long, vague one.
 
-**What to read before writing**
+**How to investigate**
 
-Always investigate the repo before editing `AGENTS.md`. Read these in roughly this order, stopping when you have enough signal:
+Always investigate the repo before editing `AGENTS.md`. Read the highest-value sources first, stopping when you have enough signal:
 
 - `README*`, root manifests, workspace config, and lockfiles
   (for example: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `nx.json`, `pnpm-lock.yaml`, `bun.lockb`).
-- Build / test / lint / formatter / typecheck / codegen config
+- Build, test, lint, formatter, typecheck, and codegen config
   (for example: `next.config.*`, `vite.config.*`, `tsconfig.json`, `eslint*`, `prettier*`, `tailwind.config.*`, `postcss.config.*`).
 - CI workflows and task runners
   (for example: `.github/workflows`, `justfile`, `Makefile`, `flake.nix`, Git hooks, monorepo task tools).
 - Existing instruction files
-  (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, `.cursorrules`, `.github/copilot-instructions.md`, `opencode.json` instructions or equivalents).
-- Repo-local config for agents or tools that affect workflow.
+  (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, `.cursorrules`, `.github/copilot-instructions.md`, or equivalents).
 
-If architecture is still unclear, skim a **small** number of representative source files to find real entrypoints, package boundaries, and execution flow. Prioritise "wiring" files (app shells, routers, main services) over random leaf components.
+If architecture is still unclear after reading config and docs, inspect a **small** number of representative code files to find the real entrypoints, package boundaries, and execution flow. Prefer files that explain how the system is wired together over random leaf files.
 
 **Source-of-truth rule**
 
-- Prefer executable sources over prose. If docs conflict with scripts or config, trust the executable source.
+- Prefer executable sources of truth over prose. If docs conflict with scripts or config, trust the executable source.
 - Do not document anything you could not verify directly from the repo or from clearly trustworthy instruction files.
 
-**What to extract into AGENTS.md**
+**What to extract**
 
 Focus on high-signal facts that materially change how an agent should work in this repo:
 
@@ -295,14 +305,16 @@ When in doubt, omit.
 **Behaviour when AGENTS.md is missing vs existing**
 
 - If `AGENTS.md` is **missing** or effectively empty (only generated comment blocks, warnings, or trivial boilerplate):
-  - Create or repopulate it using the template in this skill.
-  - Fill every section with real, verified project details from the investigation above.
+  - Create or repopulate it using the authoring rules above and the template as a fallback shape.
+  - Include only sections backed by real, verified project details from the investigation above.
   - Preserve any existing generated comment blocks at the top and append your sections after them.
 - If `AGENTS.md` already contains real project context:
   - Improve it in place rather than rewriting blindly.
   - Preserve guidance that is still correct and high-signal.
   - Delete or rewrite content that is clearly stale, generic, or contradicted by the current codebase.
   - Reconcile differences in favour of executable sources (config, scripts, CI) while keeping any still-valid nuance from older instructions.
+  - Add missing high-signal facts discovered during investigation, even when the existing file is not empty.
+  - Do not report "AGENTS.md already has real project context, so it was not rewritten" as the decision. The required decision is whether it was `reconciled` or audited and `unchanged`, with a short reason.
 
 **Questions to the user**
 
@@ -316,7 +328,7 @@ When in doubt, omit.
 **Length and density**
 
 - For small repos, keep `AGENTS.md` short but ensure all critical commands, structure, and constraints are covered.
-- For larger repos, aim for 150–200 lines but density matters more than length. Avoid padding sections just to hit a line target.
+- For larger repos, summarize only the structural facts and workflows that actually change how an agent should work.
 - Prefer short sections and bullets over long paragraphs.
 
 ---
@@ -755,7 +767,7 @@ Run `$safe-refactor-code` on affected areas.
 
 | File | When to update |
 |---|---|
-| `AGENTS.md` | Update when project rules, stack, structure, environment, or first-run project orientation is missing or changed |
+| `AGENTS.md` | Audit every session setup; create/populate/reconcile when project rules, stack, structure, environment, commands, or first-run orientation are missing, stale, generic, or contradicted |
 | `CHANGELOG.md` | Only if changes are releasable |
 | `ACTIVE.md` | Every session — Before/Current/Next + Last Session |
 | `SESSION.md` | Throughout session — wiped on save |
@@ -769,7 +781,7 @@ Run `$safe-refactor-code` on affected areas.
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.4 session complete ===
+=== safe-code v2.5 session complete ===
 
 Project root: <path>
 Agent: <agent>
@@ -782,7 +794,7 @@ Remote: <URL | none>  [Bucket <A | B | C>]
 Push:   <auto on /safe-code save | manual | not applicable>
 
 Files:
-  Root:  AGENTS.md <created|existed|populated>    CHANGELOG.md <created|existed>
+  Root:  AGENTS.md <created|populated|reconciled|unchanged>    CHANGELOG.md <created|existed>
   Agent: ACTIVE.md <created|existed>              SESSION.md <created|existed>
          BACKLOG.md <created|existed>             LOG.md <created|existed>
          MEMORY.md <created|existed>              safe-refactor-code.md <created|existed>

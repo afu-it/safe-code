@@ -129,12 +129,12 @@ Hit Enter. The agent will do all of this automatically:
 
 ### What happens to AGENTS.md?
 
-On first run, safe-code scans your repo **before** writing `AGENTS.md`:
+On setup, safe-code scans your repo **before deciding what to do with `AGENTS.md`**:
 
 - It reads your `README`, config files, CI workflows, package manager files, and any existing instruction files
 - It extracts real, verified facts — exact commands, your stack, folder structure, quirks
 - If `AGENTS.md` already exists but is mostly empty or just auto-generated boilerplate, it fills it in properly
-- If it already has useful content, it improves it in place without overwriting anything good
+- If `AGENTS.md` already has useful content, it audits and reconciles the file in place without overwriting anything good
 
 ---
 
