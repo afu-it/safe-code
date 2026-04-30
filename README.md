@@ -153,6 +153,8 @@ The agent picks the right mode automatically:
 
 **② Agent init behavior tightened** — missing, thin, and populated `AGENTS.md` files all follow the same compact, verified, high-signal authoring rules.
 
+**③ Smarter one-command flow** — `/safe-code` now infers an internal run profile: Orientation, Audit, or Cleanup. New/risky repos stay docs-and-audit only; stable repos with rollback can proceed to safe cleanup. No extra commands added.
+
 ---
 
 ## What's New in v2.4

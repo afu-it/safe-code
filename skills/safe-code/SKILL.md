@@ -675,6 +675,63 @@ Reasoning:
 
 ---
 
+## Step 3d: Infer Run Intent
+
+`/safe-code` has only one entry command. Do not add extra commands for docs-only, init-only, or audit-only work. Instead, infer the safest run profile from repo facts.
+
+### Intent Profiles
+
+```
+Orientation  -> repo is new, no commits, no remote, missing/thin AGENTS.md, or continuity docs just created
+Audit        -> rollback is missing or risky, worktree is heavily dirty, user asked to check/review, or candidates are uncertain
+Cleanup      -> git rollback exists, worktree state is understood, AGENTS.md is reconciled, and high-confidence cleanup is available
+```
+
+### Profile Rules
+
+- Always complete `AGENTS.md` audit/reconciliation before selecting the profile.
+- If `AGENTS.md` was `created`, `populated`, or meaningfully `reconciled`, prefer `Orientation` or `Audit` unless the user explicitly asked for cleanup.
+- If git has `0` commits, no repo, or no rollback path, choose `Orientation` or `Audit`; do not delete code.
+- If the whole tree is untracked, choose `Audit`; write docs and flags only.
+- If no High-confidence dead-code candidates exist, choose `Audit`; do not force a refactor.
+- If the user asks for broad "cleanup", "hygiene", or `/safe-code` in a stable repo with rollback, `Cleanup` is allowed after the pre-plan safety check.
+
+### Profile Effects
+
+```
+Orientation:
+  - create/reconcile AGENTS.md and continuity docs
+  - load context and record project facts
+  - do not remove or refactor code
+
+Audit:
+  - do everything in Orientation
+  - scan for risks, stale docs, dead code, and verification gaps
+  - write findings to BACKLOG.md, MEMORY.md, or safe-refactor-code.md
+  - do not remove code unless the user separately approves a Mode B plan
+
+Cleanup:
+  - do everything in Audit
+  - execute only High-confidence, reversible slices
+  - verify after each slice
+```
+
+The profile is an internal behavior guide. The final safety mode remains A/B/C.
+
+### 3e. Intent reasoning output
+
+```
+Reasoning:
+  AGENTS.md: <created | populated | reconciled | unchanged>
+  Rollback: yes/no
+  Worktree: <clean | dirty | untracked-heavy>
+  User intent: <orientation | audit | cleanup | unclear>
+  Profile: <Orientation | Audit | Cleanup>
+  Why: <one sentence>
+```
+
+---
+
 ## Step 4: Audit Dead Code
 
 > **Layer 3 Trigger:** Load `MEMORY.md` now if not already loaded.
@@ -704,6 +761,12 @@ if ANY false:
 
 ### Pre-Plan Check (run before deciding mode)
 
+Use the Step 3d profile first:
+
+- `Orientation` profile -> Mode C unless the user explicitly requests a cleanup plan.
+- `Audit` profile -> Mode C by default; Mode B only if there is a small, reversible cleanup plan worth asking about.
+- `Cleanup` profile -> continue with the pre-plan check below.
+
 Answer these before producing the execution plan:
 
 ```
@@ -725,9 +788,9 @@ Reasoning:
   Why: <one sentence>
 ```
 
-- **A** — git clean + rollback + all High + no surprises → auto-execute
-- **B** — git dirty / borderline / large scope → show plan, wait for approval
-- **C** — no git / no rollback / plan-only asked → show plan only
+- **A** — `Cleanup` profile + git clean + rollback + all High + no surprises → auto-execute
+- **B** — cleanup is possible but dirty / borderline / large scope → show plan, wait for approval
+- **C** — `Orientation` or `Audit` profile, no git, no rollback, or plan-only asked → docs + findings only
 
 ---
 
@@ -787,6 +850,7 @@ Project root: <path>
 Agent: <agent>
 Agents folder: <agents-folder>
 Execution mode: <A | B | C>
+Run profile: <Orientation | Audit | Cleanup>
 Session type: <fresh | resumed from <saved_at>>
 
 Git:    <repo found | not found> | <commit count> commits | branch: <branch>
