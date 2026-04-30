@@ -2,7 +2,7 @@
 
 > **One command. Full repo hygiene.** Dead code removed, refactored, docs synced — all in one autonomous pass.
 
-[![version](https://img.shields.io/badge/version-2.5.1-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-2.5.2-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -167,7 +167,7 @@ The agent picks the right mode automatically:
 
 ## What's New
 
-**v2.5.1** — short or generic `AGENTS.md` files are now treated as thin and must be upgraded to a complete compact handoff, not patched with a one-line note.
+**v2.5.2** — `AGENTS.md` quality checks now catch missing env/setup facts, absent expected scripts, verification order, and claims contradicted by executable config.
 
 - `AGENTS.md` is audited every setup and only marked `unchanged` after checking it against current repo sources.
 - Missing, thin, and populated files all follow the same compact, verified, high-signal authoring rules.

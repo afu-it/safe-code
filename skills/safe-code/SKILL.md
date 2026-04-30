@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. Git push only occurs after the user explicitly runs /safe-code save — no autonomous push without user command. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.5.1"
+version: "2.5.2"
 ---
 
 # Safe Code
@@ -197,9 +197,12 @@ Treat `AGENTS.md` as effectively empty if it contains only:
 Treat `AGENTS.md` as thin if, after ignoring generated comment blocks, it lacks enough verified handoff value for another AI agent. Common thin-file signs:
 - fewer than 30 meaningful non-comment lines
 - missing exact local commands from manifests/config
+- missing important negative command facts an agent would otherwise guess, such as "no test script"
+- missing required environment variables or setup prerequisites from `.env*`, config, or runtime errors
 - missing real framework/runtime/database/auth/tooling facts
 - missing major entrypoints or package boundaries
 - missing repo-specific gotchas an agent would likely miss
+- containing claims contradicted by executable sources, such as stale README notes or incorrect tooling/config explanations
 - mostly generic rules such as "follow best practices", "write clean code", or "ask if unsure"
 
 Thin files must be upgraded to a compact complete handoff, not merely amended with a small note.
@@ -292,8 +295,11 @@ Focus on high-signal facts that materially change how an agent should work in th
 
 - Exact developer commands, especially non-obvious ones
   (dev, build, lint, typecheck, unit tests, integration tests, migrations, codegen, seeding).
+- Missing expected commands when that absence matters
+  (for example: no `test` script, no `typecheck` script, no migration command wrapper).
 - How to run a single test, a single package, or a focused verification step.
 - Required command order when it matters (for example: `lint → typecheck → test`).
+- Setup prerequisites and required environment variables, especially database URLs, auth secrets, API keys, local services, and seed data.
 - Monorepo or multi-package layout: package boundaries, major directories, and real app/library entrypoints.
 - Framework or toolchain quirks: generated code, migrations, codegen outputs, build artefacts, special env loading, dev server behaviour, infra deploy flow.
 - Repo-specific style or workflow conventions that differ from common defaults.
@@ -336,12 +342,18 @@ Before marking `AGENTS.md` done, verify it answers these for the current repo:
 
 - What is this project and who/what uses it?
 - What exact commands should an agent run for dev, build, lint, typecheck, tests, migrations, codegen, or seeds when those exist?
+- What expected commands are intentionally absent or must be run through `npx`/tooling instead?
+- What env vars, local services, databases, or setup prerequisites are required?
+- What verification order should an agent use before claiming work is done?
 - What are the true runtime/framework/database/auth/i18n/styling/package-manager facts?
 - What directories and files are real entrypoints or source-of-truth wiring?
 - What repo-specific gotchas would an agent likely miss without this file?
+- Are any existing `AGENTS.md` claims contradicted by executable sources?
 - What existing instruction files or generated blocks must be preserved?
 
 If two or more answers are missing and discoverable from the repo, keep editing `AGENTS.md`; do not mark it `unchanged`, and do not finish with only a one-line reconciliation.
+
+If any existing `AGENTS.md` claim is contradicted by executable sources, fix that claim before finishing even when the file is otherwise compact and useful.
 
 **Questions to the user**
 
@@ -871,7 +883,7 @@ Run `$safe-refactor-code` on affected areas.
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.5.1 session complete ===
+=== safe-code v2.5.2 session complete ===
 
 Project root: <path>
 Agent: <agent>
