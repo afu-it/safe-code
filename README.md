@@ -1,8 +1,8 @@
 # safe-code
 
-> **One command. Full repo hygiene.** Dead code removed, refactored, docs synced — all in one autonomous pass.
+> **Three clear commands. Full repo hygiene.** First run, context-safe continue, and clean handoff.
 
-[![version](https://img.shields.io/badge/version-2.7-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-2.8-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -27,7 +27,7 @@ Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
 
 ## What It Does
 
-You run one command. The agent does everything else:
+You run one of three commands. The agent does everything else:
 
 ```
 /safe-code
@@ -36,7 +36,7 @@ You run one command. The agent does everything else:
 ```
  Step 0  →  Detect active agent (Codex / Claude / Cursor / Windsurf)
  Step 1  →  Create 8 continuity docs + populate AGENTS.md with real project context
- Step 2  →  Load context, auto-resume saved session if found
+ Step 2  →  Load first-run context, or use --continue for saved session context
  Step 3  →  Check git state + detect remote platform + update graph when available
  Step 4  →  Audit codebase — find dead code candidates with graph + manual checks
  Step 5  →  Plan + pick execution mode (auto / ask / plan-only)
@@ -49,12 +49,13 @@ Nothing is deleted without a rollback path. Nothing is pushed by safe-code.
 
 ---
 
-## Two Commands. That's It.
+## Three Commands. That's It.
 
 | Command | What it does |
 |---|---|
-| `/safe-code` | Start a full hygiene pass — or resume from where you left off |
-| `/safe-code save` | End the session: update docs, initialize local git if needed, commit locally, clear working memory |
+| `/safe-code` | First-time setup or fresh full hygiene pass |
+| `/safe-code --continue` | Resume from continuity docs without hallucinating context |
+| `/safe-code --save` | End the session: update docs, initialize local git if needed, commit locally, clear working memory |
 
 ### Saving a session does 11 things automatically:
 
@@ -91,8 +92,8 @@ your-project/
     └── safe-refactor-code.md   ← refactor rules + flagged code
 ```
 
-> **ACTIVE.md** persists across sessions (like a hard disk).  
-> **SESSION.md** is wiped on every `/safe-code save` (like RAM).  
+> **ACTIVE.md** persists across sessions (like a hard disk).
+> **SESSION.md** is wiped on every `/safe-code --save` (like RAM).
 
 ### How AGENTS.md is maintained
 
@@ -113,7 +114,7 @@ On setup, safe-code **investigates the repo before deciding what to do with `AGE
           you
            │
            ▼
-      /safe-code          ← you only talk to this one
+      /safe-code          ← first run / fresh pass
            │
      ┌─────┬──────┬──────────┐
      ▼     ▼      ▼          ▼
@@ -138,7 +139,7 @@ Step 3f  Step 4 & 6  Step 7  automatic review/debug support
 | `review-changes` | Delta/PR review with blast radius and tests | ❌ Auto-called after edits |
 | `debug-issue` | Graph-assisted bug tracing | ❌ Auto-called on failures or bugs |
 
-Helper skills are internal automation. Users only need `/safe-code` and `/safe-code save`.
+Helper skills are internal automation. Users only need `/safe-code`, `/safe-code --continue`, and `/safe-code --save`.
 
 Graph support comes from `code-review-graph` when available. On first run, safe-code can auto-create a project-local `.mcp.json` that uses `uvx code-review-graph serve` when `uvx` is installed. It does not edit global agent config or run global installs.
 
@@ -181,6 +182,13 @@ The agent picks the right mode automatically:
 
 ## What's New
 
+**v2.8** — safe-code now has explicit first-run, continue, and save commands.
+
+- `/safe-code` is first-time setup or a fresh hygiene pass.
+- `/safe-code --continue` forces context-safe resume from `AGENTS.md`, `ACTIVE.md`, `SESSION.md`, `LOG.md`, and memory files.
+- `/safe-code --save` saves handoff state, commits locally, wipes session RAM, and closes the session.
+- Deprecated forms `/safe-code save` and `/safe-code continue` now point to the flag commands.
+
 **v2.7** — safe-code now integrates code-review-graph workflows without making them mandatory.
 
 - Added `build-graph`, `explore-codebase`, `review-changes`, and `debug-issue`.
@@ -189,12 +197,12 @@ The agent picks the right mode automatically:
 - `/safe-code` now performs a graph readiness check before audit and falls back cleanly when graph tools are missing.
 - `/safe-code` now auto-routes helper skills; users do not need to call helpers manually.
 
-**v2.6** — `/safe-code save` now initializes or uses local git and commits locally only. It never pushes to a remote.
+**v2.6** — `/safe-code --save` initializes or uses local git and commits locally only. It never pushes to a remote.
 
 - `AGENTS.md` is audited every setup and only marked `unchanged` after checking it against current repo sources.
 - Missing, thin, and populated files all follow the same compact, verified, high-signal authoring rules.
 - `/safe-code` infers an internal profile: Orientation, Audit, or Cleanup. New/risky repos stay docs-and-audit only; stable repos with rollback can proceed to safe cleanup.
-- Still only two commands: `/safe-code` and `/safe-code save`.
+- Replaced by v2.8 command contract: `/safe-code`, `/safe-code --continue`, and `/safe-code --save`.
 
 ---
 

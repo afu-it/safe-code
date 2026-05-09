@@ -30,12 +30,12 @@ Buka **Terminal** (atau Command Prompt) dan taip:
 node --version
 ```
 
-Kalau keluar nombor macam `v20.11.0` → ✅ ada.  
+Kalau keluar nombor macam `v20.11.0` → ✅ ada.
 Kalau keluar error → install dulu dari [nodejs.org](https://nodejs.org) (pilih LTS).
 
-> **Apa tu Terminal?**  
-> Terminal = kotak hitam untuk bagi arahan kat komputer pakai taip.  
-> Windows: cari "Command Prompt" atau "PowerShell"  
+> **Apa tu Terminal?**
+> Terminal = kotak hitam untuk bagi arahan kat komputer pakai taip.
+> Windows: cari "Command Prompt" atau "PowerShell"
 > Mac: cari "Terminal" dalam Applications → Utilities
 
 ### 2. Ada Git ke?
@@ -44,7 +44,7 @@ Kalau keluar error → install dulu dari [nodejs.org](https://nodejs.org) (pilih
 git --version
 ```
 
-Kalau keluar nombor → ✅ ada.  
+Kalau keluar nombor → ✅ ada.
 Kalau error → install dari [git-scm.com](https://git-scm.com).
 
 ### 3. Projek kau ada dalam folder dengan git?
@@ -54,7 +54,7 @@ cd nama-projek-kau
 git status
 ```
 
-Kalau keluar sesuatu (walaupun "nothing to commit") → ✅ okay.  
+Kalau keluar sesuatu (walaupun "nothing to commit") → ✅ okay.
 Kalau keluar `not a git repository` → jalankan `git init` dulu.
 
 ---
@@ -152,7 +152,7 @@ Pada setup, safe-code **scan repo kau dulu** sebelum decide nak buat apa dengan 
 Kalau kau nak stop kerja dan sambung esok, atau nak beralih projek lain:
 
 ```
-/safe-code save
+/safe-code --save
 ```
 
 Dia akan buat **11 benda automatik** dalam masa beberapa saat:
@@ -191,20 +191,21 @@ your-project/
         └── safe-refactor-code.md ← rules refactor
 ```
 
-> 💡 **ACTIVE.md** = macam hard disk — kekal even lepas kau tutup  
-> 💡 **SESSION.md** = macam RAM — kosong balik setiap kali `/safe-code save`  
+> 💡 **ACTIVE.md** = macam hard disk — kekal even lepas kau tutup
+> 💡 **SESSION.md** = macam RAM — kosong balik setiap kali `/safe-code --save`
 > 💡 **AGENTS.md** = diisi dengan context projek sebenar, bukan placeholder generic
 
 ---
 
-## 🎛️ Dua Command Je
+## 🎛️ Tiga Command Je
 
-Kau cuma perlu dua ni:
+Kau cuma perlu tiga ni:
 
 | Apa yang kau nak | Command |
 |---|---|
-| Start atau sambung hygiene repo | `/safe-code` |
-| Save docs, commit local, dan tutup session | `/safe-code save` |
+| First-time setup atau fresh hygiene pass | `/safe-code` |
+| Sambung dari saved docs tanpa hallucinate context | `/safe-code --continue` |
+| Save docs, commit local, dan tutup session | `/safe-code --save` |
 
 safe-code pilih mode paling selamat secara automatic: orientation, audit, atau cleanup. Dia juga auto-run helper skills untuk graph build, repo exploration, dead-code pruning, refactor checks, review, dan debugging bila perlu. Kalau `uvx` ada, safe-code boleh create `.mcp.json` project-local untuk graph mode secara automatic.
 
@@ -243,22 +244,22 @@ npx skills remove safe-code
 
 ## ❓ Soalan Biasa Orang Baru Tanya
 
-**"AI dia delete terus ke tanpa tanya?"**  
+**"AI dia delete terus ke tanpa tanya?"**
 Tidak. Dia akan tunjuk plan dulu dan tanya kau kalau ada benda yang dia tak sure. Kod yang dia confident je dia buang — dan setiap slice dia verify dulu sebelum teruskan.
 
-**"Kalau agent silap buang, macam mana?"**  
+**"Kalau agent silap buang, macam mana?"**
 Dia rollback automatik kalau ada slice yang fail verification. Plus, sebab kau ada git, kau boleh `git checkout -- filename` bila-bila masa untuk restore fail.
 
-**"Kena ada internet ke?"**  
+**"Kena ada internet ke?"**
 Hanya semasa install (`npx skills add ...`). Lepas tu, skill dah ada dalam komputer kau — tak perlu internet.
 
-**"Skill ni buang source code kita ke?"**  
+**"Skill ni buang source code kita ke?"**
 Dia buang **dead code** je — kod yang dah takde siapa guna dalam projek. Kod yang masih active, dia tak sentuh.
 
-**"Kenapa AGENTS.md nampak detail lepas first run?"**  
+**"Kenapa AGENTS.md nampak detail lepas first run?"**
 Kerana safe-code scan repo kau dulu sebelum tulis. Tujuannya supaya mana-mana AI agent baca file tu terus faham projek kau — stack kau, command kau, cara kerja kau — tanpa perlu tanya lagi.
 
-**"Macam mana nak tahu skill dah installed?"**  
+**"Macam mana nak tahu skill dah installed?"**
 ```bash
 npx skills list
 ```
@@ -267,11 +268,11 @@ npx skills list
 
 ## 💡 Tips Untuk Orang Baru
 
-**Mulakan dengan `/safe-code`.**  
+**Mulakan dengan `/safe-code`.**
 Kalau repo baru, dirty, atau risky, dia akan kekal dalam mode audit/documentation secara natural.
 
-**Pastikan git clean sebelum start.**  
+**Pastikan git clean sebelum start.**
 Jalankan `git status` dulu. Kalau ada perubahan belum commit, buat `git commit` dulu. Ni supaya kau ada backup sebelum agent buat kerja.
 
-**Jangan takut.**  
+**Jangan takut.**
 Skill ni direka untuk selamat. Agent akan tanya kau bila ada keraguan. Kau sentiasa in control.

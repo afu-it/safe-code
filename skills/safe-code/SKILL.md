@@ -1,7 +1,7 @@
 ---
 name: safe-code
-description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. /safe-code save creates or uses a local git repo and commits locally only — it never pushes to a remote. Universal git remote detection is informational only. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.7"
+description: "Full repo hygiene in one pass. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Detects the active agent, initializes all continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps docs in sync. /safe-code --save creates or uses a local git repo and commits locally only — it never pushes to a remote. Universal git remote detection is informational only. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
+version: "2.8"
 ---
 
 # Safe Code
@@ -56,7 +56,7 @@ SESSION.md     — Carry Forward block only
 LOG.md         — last 3 typed entries only
 ```
 
-### Layer 2 — Context (auto, if saved session detected)
+### Layer 2 — Context (`/safe-code --continue`, if saved session detected)
 
 ```
 LOG.md         — full content
@@ -72,7 +72,7 @@ BACKLOG.md            — Step 7 (sync docs)
 CHANGELOG.md          — Step 7 (sync docs, if releasable changes exist)
 ```
 
-Do NOT load Layer 2 or Layer 3 files unless their trigger condition is met. This preserves context window for actual codebase analysis. No user action required — agent loads automatically.
+Do NOT load Layer 2 or Layer 3 files unless their trigger condition is met. This preserves context window for actual codebase analysis. `/safe-code --continue` is the explicit trigger for resume context.
 
 ---
 
@@ -80,18 +80,39 @@ Do NOT load Layer 2 or Layer 3 files unless their trigger condition is met. This
 
 | | ACTIVE.md | SESSION.md |
 |---|---|---|
-| **Persists** | Yes, across sessions | No — wiped on `/safe-code save` |
+| **Persists** | Yes, across sessions | No — wiped on `/safe-code --save` |
 | **Contains** | Overall progress, next_action, resume point | Mid-step notes, temp decisions, working vars |
-| **Updated** | On `/safe-code save` only | Freely throughout session |
+| **Updated** | On `/safe-code --save` only | Freely throughout session |
 | **Analogy** | Hard disk | RAM |
 
 ---
 
 ## Command: `/safe-code`
 
-Run a full hygiene pass. Auto-detects saved session in `ACTIVE.md` and resumes if found.
+Run first-time setup or a fresh full hygiene pass. Use this when entering a repo for the first time or intentionally starting a new safe-code pass.
 
-## Command: `/safe-code save`
+It creates/reconciles continuity docs, bootstraps graph support when possible, explores the repo, and selects the safest profile: Orientation, Audit, or Cleanup.
+
+If a saved session exists, print a short reminder to use `/safe-code --continue` for context-safe resume unless the user clearly wants a fresh pass.
+
+## Command: `/safe-code --continue`
+
+Resume an existing safe-code session with full context loading. Use this when continuing in a new chat, new day, or after `/safe-code --save`.
+
+Before doing any work, it must read:
+
+```
+1. AGENTS.md      — project rules, stack, standards
+2. ACTIVE.md      — current state, Last Session, pending, next_action
+3. SESSION.md     — Carry Forward and any active notes
+4. LOG.md         — latest entries, then full content if Last Session.status = "saved"
+5. MEMORY.md      — architecture snapshot if audit/refactor/debug needs it
+6. safe-refactor-code.md — flagged candidates and refactor guardrails if cleanup/refactor resumes
+```
+
+Do not guess previous context. If required continuity docs are missing or inconsistent, downgrade to Orientation/Audit and repair docs before editing code.
+
+## Command: `/safe-code --save`
 
 Save and close the current safe-code work session:
 
@@ -109,8 +130,13 @@ Save and close the current safe-code work session:
 11. Report commit hash + local-only status + "session saved and closed"
 ```
 
-`/safe-code save` is the end-of-session command. After it runs, treat the current safe-code session as closed. Future work starts with `/safe-code`, which resumes from `ACTIVE.md`.
-Never push from `/safe-code save`. If the user wants remote sync, they must run `git push` themselves or ask explicitly outside this command.
+`/safe-code --save` is the end-of-session command. After it runs, treat the current safe-code session as closed. Future work resumes with `/safe-code --continue`.
+Never push from `/safe-code --save`. If the user wants remote sync, they must run `git push` themselves or ask explicitly outside this command.
+
+## Deprecated Command Forms
+
+- `/safe-code save` -> print: "Use `/safe-code --save`."
+- `/safe-code continue` -> print: "Use `/safe-code --continue`."
 
 ---
 
@@ -433,7 +459,7 @@ next_action: none
 ```md
 # SESSION.md
 _<DATE> <TIME>_
-> Temporary working memory. Auto-wiped on /safe-code save.
+> Temporary working memory. Auto-wiped on /safe-code --save.
 > Do NOT rely on this for persistent state — use ACTIVE.md.
 
 ## Working Now
@@ -587,7 +613,7 @@ All paths inside project root. Proceeding.
 
 ---
 
-## Step 2: Load Context + Auto-Detect Session
+## Step 2: Load Context + Detect Session Mode
 
 ### 2a. Load Layer 1 (always, every session)
 
@@ -599,6 +625,8 @@ All paths inside project root. Proceeding.
 ```
 
 ### 2b. Detect saved session from ACTIVE.md
+
+This step is mandatory for `/safe-code --continue`.
 
 ```
 if Last Session.status = "saved":
@@ -614,9 +642,9 @@ if Last Session.status = "none" or block missing:
   -> Continue to Step 3
 ```
 
-Auto-detect only. Do not ask user.
+For plain `/safe-code`, do not auto-resume unless the user explicitly asks to continue. Print the saved-session reminder and proceed only if the user confirms fresh start or no saved session exists.
 
-### Last Session block (written by `/safe-code save`)
+### Last Session block (written by `/safe-code --save`)
 
 ```md
 ## Last Session
@@ -644,7 +672,7 @@ next_action: none
 
 ## LOG.md Trim Rule
 
-Check LOG.md line count on every `/safe-code save`.
+Check LOG.md line count on every `/safe-code --save`.
 
 ```
 if LOG.md > 200 lines:
@@ -692,7 +720,7 @@ BUCKET B — Git + external deploy platforms
   Matches: vercel.com, netlify.com, pages.cloudflare.com,
            any platform that auto-deploys on push
   Save action: local git commit only
-  Note:    "Remote push may trigger deploy, so /safe-code save never pushes."
+  Note:    "Remote push may trigger deploy, so /safe-code --save never pushes."
 
 BUCKET C — Local only
   Matches: no remote configured
@@ -822,7 +850,7 @@ Reasoning:
 
 ## Step 3g: Auto Helper Routing
 
-`/safe-code` automatically decides which helper skills to use. The user should only need `/safe-code` and `/safe-code save`.
+`/safe-code` automatically decides which helper skills to use. The user should only need `/safe-code`, `/safe-code --continue`, and `/safe-code --save`.
 
 | Condition | Auto action |
 |---|---|
@@ -964,7 +992,7 @@ If verification fails or a regression appears, automatically run `$debug-issue` 
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.7 session complete ===
+=== safe-code v2.8 session complete ===
 
 Project root: <path>
 Agent: <agent>
@@ -994,7 +1022,7 @@ Flagged:   <list>
 Refactors: <summary>
 Review:    <review-changes run | skipped: docs-only | unavailable fallback>
 Debug:     <debug-issue run | not needed | unresolved blocker>
-Follow-up saved for next `/safe-code`: <list>
+Follow-up saved for next `/safe-code --continue`: <list>
 
-Run /safe-code save to commit and close this session.
+Run /safe-code --save to commit and close this session.
 ```

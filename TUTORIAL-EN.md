@@ -30,12 +30,12 @@ Open your **Terminal** (or Command Prompt) and type:
 node --version
 ```
 
-If you see a number like `v20.11.0` → ✅ you're good.  
+If you see a number like `v20.11.0` → ✅ you're good.
 If you get an error → install it first from [nodejs.org](https://nodejs.org) (pick LTS).
 
-> **What's a Terminal?**  
-> The Terminal is a black box where you give your computer instructions by typing.  
-> Windows: search for "Command Prompt" or "PowerShell"  
+> **What's a Terminal?**
+> The Terminal is a black box where you give your computer instructions by typing.
+> Windows: search for "Command Prompt" or "PowerShell"
 > Mac: go to Applications → Utilities → Terminal
 
 ### 2. Do you have Git?
@@ -44,7 +44,7 @@ If you get an error → install it first from [nodejs.org](https://nodejs.org) (
 git --version
 ```
 
-If you see a version number → ✅ you're good.  
+If you see a version number → ✅ you're good.
 If you get an error → install it from [git-scm.com](https://git-scm.com).
 
 ### 3. Is your project in a git folder?
@@ -54,7 +54,7 @@ cd your-project-name
 git status
 ```
 
-If you see any output (even "nothing to commit") → ✅ you're good.  
+If you see any output (even "nothing to commit") → ✅ you're good.
 If you see `not a git repository` → run `git init` first.
 
 ---
@@ -152,7 +152,7 @@ On setup, safe-code scans your repo **before deciding what to do with `AGENTS.md
 If you want to stop and continue tomorrow, or switch to another project:
 
 ```
-/safe-code save
+/safe-code --save
 ```
 
 It will automatically do **11 things** in a few seconds:
@@ -191,20 +191,21 @@ your-project/
         └── safe-refactor-code.md ← refactor rules
 ```
 
-> 💡 **ACTIVE.md** = like a hard drive — persists even after you close everything  
-> 💡 **SESSION.md** = like RAM — cleared every time you run `/safe-code save`  
+> 💡 **ACTIVE.md** = like a hard drive — persists even after you close everything
+> 💡 **SESSION.md** = like RAM — cleared every time you run `/safe-code --save`
 > 💡 **AGENTS.md** = populated with real project context, not generic placeholders
 
 ---
 
-## 🎛️ Only Two Commands
+## 🎛️ Three Commands
 
 You only need these:
 
 | What you want to do | Command |
 |---|---|
-| Start or continue safe repo hygiene | `/safe-code` |
-| Save docs, commit locally, and close session | `/safe-code save` |
+| First-time setup or fresh hygiene pass | `/safe-code` |
+| Continue from saved docs without hallucinating context | `/safe-code --continue` |
+| Save docs, commit locally, and close session | `/safe-code --save` |
 
 safe-code chooses the safest internal mode automatically: orientation, audit, or cleanup. It also auto-runs helper skills for graph build, repo exploration, dead-code pruning, refactor checks, review, and debugging when needed. If `uvx` is available, safe-code can create project-local `.mcp.json` for graph mode automatically.
 
@@ -243,22 +244,22 @@ npx skills remove safe-code
 
 ## ❓ Questions Beginners Usually Ask
 
-**"Does the AI delete things without asking me?"**  
+**"Does the AI delete things without asking me?"**
 No. It shows you the plan first and asks whenever it's unsure. It only deletes code it's confident about — and it verifies each small slice before moving on.
 
-**"What if the agent accidentally deletes something important?"**  
+**"What if the agent accidentally deletes something important?"**
 It auto-rolls back if any slice fails verification. And because you have git, you can always run `git checkout -- filename` to restore any file.
 
-**"Do I need internet to use this?"**  
+**"Do I need internet to use this?"**
 Only during install (`npx skills add ...`). After that, the skills live on your machine — no internet needed.
 
-**"Will this delete my actual source code?"**  
+**"Will this delete my actual source code?"**
 It only removes **dead code** — code that nothing in the project calls or uses anymore. All active code is untouched.
 
-**"Why does AGENTS.md look detailed after the first run?"**  
+**"Why does AGENTS.md look detailed after the first run?"**
 Because safe-code scans your repo first before writing it. The goal is a file that any AI agent can read and immediately understand your project — your stack, your commands, your quirks — without asking.
 
-**"How do I know if the skill is installed?"**  
+**"How do I know if the skill is installed?"**
 ```bash
 npx skills list
 ```
@@ -267,11 +268,11 @@ npx skills list
 
 ## 💡 Tips for Beginners
 
-**Start with `/safe-code`.**  
+**Start with `/safe-code`.**
 If your repo is new, dirty, or risky, it will naturally stay in audit/documentation mode.
 
-**Make sure git is clean before starting.**  
+**Make sure git is clean before starting.**
 Run `git status` first. If you have uncommitted changes, do `git commit` before running the skill. This gives you a safety net.
 
-**Don't be afraid.**  
+**Don't be afraid.**
 This skill was designed to be safe. The agent asks you when it has doubts. You are always in control.
