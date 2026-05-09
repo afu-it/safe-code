@@ -78,6 +78,8 @@ Tekan Enter. Tunggu. Dia akan:
 ✔ Installed → ~/.codex/skills/codebase-pruner
 ⠋ Installing safe-refactor-code...
 ✔ Installed → ~/.codex/skills/safe-refactor-code
+⠋ Installing senior-dev...
+✔ Installed → ~/.codex/skills/senior-dev
 ⠋ Installing build-graph...
 ✔ Installed → ~/.codex/skills/build-graph
 ⠋ Installing explore-codebase...
@@ -233,8 +235,8 @@ npx skills update --skill safe-code
 ## 🗑️ Nak Buang Skill?
 
 ```bash
-# Buang semua tujuh
-npx skills remove safe-code codebase-pruner safe-refactor-code build-graph explore-codebase review-changes debug-issue
+# Buang semua lapan
+npx skills remove safe-code codebase-pruner safe-refactor-code senior-dev build-graph explore-codebase review-changes debug-issue
 
 # Buang satu je
 npx skills remove safe-code

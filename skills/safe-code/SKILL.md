@@ -8,6 +8,8 @@ version: "2.8"
 
 Run a complete repo hygiene pass autonomously. Think before acting. Make decisions independently. Only ask the user when a decision cannot be reversed or when intent is genuinely unclear.
 
+Apply `$senior-dev` discipline throughout the run: task list first, measure twice cut once, confidence gate, clean repo policy, small reversible slices, and verification before completion.
+
 ## Scope Rule (Read This First)
 
 **Everything operates inside the current project root only.**
@@ -926,6 +928,7 @@ Reasoning:
 
 | Condition | Auto action |
 |---|---|
+| Any `/safe-code`, `/safe-code --continue`, or `/safe-code --save` run | Apply `$senior-dev` discipline |
 | First run, missing/thin `AGENTS.md`, or architecture facts needed | Run `$explore-codebase` or equivalent graph/manual orientation |
 | Graph missing, stale, or branch changed | Run `$build-graph` if graph tools exist |
 | Dead-code audit or cleanup candidate exists | Run `$codebase-pruner` |

@@ -110,7 +110,7 @@ On setup, safe-code **investigates the repo before deciding what to do with `AGE
 
 ---
 
-## Seven Skills, One Ecosystem
+## Eight Skills, One Ecosystem
 
 ```
           you
@@ -118,15 +118,15 @@ On setup, safe-code **investigates the repo before deciding what to do with `AGE
            ▼
       /safe-code          ← first run / fresh pass
            │
-     ┌─────┬──────┬──────────┐
-     ▼     ▼      ▼          ▼
- build  codebase safe-    review-
- graph   pruner refactor  changes
-                 code
-     │            │
-     ▼            ▼
- explore      debug-
- codebase     issue
+     ┌─────┬──────┬──────────┬─────────┐
+     ▼     ▼      ▼          ▼         ▼
+ senior build  codebase    safe-    review-
+ dev    graph   pruner   refactor  changes
+                         code
+     │      │              │
+     ▼      ▼              ▼
+ discipline explore      debug-
+            codebase     issue
 
 Step 3f  Step 4 & 6  Step 7  automatic review/debug support
 ```
@@ -134,6 +134,7 @@ Step 3f  Step 4 & 6  Step 7  automatic review/debug support
 | Skill | Role | You call it? |
 |---|---|---|
 | `safe-code` | Orchestrator — coordinates everything | ✅ Yes |
+| `senior-dev` | Senior engineering discipline, task lists, confidence gate, clean repo policy | ❌ Auto-applied by safe-code and usable alone |
 | `build-graph` | Builds or updates code-review graph | ❌ Called by safe-code |
 | `explore-codebase` | Graph-backed repo orientation and AGENTS.md facts | ❌ Auto-called by safe-code |
 | `codebase-pruner` | Finds + removes dead code | ❌ Called by safe-code |
@@ -194,7 +195,7 @@ The agent picks the right mode automatically:
 
 **v2.7** — safe-code now integrates code-review-graph workflows without making them mandatory.
 
-- Added `build-graph`, `explore-codebase`, `review-changes`, and `debug-issue`.
+- Added `senior-dev`, `build-graph`, `explore-codebase`, `review-changes`, and `debug-issue`.
 - `codebase-pruner` now uses graph dead-code, callers/importers, and impact-radius evidence when available.
 - `safe-refactor-code` now folds in graph-powered rename previews, affected flows, and post-change review.
 - `/safe-code` now performs a graph readiness check before audit and falls back cleanly when graph tools are missing.
