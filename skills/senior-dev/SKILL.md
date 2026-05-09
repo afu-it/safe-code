@@ -113,7 +113,8 @@ Prefer:
 
 ## Final Review Gate
 
-Before final answer, critique the result adversarially.
+- Before final answer, critique the result adversarially.
+- Make sure you 100% confident in this strategy. If not, find all possible loopholes, suggest proper fixes, and run this loop until you are factually 100% confident in the new strategy. 
 
 Check:
 
