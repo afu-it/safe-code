@@ -47,6 +47,8 @@ You run one of three commands. The agent does everything else:
 
 Nothing is deleted without a rollback path. Nothing is pushed by safe-code.
 
+safe-code follows a **measure twice, cut once** policy: every run keeps a visible task checklist in `SESSION.md`, verifies each meaningful step before marking it done, and moves unfinished work into `ACTIVE.md` on `/safe-code --save`.
+
 ---
 
 ## Three Commands. That's It.
@@ -188,6 +190,7 @@ The agent picks the right mode automatically:
 - `/safe-code --continue` forces context-safe resume from `AGENTS.md`, `ACTIVE.md`, `SESSION.md`, `LOG.md`, and memory files.
 - `/safe-code --save` saves handoff state, commits locally, wipes session RAM, and closes the session.
 - Deprecated forms `/safe-code save` and `/safe-code continue` now point to the flag commands.
+- Every run now maintains a `SESSION.md` task checklist and migrates unfinished items to `ACTIVE.md` on save.
 
 **v2.7** — safe-code now integrates code-review-graph workflows without making them mandatory.
 

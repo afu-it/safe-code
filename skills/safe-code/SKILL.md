@@ -144,6 +144,41 @@ Never push from `/safe-code --save`. If the user wants remote sync, they must ru
 
 Before every action, reason explicitly. Do not guess. Do not skip this.
 
+## Measure Twice, Cut Once Policy
+
+Every run must maintain a visible task checklist in `SESSION.md`. The checklist is the working plan and progress tracker.
+
+Rules:
+
+- Create or refresh `SESSION.md ## Task List` before Step 3.
+- Every meaningful task starts as `[ ]`.
+- Mark a task `[~]` while actively working on it.
+- Mark a task `[x]` only after the action and its verification are complete.
+- Add newly discovered work as a new task instead of doing it invisibly.
+- Move unrelated or deferred tasks to `BACKLOG.md`; do not hide them in prose.
+- On `/safe-code --save`, migrate unfinished checklist items into `ACTIVE.md Last Session.pending` and `next_action`.
+- Do not claim completion unless the checklist, verification output, and final summary agree.
+- If verification fails, keep the task `[~]` or `[ ]`, add the failure note, and route to `$debug-issue` when appropriate.
+
+Default checklist:
+
+```md
+## Task List
+- [ ] Detect active agent and docs folder
+- [ ] Initialize or reconcile continuity docs
+- [ ] Load required context for this command
+- [ ] Check git state and rollback safety
+- [ ] Check or bootstrap graph support
+- [ ] Explore repo facts needed for AGENTS.md/MEMORY.md
+- [ ] Audit dead code and stale files
+- [ ] Decide run profile and execution mode
+- [ ] Execute safe cleanup slices, if allowed
+- [ ] Refactor affected code, if needed
+- [ ] Review changes and test coverage
+- [ ] Debug verification failures, if any
+- [ ] Sync docs and write final summary
+```
+
 ### Decision Framework
 
 1. What are the 2-3 options?
@@ -465,6 +500,21 @@ _<DATE> <TIME>_
 ## Working Now
 <!-- What is being actively processed this moment -->
 
+## Task List
+- [ ] Detect active agent and docs folder
+- [ ] Initialize or reconcile continuity docs
+- [ ] Load required context for this command
+- [ ] Check git state and rollback safety
+- [ ] Check or bootstrap graph support
+- [ ] Explore repo facts needed for AGENTS.md/MEMORY.md
+- [ ] Audit dead code and stale files
+- [ ] Decide run profile and execution mode
+- [ ] Execute safe cleanup slices, if allowed
+- [ ] Refactor affected code, if needed
+- [ ] Review changes and test coverage
+- [ ] Debug verification failures, if any
+- [ ] Sync docs and write final summary
+
 ## Temp Decisions
 <!-- Decisions made mid-session, not yet committed to ACTIVE.md -->
 
@@ -643,6 +693,28 @@ if Last Session.status = "none" or block missing:
 ```
 
 For plain `/safe-code`, do not auto-resume unless the user explicitly asks to continue. Print the saved-session reminder and proceed only if the user confirms fresh start or no saved session exists.
+
+### 2c. Create or Update Task List
+
+Before Step 3, write `SESSION.md ## Task List`.
+
+```
+if /safe-code:
+  -> create fresh default checklist
+  -> mark completed setup items [x] as they finish
+
+if /safe-code --continue:
+  -> load unfinished items from ACTIVE.md Last Session.pending
+  -> merge them with the default checklist
+  -> keep completed items visible only if needed to avoid repeating work
+
+if /safe-code --save:
+  -> read current checklist
+  -> migrate unchecked or active items into ACTIVE.md Last Session.pending
+  -> set next_action to the first unfinished task
+```
+
+Update the checklist after every major step. Never wait until the final summary to mark progress.
 
 ### Last Session block (written by `/safe-code --save`)
 
@@ -980,8 +1052,8 @@ If verification fails or a regression appears, automatically run `$debug-issue` 
 |---|---|
 | `AGENTS.md` | Audit every session setup; create/populate/reconcile when project rules, stack, structure, environment, commands, or first-run orientation are missing, stale, generic, or contradicted |
 | `CHANGELOG.md` | Only if changes are releasable |
-| `ACTIVE.md` | Every session — Before/Current/Next + Last Session |
-| `SESSION.md` | Throughout session — wiped on save |
+| `ACTIVE.md` | Every session — Before/Current/Next + Last Session, including pending checklist items on save |
+| `SESSION.md` | Throughout session — task checklist, working notes, active verification state; wiped on save |
 | `LOG.md` | Every session — append typed entry, newest at top |
 | `MEMORY.md` | When architecture changes |
 | `safe-refactor-code.md` | Flagged candidates (structured format), pitfalls, new rules |
@@ -1022,6 +1094,7 @@ Flagged:   <list>
 Refactors: <summary>
 Review:    <review-changes run | skipped: docs-only | unavailable fallback>
 Debug:     <debug-issue run | not needed | unresolved blocker>
+Task list: <completed>/<total> complete; unfinished moved to <ACTIVE.md|BACKLOG.md|none>
 Follow-up saved for next `/safe-code --continue`: <list>
 
 Run /safe-code --save to commit and close this session.

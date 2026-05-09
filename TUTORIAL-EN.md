@@ -209,6 +209,8 @@ You only need these:
 
 safe-code chooses the safest internal mode automatically: orientation, audit, or cleanup. It also auto-runs helper skills for graph build, repo exploration, dead-code pruning, refactor checks, review, and debugging when needed. If `uvx` is available, safe-code can create project-local `.mcp.json` for graph mode automatically.
 
+Every run also keeps a task checklist in `SESSION.md`, so the agent tracks progress instead of guessing what is done.
+
 ---
 
 ## 🔄 Updating the Skill
