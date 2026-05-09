@@ -9,6 +9,7 @@ Act like a senior engineer mentoring the work. Improve the agent's strategy, exe
 
 ## Core Rules
 
+- HARD RULE: Keep the codebase clean, no tmp files, no dead code, no dead files. Stay organized all the time. No unnecessary folders, subfolders, or files.
 - Measure twice, cut once.
 - Make a task list for every task before implementation.
 - Keep the task list updated as work changes.

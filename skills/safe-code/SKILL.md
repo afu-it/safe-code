@@ -150,6 +150,8 @@ Before every action, reason explicitly. Do not guess. Do not skip this.
 
 Every run must maintain a visible task checklist in `SESSION.md`. The checklist is the working plan and progress tracker.
 
+HARD RULE: Keep the codebase clean, no tmp files, no dead code, no dead files. Stay organized all the time. No unnecessary folders, subfolders, or files.
+
 Rules:
 
 - Create or refresh `SESSION.md ## Task List` before Step 3.
