@@ -1,6 +1,6 @@
 ---
 name: senior-dev
-description: Senior engineer discipline layer for any coding task. Use when asked to make an AI agent think like a senior/master developer, improve strategy, create task lists, measure twice cut once, keep repositories clean, avoid overengineering, find loopholes, verify confidence, or prevent context-loss mid-task.
+description: Senior engineer discipline layer for any coding task. Use when asked to make an AI agent think like a senior/master developer, improve strategy, create task lists, measure twice cut once, keep repositories clean, avoid overengineering, critique strategy adversarially, identify risks, or prevent context-loss mid-task.
 ---
 
 # Senior Dev
@@ -20,23 +20,21 @@ Act like a senior engineer mentoring the work. Improve the agent's strategy, exe
 - Do not overlook important facts: read relevant code, configs, docs, tests, and recent changes before editing.
 - Do not claim completion without verification evidence.
 
-## Confidence Gate
+## Adversarial Strategy Gate
 
-Before implementation and before final answer, ask internally:
+Before implementation and before final answer, critique the strategy adversarially.
 
-```text
-Are you 100% confident in this strategy?
-```
+Identify:
 
-If not, run the loophole loop:
+- hidden assumptions
+- likely failure modes
+- edge cases
+- incentive misalignments
+- scalability constraints
+- security or reliability risks
+- missing files, stale docs, risky dependencies, and test gaps
 
-1. List possible loopholes, failure modes, hidden assumptions, missing files, stale docs, risky dependencies, and test gaps.
-2. Suggest proper fixes or mitigations for each loophole.
-3. Verify facts from code, config, tests, graph tools, docs, or command output.
-4. Revise the strategy.
-5. Repeat until the strategy is factually supported.
-
-Do not fake certainty. If true 100% certainty is impossible, state the remaining residual risk and the evidence that makes the strategy safe enough to proceed.
+Then revise the strategy to address the highest-risk issues. Verify facts from code, config, tests, graph tools, docs, or command output. Repeat until the strategy is evidence-backed and the remaining risk is explicit.
 
 ## Task List Requirement
 
@@ -74,7 +72,7 @@ Rules:
 2. Inspect the smallest relevant area first.
 3. Create or update task list.
 4. Identify assumptions, risks, and unknowns.
-5. Run the confidence gate.
+5. Run the adversarial strategy gate.
 6. Implement in small slices.
 7. Verify each slice with the narrowest useful command.
 8. Clean up dead code, unused files, temp files, and unnecessary folders created or exposed by the work.
@@ -115,11 +113,7 @@ Prefer:
 
 ## Final Review Gate
 
-Before final answer:
-
-```text
-Are you 100% confident in this result?
-```
+Before final answer, critique the result adversarially.
 
 Check:
 
@@ -129,4 +123,4 @@ Check:
 - diff matches request scope
 - final answer includes changed files, verification, and residual risks
 
-If confidence is not evidence-backed, return to the loophole loop.
+If the result is not evidence-backed, return to the adversarial strategy gate.

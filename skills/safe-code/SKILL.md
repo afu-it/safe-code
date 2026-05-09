@@ -8,7 +8,7 @@ version: "2.8"
 
 Run a complete repo hygiene pass autonomously. Think before acting. Make decisions independently. Only ask the user when a decision cannot be reversed or when intent is genuinely unclear.
 
-Apply `$senior-dev` discipline throughout the run: task list first, measure twice cut once, confidence gate, clean repo policy, small reversible slices, and verification before completion.
+Apply `$senior-dev` discipline throughout the run: task list first, measure twice cut once, adversarial strategy critique, clean repo policy, small reversible slices, and verification before completion.
 
 ## Scope Rule (Read This First)
 

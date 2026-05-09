@@ -134,7 +134,7 @@ Step 3f  Step 4 & 6  Step 7  automatic review/debug support
 | Skill | Role | You call it? |
 |---|---|---|
 | `safe-code` | Orchestrator — coordinates everything | ✅ Yes |
-| `senior-dev` | Senior engineering discipline, task lists, confidence gate, clean repo policy | ❌ Auto-applied by safe-code and usable alone |
+| `senior-dev` | Senior engineering discipline, task lists, adversarial strategy critique, clean repo policy | ❌ Auto-applied by safe-code and usable alone |
 | `build-graph` | Builds or updates code-review graph | ❌ Called by safe-code |
 | `explore-codebase` | Graph-backed repo orientation and AGENTS.md facts | ❌ Auto-called by safe-code |
 | `codebase-pruner` | Finds + removes dead code | ❌ Called by safe-code |
