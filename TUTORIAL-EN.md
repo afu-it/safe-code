@@ -206,7 +206,7 @@ You only need these:
 | Start or continue safe repo hygiene | `/safe-code` |
 | Save docs, commit locally, and close session | `/safe-code save` |
 
-safe-code chooses the safest internal mode automatically: orientation, audit, or cleanup. It also auto-runs helper skills for graph build, repo exploration, dead-code pruning, refactor checks, review, and debugging when needed.
+safe-code chooses the safest internal mode automatically: orientation, audit, or cleanup. It also auto-runs helper skills for graph build, repo exploration, dead-code pruning, refactor checks, review, and debugging when needed. If `uvx` is available, safe-code can create project-local `.mcp.json` for graph mode automatically.
 
 ---
 

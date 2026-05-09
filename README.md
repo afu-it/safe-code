@@ -140,13 +140,7 @@ Step 3f  Step 4 & 6  Step 7  automatic review/debug support
 
 Helper skills are internal automation. Users only need `/safe-code` and `/safe-code save`.
 
-Graph support comes from `code-review-graph` when available:
-
-```bash
-pipx install code-review-graph
-# or
-uvx code-review-graph serve
-```
+Graph support comes from `code-review-graph` when available. On first run, safe-code can auto-create a project-local `.mcp.json` that uses `uvx code-review-graph serve` when `uvx` is installed. It does not edit global agent config or run global installs.
 
 If graph tools are unavailable, safe-code falls back to manual `rg`, manifest, config, and test-based analysis.
 

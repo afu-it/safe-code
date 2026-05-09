@@ -206,7 +206,7 @@ Kau cuma perlu dua ni:
 | Start atau sambung hygiene repo | `/safe-code` |
 | Save docs, commit local, dan tutup session | `/safe-code save` |
 
-safe-code pilih mode paling selamat secara automatic: orientation, audit, atau cleanup. Dia juga auto-run helper skills untuk graph build, repo exploration, dead-code pruning, refactor checks, review, dan debugging bila perlu.
+safe-code pilih mode paling selamat secara automatic: orientation, audit, atau cleanup. Dia juga auto-run helper skills untuk graph build, repo exploration, dead-code pruning, refactor checks, review, dan debugging bila perlu. Kalau `uvx` ada, safe-code boleh create `.mcp.json` project-local untuk graph mode secara automatic.
 
 ---
 

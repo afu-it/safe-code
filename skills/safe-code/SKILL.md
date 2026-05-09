@@ -16,6 +16,7 @@ Run a complete repo hygiene pass autonomously. Think before acting. Make decisio
 - Never use `~/`, `~/.codex/`, `~/.claude/`, or any home directory path
 - All paths are relative to the project root
 - The project root is the directory where the agent was invoked
+- Graph MCP bootstrap may create or update `<project-root>/.mcp.json` only. Do not auto-edit global agent MCP config.
 
 ```
 CORRECT: <project-root>/.codex/agents/ACTIVE.md
@@ -776,12 +777,33 @@ Reasoning:
 
 Use the code-review graph as an analysis accelerator when available. It never overrides the safety rules above.
 
-1. Automatically run `$build-graph`:
+1. Detect graph access:
+   - MCP graph tools already available
+   - `code-review-graph` command available
+   - `uvx` command available
+   - existing `<project-root>/.mcp.json`
+2. If MCP graph tools are missing but `uvx` exists, auto-create or update project-local `.mcp.json`:
+
+   ```json
+   {
+     "mcpServers": {
+       "code-review-graph": {
+         "command": "uvx",
+         "args": ["code-review-graph", "serve"]
+       }
+     }
+   }
+   ```
+
+   Preserve existing MCP servers when updating `.mcp.json`.
+3. If `code-review-graph` is installed locally but MCP tools are not exposed, record the install as available and continue manual/CLI graph fallback for this run.
+4. Do not run `pipx install`, edit global MCP files, or write outside the project root automatically.
+5. Automatically run `$build-graph` when MCP graph tools are available:
    - `get_minimal_context_tool(task="safe-code hygiene pass")`
    - `build_or_update_graph_tool()` if the graph is stale or empty
    - `list_graph_stats_tool()` to confirm files, nodes, edges, and languages
-2. If graph tools are unavailable, empty, or fail, record `Graph: unavailable` and continue with manual scans.
-3. If graph coverage is partial, use graph findings only for covered languages and keep manual entrypoint/config checks.
+6. If graph tools are unavailable, empty, or fail, record `Graph: unavailable` and continue with manual scans.
+7. If graph coverage is partial, use graph findings only for covered languages and keep manual entrypoint/config checks.
 
 Do not ask the user to run helper skills manually. `/safe-code` owns helper orchestration.
 
@@ -789,7 +811,7 @@ Do not ask the user to run helper skills manually. `/safe-code` owns helper orch
 
 ```
 Reasoning:
-  Graph: <ready | unavailable | partial | stale>
+  Graph: <ready | bootstrapped .mcp.json | command available | unavailable | partial | stale>
   Files/nodes/edges: <counts | unknown>
   Languages: <list | unknown>
   Decision: <use graph + manual checks | manual checks only>
