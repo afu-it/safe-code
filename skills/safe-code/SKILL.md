@@ -1,7 +1,7 @@
 ---
 name: safe-code
-description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. Git push only occurs after the user explicitly runs /safe-code save — no autonomous push without user command. Universal git remote detection works with GitHub, GitLab, Bitbucket, Azure DevOps, Codeberg, self-hosted, Cloudflare Pages, Vercel, Netlify, and local-only repos. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.5.2"
+description: "Full repo hygiene in one pass. Detects the active agent, auto-detects saved sessions from ACTIVE.md, initializes all 8 continuity docs inside the current project only, audits and removes dead code in safe slices, refactors in place, and keeps all docs in sync. /safe-code save creates or uses a local git repo and commits locally only — it never pushes to a remote. Universal git remote detection is informational only. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
+version: "2.7"
 ---
 
 # Safe Code
@@ -92,7 +92,7 @@ Run a full hygiene pass. Auto-detects saved session in `ACTIVE.md` and resumes i
 
 ## Command: `/safe-code save`
 
-Checkpoint the current session:
+Save and close the current safe-code work session:
 
 ```
 1. Migrate SESSION.md — extract important decisions into ACTIVE.md
@@ -102,13 +102,14 @@ Checkpoint the current session:
 5. Update CHANGELOG.md (root) — only if releasable changes were made
 6. Auto-trim LOG.md if needed (see LOG.md Trim Rule below)
 7. Reset SESSION.md — empty template (wipe working memory)
-8. git add -A
-9. git commit -m "safe-code: <YYYY-MM-DD> - <one-line summary>"
-10. Push based on remote bucket (see Step 3b)
-11. Report commit hash + push status
+8. Ensure local git repo exists (`git init` if needed)
+9. git add -A
+10. git commit -m "safe-code: <YYYY-MM-DD> - <one-line summary>"
+11. Report commit hash + local-only status + "session saved and closed"
 ```
 
-Does NOT end the session — work can continue after saving.
+`/safe-code save` is the end-of-session command. After it runs, treat the current safe-code session as closed. Future work starts with `/safe-code`, which resumes from `ACTIVE.md`.
+Never push from `/safe-code save`. If the user wants remote sync, they must run `git push` themselves or ask explicitly outside this command.
 
 ---
 
@@ -676,7 +677,7 @@ if worktree clean -> safe to proceed
 
 ### 3b. Detect remote platform
 
-Run `git remote -v` and classify into one of three buckets:
+Run `git remote -v` and classify into one of three buckets for information only. Remote detection must never cause an automatic push.
 
 ```
 BUCKET A — Git-native platforms
@@ -684,18 +685,18 @@ BUCKET A — Git-native platforms
            dev.azure.com, codeberg.org,
            self-hosted GitLab/Gitea (custom domain),
            SSH custom URLs, HTTPS custom URLs
-  Action:  git commit + git push
+  Save action: local git commit only
 
 BUCKET B — Git + external deploy platforms
   Matches: vercel.com, netlify.com, pages.cloudflare.com,
            any platform that auto-deploys on push
-  Action:  git commit + git push
-  Note:    "Auto-deploy may trigger on push — confirm intent if needed"
+  Save action: local git commit only
+  Note:    "Remote push may trigger deploy, so /safe-code save never pushes."
 
 BUCKET C — Local only
   Matches: no remote configured
-  Action:  git commit only — no push attempt
-  Note:    "No remote detected. Push manually when ready."
+  Save action: local git commit only
+  Note:    "No remote detected."
 ```
 
 Do NOT ask user which platform they use — detect from URL only.
@@ -771,6 +772,49 @@ Reasoning:
 
 ---
 
+## Step 3f: Graph Readiness Check
+
+Use the code-review graph as an analysis accelerator when available. It never overrides the safety rules above.
+
+1. Automatically run `$build-graph`:
+   - `get_minimal_context_tool(task="safe-code hygiene pass")`
+   - `build_or_update_graph_tool()` if the graph is stale or empty
+   - `list_graph_stats_tool()` to confirm files, nodes, edges, and languages
+2. If graph tools are unavailable, empty, or fail, record `Graph: unavailable` and continue with manual scans.
+3. If graph coverage is partial, use graph findings only for covered languages and keep manual entrypoint/config checks.
+
+Do not ask the user to run helper skills manually. `/safe-code` owns helper orchestration.
+
+### 3f. Graph reasoning output
+
+```
+Reasoning:
+  Graph: <ready | unavailable | partial | stale>
+  Files/nodes/edges: <counts | unknown>
+  Languages: <list | unknown>
+  Decision: <use graph + manual checks | manual checks only>
+  Why: <one sentence>
+```
+
+---
+
+## Step 3g: Auto Helper Routing
+
+`/safe-code` automatically decides which helper skills to use. The user should only need `/safe-code` and `/safe-code save`.
+
+| Condition | Auto action |
+|---|---|
+| First run, missing/thin `AGENTS.md`, or architecture facts needed | Run `$explore-codebase` or equivalent graph/manual orientation |
+| Graph missing, stale, or branch changed | Run `$build-graph` if graph tools exist |
+| Dead-code audit or cleanup candidate exists | Run `$codebase-pruner` |
+| Rename, restructure, modernization, or cleanup follow-up exists | Run `$safe-refactor-code` |
+| Edits were made or risk is non-trivial | Run `$review-changes` before final summary |
+| A test fails, verification fails, or user asks about a bug/regression | Run `$debug-issue` |
+
+If a helper skill cannot run, use its documented fallback behavior inside `/safe-code` and record the fallback in the final summary.
+
+---
+
 ## Step 4: Audit Dead Code
 
 > **Layer 3 Trigger:** Load `MEMORY.md` now if not already loaded.
@@ -779,6 +823,8 @@ Invoke `$codebase-pruner` in `Audit` mode.
 
 - Classify every candidate explicitly (High vs Medium)
 - Cross-reference `safe-refactor-code.md` for previously flagged items
+- Use `refactor_tool(mode="dead_code")`, callers/importers queries, and impact radius when graph tools are ready
+- Treat graph findings as candidate evidence; still check configs, exports, dynamic loaders, and runtime wiring
 - Do not delete or modify anything in this step
 
 ### Medium Auto-Promotion Rule
@@ -811,6 +857,7 @@ Answer these before producing the execution plan:
 ```
 - Multiple valid interpretations of "dead" for any candidate? → if yes, default Mode B
 - Blast radius > 10 files?                                   → stop, report first
+- Graph impact radius > 10 files?                             → stop, report first
 - Any candidate in a recently modified file (git log)?       → flag, extra caution
 - Can every planned step be verified with a command?         → if no, default Mode B
 ```
@@ -857,6 +904,7 @@ Slice 2: <path/to/file>:<symbol>
 - Verify after each slice before moving to the next
 - Roll back only the failing slice if verification fails
 - If verification command unavailable → flag as Medium, skip to next slice
+- After each slice, run `detect_changes_tool(detail_level="minimal")` when graph tools are ready
 - Save new flagged candidates to `safe-refactor-code.md` using structured format
 
 ---
@@ -866,6 +914,17 @@ Slice 2: <path/to/file>:<symbol>
 > **Layer 3 Trigger:** Load `MEMORY.md`, `BACKLOG.md`, and `CHANGELOG.md` now if not already loaded.
 
 Run `$safe-refactor-code` on affected areas.
+
+Graph-aware refactors:
+
+- Use graph rename previews for symbol renames.
+- Check impact radius before editing shared code.
+- Check affected flows before runtime-path changes.
+- Run graph delta review before final docs sync when graph tools are ready.
+
+Then automatically run `$review-changes` when any code changed, or when graph/manual impact analysis reports Medium or High risk. Skip only for pure documentation/session updates.
+
+If verification fails or a regression appears, automatically run `$debug-issue` on the failing symptom before asking the user for help.
 
 | File | When to update |
 |---|---|
@@ -883,7 +942,7 @@ Run `$safe-refactor-code` on affected areas.
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.5.2 session complete ===
+=== safe-code v2.7 session complete ===
 
 Project root: <path>
 Agent: <agent>
@@ -891,10 +950,11 @@ Agents folder: <agents-folder>
 Execution mode: <A | B | C>
 Run profile: <Orientation | Audit | Cleanup>
 Session type: <fresh | resumed from <saved_at>>
+Graph:  <ready | unavailable | partial> | files: <count> | nodes: <count> | edges: <count>
 
 Git:    <repo found | not found> | <commit count> commits | branch: <branch>
 Remote: <URL | none>  [Bucket <A | B | C>]
-Push:   <auto on /safe-code save | manual | not applicable>
+Save:   local commit only; no push
 
 Files:
   Root:  AGENTS.md <created|populated|reconciled|unchanged>    CHANGELOG.md <created|existed>
@@ -910,7 +970,9 @@ Decisions: <list>
 Removed:   <list>
 Flagged:   <list>
 Refactors: <summary>
-Follow-up: <list>
+Review:    <review-changes run | skipped: docs-only | unavailable fallback>
+Debug:     <debug-issue run | not needed | unresolved blocker>
+Follow-up saved for next `/safe-code`: <list>
 
-Run /safe-code save to commit this session.
+Run /safe-code save to commit and close this session.
 ```

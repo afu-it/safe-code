@@ -1,8 +1,8 @@
 ---
 name: safe-refactor-code
-description: "Refactor code safely in small verified slices while keeping repo continuity docs in sync inside the active agent's own folder. Use when an agent is asked to refactor, restructure, clean up, remove or replace code, modernize modules, or do follow-up hygiene in a repo."
+description: "Refactor code safely in small verified slices while keeping repo continuity docs in sync. Uses code-review graph tools for rename previews, impact radius, affected flows, and post-change review when available. Use when an agent is asked to refactor, restructure, clean up, remove or replace code, modernize modules, or do follow-up hygiene in a repo."
 metadata:
-  version: "1.3"
+  version: "1.4"
 ---
 
 # Safe Refactor Code
@@ -17,6 +17,19 @@ Refactor code in small verified slices, then update the repo's continuity files 
 - Update `CHANGELOG.md` on real code changes using today's section: `## [YYYY-MM-DD]`.
 - Prefer additive or scoped edits to docs. Do not wipe user-written history unless the user explicitly asks.
 - After refactors, scan for obvious dead code, unused imports, stale helpers, and outdated doc references before finishing.
+- Use code-review graph tools when available. Fall back to direct source search and verification when graph tools are unavailable or empty.
+
+## Graph-Aware Refactor Rules
+
+- Start graph-assisted refactors with `get_minimal_context_tool(task="<refactor goal>")`.
+- Update stale graphs with `build_or_update_graph_tool()` before broad refactors.
+- For symbol renames, use `refactor_tool(mode="rename", old_name=<old>, new_name=<new>)` and inspect the preview before applying.
+- Apply graph rename edits only with `apply_refactor_tool(refactor_id=<id>)` after preview review.
+- For broad or shared-code changes, run `get_impact_radius_tool(detail_level="minimal")` before editing.
+- For runtime path risk, run `get_affected_flows_tool()` before editing.
+- For decomposition candidates, use `find_large_functions_tool()` or `refactor_tool(mode="suggest")`.
+- For dead code exposed by the refactor, use `refactor_tool(mode="dead_code")`; delete only High-confidence candidates after config and dynamic-reference checks.
+- Before final summary, run `detect_changes_tool(detail_level="minimal")` when graph tools are available.
 
 ## Agent Compatibility
 
@@ -110,7 +123,19 @@ Fallback for missing `AGENTS.md`:
 - If an equivalent exists, treat it as the main continuity document for this run.
 - If no equivalent exists, create `AGENTS.md` only when the refactor changes architecture or handoff risk enough that future agents would benefit.
 
-### 2. Refactor in Safe Slices
+### 2. Plan With Graph Context When Available
+
+Use this order:
+
+1. `get_minimal_context_tool(task="<refactor goal>")`
+2. `build_or_update_graph_tool()` if the graph is empty or stale
+3. `get_impact_radius_tool(detail_level="minimal")` for files or symbols likely to affect callers
+4. `get_affected_flows_tool()` for changes that can affect runtime paths
+5. `refactor_tool(mode="rename")`, `mode="suggest"`, or `mode="dead_code"` only when the operation matches the refactor goal
+
+If graph tools fail, record the failure briefly and continue with `rg`, imports, manifests, tests, and direct source reads.
+
+### 3. Refactor in Safe Slices
 
 - Prefer one subsystem or concern at a time.
 - Preserve behavior unless the user asked for a behavior change.
@@ -120,7 +145,16 @@ Fallback for missing `AGENTS.md`:
 
 If widespread dead code is detected beyond the immediate refactor area, invoke the `codebase-pruner` skill for a full repo dead code audit.
 
-### 3. Sync Docs Before Finishing
+### 4. Post-Change Review
+
+Before syncing docs:
+
+- Run `detect_changes_tool(detail_level="minimal")` if graph tools are available.
+- Check `query_graph_tool(pattern="tests_for", target=<changed high-risk symbol>)` when graph risk or blast radius is non-trivial.
+- Read changed files directly and remove accidental unused imports or stale exports.
+- Run the narrowest useful verification command.
+
+### 5. Sync Docs Before Finishing
 
 After real code changes, update the continuity files in the detected doc folder:
 
@@ -129,7 +163,7 @@ After real code changes, update the continuity files in the detected doc folder:
 - `MEMORY.md` — short current snapshot, active caveats, important paths
 - `CHANGELOG.md` — today's dated section with Added, Changed, Fixed, Removed
 
-### 4. Keep Changelog Shape Stable
+### 6. Keep Changelog Shape Stable
 
 Use this structure:
 
@@ -153,7 +187,7 @@ Use this structure:
 - Omit empty subsections when nothing belongs there.
 - Do not add a changelog entry for read-only review or analysis turns.
 
-### 5. Finish With a Hygiene Pass
+### 7. Finish With a Hygiene Pass
 
 Before closing:
 

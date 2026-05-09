@@ -78,6 +78,14 @@ Tekan Enter. Tunggu. Dia akan:
 ✔ Installed → ~/.codex/skills/codebase-pruner
 ⠋ Installing safe-refactor-code...
 ✔ Installed → ~/.codex/skills/safe-refactor-code
+⠋ Installing build-graph...
+✔ Installed → ~/.codex/skills/build-graph
+⠋ Installing explore-codebase...
+✔ Installed → ~/.codex/skills/explore-codebase
+⠋ Installing review-changes...
+✔ Installed → ~/.codex/skills/review-changes
+⠋ Installing debug-issue...
+✔ Installed → ~/.codex/skills/debug-issue
 ✔ Done!
 ```
 
@@ -139,7 +147,7 @@ Pada setup, safe-code **scan repo kau dulu** sebelum decide nak buat apa dengan 
 
 ---
 
-## 💾 Nak Save Progress?
+## 💾 Nak Tutup Session?
 
 Kalau kau nak stop kerja dan sambung esok, atau nak beralih projek lain:
 
@@ -154,13 +162,14 @@ Dia akan buat **11 benda automatik** dalam masa beberapa saat:
   ✔  Catat dalam diari → LOG.md
   ✔  Update architecture → MEMORY.md
   ✔  Bersihkan working notes → SESSION.md
+  ✔  git init (kalau perlu)
   ✔  git add -A
   ✔  git commit (dengan message auto)
-  ✔  git push
-  ✔  Print: commit hash + status
+  ✔  Print: commit hash + local-only status
+  ✔  Tutup safe-code session ini
 ```
 
-Lain kali kau jalankan `/safe-code` balik, dia **auto-detect** ada saved session dan sambung dari mana terhenti.
+Lain kali kau jalankan `/safe-code` balik, dia **auto-detect** session yang ditutup dan sambung dari `ACTIVE.md`.
 
 ---
 
@@ -195,9 +204,9 @@ Kau cuma perlu dua ni:
 | Apa yang kau nak | Command |
 |---|---|
 | Start atau sambung hygiene repo | `/safe-code` |
-| Save docs, commit, dan push bila dibenarkan | `/safe-code save` |
+| Save docs, commit local, dan tutup session | `/safe-code save` |
 
-safe-code pilih mode paling selamat secara automatic: orientation, audit, atau cleanup.
+safe-code pilih mode paling selamat secara automatic: orientation, audit, atau cleanup. Dia juga auto-run helper skills untuk graph build, repo exploration, dead-code pruning, refactor checks, review, dan debugging bila perlu.
 
 ---
 
@@ -221,8 +230,8 @@ npx skills update --skill safe-code
 ## 🗑️ Nak Buang Skill?
 
 ```bash
-# Buang semua
-npx skills remove safe-code codebase-pruner safe-refactor-code
+# Buang semua tujuh
+npx skills remove safe-code codebase-pruner safe-refactor-code build-graph explore-codebase review-changes debug-issue
 
 # Buang satu je
 npx skills remove safe-code

@@ -16,6 +16,21 @@ Audit a repo for dead code, estimate deletion risk, and remove only high-confide
 - Never delete generated files. Update the generator or generated output flow instead.
 - Never mix pruning with unrelated feature work or refactors.
 - Prefer narrow, reversible slices with verification after each slice.
+- Use code-review graph tools when available. Treat graph output as evidence, not permission to delete.
+
+## Graph-Aware Audit Path
+
+Use this path before manual scanning when graph tools are available:
+
+1. `get_minimal_context_tool(task="dead code audit")`
+2. `build_or_update_graph_tool()` if the graph is empty or stale
+3. `refactor_tool(mode="dead_code")` for unreferenced functions and classes
+4. `query_graph_tool(pattern="importers_of", target=<file or module>)` for orphaned modules
+5. `query_graph_tool(pattern="callers_of", target=<symbol>)` for functions and methods
+6. `get_impact_radius_tool(detail_level="minimal")` before deleting any shared file
+7. `detect_changes_tool(detail_level="minimal")` after edits
+
+If graph tools are unavailable, empty, or fail, continue with the manual entrypoint and reference graph workflow below. Do not lower deletion confidence because graph data is missing.
 
 ## Step 0: Detect Active Agent and Doc Folder
 
@@ -77,6 +92,13 @@ If a file is named in config, treat that as a live reference until proven otherw
 ### 3. Build the Reference Graph
 
 Traverse imports, requires, includes, re-exports, and config references from every entrypoint.
+
+When a code-review graph is available, combine its candidates with manual evidence:
+
+- Graph "no callers" plus no config or dynamic references -> possible High confidence.
+- Graph "no callers" but dynamic dispatch, registry, route loader, reflection, package export, or config mention -> Medium or Low.
+- Manual references found outside graph -> not dead until reconciled.
+- Graph impact radius > 10 files -> stop and report before deletion.
 
 For each candidate, classify it as:
 
@@ -158,6 +180,7 @@ Before deleting a slice, verify:
 
 - the worktree state is understood
 - the candidate was scanned against the full relevant graph
+- graph callers/importers/impact were checked when graph tools are available
 - generated references were refreshed if needed
 - the candidate is not part of a package export, plugin registry, deploy script, or runtime registration path
 

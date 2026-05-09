@@ -78,6 +78,14 @@ Hit Enter. Wait a few seconds. You'll see:
 ✔ Installed → ~/.codex/skills/codebase-pruner
 ⠋ Installing safe-refactor-code...
 ✔ Installed → ~/.codex/skills/safe-refactor-code
+⠋ Installing build-graph...
+✔ Installed → ~/.codex/skills/build-graph
+⠋ Installing explore-codebase...
+✔ Installed → ~/.codex/skills/explore-codebase
+⠋ Installing review-changes...
+✔ Installed → ~/.codex/skills/review-changes
+⠋ Installing debug-issue...
+✔ Installed → ~/.codex/skills/debug-issue
 ✔ Done!
 ```
 
@@ -139,7 +147,7 @@ On setup, safe-code scans your repo **before deciding what to do with `AGENTS.md
 
 ---
 
-## 💾 Want to Save Your Progress?
+## 💾 Want to End the Session?
 
 If you want to stop and continue tomorrow, or switch to another project:
 
@@ -154,13 +162,14 @@ It will automatically do **11 things** in a few seconds:
   ✔  Write to diary → LOG.md
   ✔  Update architecture → MEMORY.md
   ✔  Clear working notes → SESSION.md
+  ✔  git init (if needed)
   ✔  git add -A
   ✔  git commit (with auto-generated message)
-  ✔  git push
-  ✔  Print: commit hash + status
+  ✔  Print: commit hash + local-only status
+  ✔  Close this safe-code session
 ```
 
-Next time you run `/safe-code`, it **auto-detects** the saved session and picks up where it left off.
+Next time you run `/safe-code`, it **auto-detects** the closed session and picks up from `ACTIVE.md`.
 
 ---
 
@@ -195,9 +204,9 @@ You only need these:
 | What you want to do | Command |
 |---|---|
 | Start or continue safe repo hygiene | `/safe-code` |
-| Save docs, commit, and push when allowed | `/safe-code save` |
+| Save docs, commit locally, and close session | `/safe-code save` |
 
-safe-code chooses the safest internal mode automatically: orientation, audit, or cleanup.
+safe-code chooses the safest internal mode automatically: orientation, audit, or cleanup. It also auto-runs helper skills for graph build, repo exploration, dead-code pruning, refactor checks, review, and debugging when needed.
 
 ---
 
@@ -221,8 +230,8 @@ npx skills update --skill safe-code
 ## 🗑️ Removing the Skill
 
 ```bash
-# Remove all three
-npx skills remove safe-code codebase-pruner safe-refactor-code
+# Remove all seven
+npx skills remove safe-code codebase-pruner safe-refactor-code build-graph explore-codebase review-changes debug-issue
 
 # Remove just one
 npx skills remove safe-code

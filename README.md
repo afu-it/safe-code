@@ -2,7 +2,7 @@
 
 > **One command. Full repo hygiene.** Dead code removed, refactored, docs synced — all in one autonomous pass.
 
-[![version](https://img.shields.io/badge/version-2.5.2-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-2.7-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -37,15 +37,15 @@ You run one command. The agent does everything else:
  Step 0  →  Detect active agent (Codex / Claude / Cursor / Windsurf)
  Step 1  →  Create 8 continuity docs + populate AGENTS.md with real project context
  Step 2  →  Load context, auto-resume saved session if found
- Step 3  →  Check git state + detect remote platform
- Step 4  →  Audit codebase — find dead code candidates
+ Step 3  →  Check git state + detect remote platform + update graph when available
+ Step 4  →  Audit codebase — find dead code candidates with graph + manual checks
  Step 5  →  Plan + pick execution mode (auto / ask / plan-only)
  Step 6  →  Remove dead code slice by slice, verify each one
- Step 7  →  Refactor affected code + sync all docs
+ Step 7  →  Refactor affected code + auto-review changes + sync all docs
  Step 8  →  Print full session summary
 ```
 
-Nothing is deleted without a rollback path. Nothing is pushed without your command.
+Nothing is deleted without a rollback path. Nothing is pushed by safe-code.
 
 ---
 
@@ -54,7 +54,7 @@ Nothing is deleted without a rollback path. Nothing is pushed without your comma
 | Command | What it does |
 |---|---|
 | `/safe-code` | Start a full hygiene pass — or resume from where you left off |
-| `/safe-code save` | Checkpoint: update docs, commit, push, clear working memory |
+| `/safe-code save` | End the session: update docs, initialize local git if needed, commit locally, clear working memory |
 
 ### Saving a session does 11 things automatically:
 
@@ -66,10 +66,10 @@ Nothing is deleted without a rollback path. Nothing is pushed without your comma
 5.  Update release notes   →  CHANGELOG.md (if releasable)
 6.  Trim old logs          →  LOG.md (archive if > 200 lines)
 7.  Wipe working memory    →  SESSION.md (reset to blank)
-8.  Stage all changes      →  git add -A
-9.  Commit                 →  git commit -m "safe-code: YYYY-MM-DD - summary"
-10. Push                   →  git push (auto-detect platform)
-11. Report                 →  print commit hash + push status
+8.  Ensure local git repo  →  git init if needed
+9.  Stage all changes      →  git add -A
+10. Commit locally         →  git commit -m "safe-code: YYYY-MM-DD - summary"
+11. Report                 →  print commit hash + local-only status + session closed
 ```
 
 ---
@@ -107,7 +107,7 @@ On setup, safe-code **investigates the repo before deciding what to do with `AGE
 
 ---
 
-## Three Skills, One Ecosystem
+## Seven Skills, One Ecosystem
 
 ```
           you
@@ -115,20 +115,40 @@ On setup, safe-code **investigates the repo before deciding what to do with `AGE
            ▼
       /safe-code          ← you only talk to this one
            │
-     ┌─────┴──────┐
+     ┌─────┬──────┬──────────┐
+     ▼     ▼      ▼          ▼
+ build  codebase safe-    review-
+ graph   pruner refactor  changes
+                 code
+     │            │
      ▼            ▼
-codebase-      safe-
- pruner      refactor-
-             code
+ explore      debug-
+ codebase     issue
 
-Step 4 & 6  Step 7
+Step 3f  Step 4 & 6  Step 7  automatic review/debug support
 ```
 
 | Skill | Role | You call it? |
 |---|---|---|
 | `safe-code` | Orchestrator — coordinates everything | ✅ Yes |
+| `build-graph` | Builds or updates code-review graph | ❌ Called by safe-code |
+| `explore-codebase` | Graph-backed repo orientation and AGENTS.md facts | ❌ Auto-called by safe-code |
 | `codebase-pruner` | Finds + removes dead code | ❌ Called by safe-code |
-| `safe-refactor-code` | Refactors + syncs all docs | ❌ Called by safe-code |
+| `safe-refactor-code` | Refactors with graph impact checks + syncs docs | ❌ Called by safe-code |
+| `review-changes` | Delta/PR review with blast radius and tests | ❌ Auto-called after edits |
+| `debug-issue` | Graph-assisted bug tracing | ❌ Auto-called on failures or bugs |
+
+Helper skills are internal automation. Users only need `/safe-code` and `/safe-code save`.
+
+Graph support comes from `code-review-graph` when available:
+
+```bash
+pipx install code-review-graph
+# or
+uvx code-review-graph serve
+```
+
+If graph tools are unavailable, safe-code falls back to manual `rg`, manifest, config, and test-based analysis.
 
 ---
 
@@ -167,7 +187,15 @@ The agent picks the right mode automatically:
 
 ## What's New
 
-**v2.5.2** — `AGENTS.md` quality checks now catch missing env/setup facts, absent expected scripts, verification order, and claims contradicted by executable config.
+**v2.7** — safe-code now integrates code-review-graph workflows without making them mandatory.
+
+- Added `build-graph`, `explore-codebase`, `review-changes`, and `debug-issue`.
+- `codebase-pruner` now uses graph dead-code, callers/importers, and impact-radius evidence when available.
+- `safe-refactor-code` now folds in graph-powered rename previews, affected flows, and post-change review.
+- `/safe-code` now performs a graph readiness check before audit and falls back cleanly when graph tools are missing.
+- `/safe-code` now auto-routes helper skills; users do not need to call helpers manually.
+
+**v2.6** — `/safe-code save` now initializes or uses local git and commits locally only. It never pushes to a remote.
 
 - `AGENTS.md` is audited every setup and only marked `unchanged` after checking it against current repo sources.
 - Missing, thin, and populated files all follow the same compact, verified, high-signal authoring rules.
