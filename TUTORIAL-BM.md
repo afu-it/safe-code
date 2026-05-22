@@ -53,13 +53,19 @@ Agent baca `AGENTS.md` dahulu. `AGENTS.md` arahkan agent baca:
 
 1. `context/project-overview.md`
 2. `context/architecture.md`
-3. `context/code-standards.md`
-4. `context/ai-workflow-rules.md`
-5. `context/ui-context.md` untuk kerja UI
-6. `context/progress-tracker.md`
-7. spec aktif dalam `context/feature-specs/`
+3. `context/user-preferences.md`
+4. `context/code-standards.md`
+5. `context/ai-workflow-rules.md`
+6. `context/ui-context.md` untuk kerja UI
+7. `context/progress-tracker.md`
+8. spec aktif dalam `context/feature-specs/`
 
 Agent tidak baca `context/current-issues.md` kecuali anda minta debug/issue analysis secara jelas.
+
+Preference capture:
+
+- Jika anda kata `aku taknak`, `aku nak`, `aku prefer`, `jangan`, `please remove`, `always`, atau `never`, safe-code anggap ia preference candidate.
+- Durable preferences akan draft dalam `SESSION.md` dan disimpan ke `context/user-preferences.md` masa `/safe-code --save`.
 
 ## 4. Feature Work
 

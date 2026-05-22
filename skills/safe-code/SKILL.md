@@ -36,6 +36,7 @@ WRONG:   ~/.codex/agents/ACTIVE.md
 ├── context/                       <- project brain; canonical long-term context
 │   ├── project-overview.md        <- what, who, goals, scope, success criteria
 │   ├── architecture.md            <- stack, boundaries, storage, invariants
+│   ├── user-preferences.md        <- user-approved preferences and hard dislikes
 │   ├── code-standards.md          <- implementation conventions
 │   ├── ai-workflow-rules.md       <- agent workflow and scoping rules
 │   ├── ui-context.md              <- UI/design conventions (read only for UI work)
@@ -67,6 +68,7 @@ Same runtime/session structure for other agents: `.claude/agents/`, `.cursor/age
 AGENTS.md                         — root instructions and Read First order
 context/project-overview.md       — product/project definition
 context/architecture.md           — system boundaries and invariants
+context/user-preferences.md       — user-approved preferences and hard dislikes
 context/code-standards.md         — coding conventions
 context/ai-workflow-rules.md      — workflow rules
 context/ui-context.md             — only for UI/design work
@@ -114,6 +116,31 @@ Do not load detail files unless the trigger condition is met.
 | Secrets/raw logs | Never | Avoid; keep summaries only |
 
 `context/current-issues.md` is special: safe-code creates a blank template and gitignores it, but the user writes it manually. It may contain raw errors, URLs, or secrets. Never copy it into persistent docs.
+
+`context/user-preferences.md` captures explicit, durable user preferences from conversation. Add only when the user clearly says they want/avoid something, or repeats a preference. Draft changes in `SESSION.md` and apply on `/safe-code --save`.
+
+### Source-of-Truth Ownership
+
+Avoid duplicate truth. Each fact has exactly one canonical home:
+
+| Fact type | Canonical home | Non-canonical notes |
+|---|---|---|
+| Root read order and agent rules | `AGENTS.md` | Do not duplicate full rules in context files |
+| Product goals, users, scope | `context/project-overview.md` | `progress-tracker.md` may reference current goal only |
+| Stack, boundaries, invariants | `context/architecture.md` | `MEMORY.md` stores temporary audit notes only |
+| User preferences and hard dislikes | `context/user-preferences.md` | `AGENTS.md` may point to it, not duplicate all preferences |
+| Coding conventions | `context/code-standards.md` | `safe-refactor-code.md` may store refactor-specific guardrails only |
+| Agent workflow | `context/ai-workflow-rules.md` | `SESSION.md` may hold temporary execution notes |
+| UI design system | `context/ui-context.md` | Read only for UI/design work |
+| Current phase and safe decisions | `context/progress-tracker.md` | `ACTIVE.md` stores resume state, not project history |
+| Feature scope | `context/feature-specs/<nn-name>.md` | Do not spread feature requirements across progress notes |
+| Release/user-visible history | `CHANGELOG.md` | Use for Added/Changed/Removed/Fixed/Security entries only |
+| Raw issue data | `context/current-issues.md` | Local-only, user-written, gitignored |
+| Resume point | `<agents-folder>/ACTIVE.md` | Operational state only |
+| Live task list and drafts | `<agents-folder>/SESSION.md` | Wiped on save |
+| Cleanup/refactor candidates | `<agents-folder>/safe-refactor-code.md` | Not general architecture truth |
+
+When two files disagree, prefer executable repo evidence first, then canonical home, then session notes. Record mismatch in `SESSION.md` and fix canonical home on `/safe-code --save`.
 
 ---
 
@@ -210,7 +237,7 @@ Rules:
 - Mark a task `[~]` while actively working on it.
 - Mark a task `[x]` only after the action and its verification are complete.
 - Add newly discovered work as a new task instead of doing it invisibly.
-- Move unrelated or deferred tasks to `BACKLOG.md`; do not hide them in prose.
+- Draft unrelated or deferred tasks for `BACKLOG.md` in `SESSION.md`; do not hide them in prose.
 - On `/safe-code --save`, migrate unfinished checklist items into `ACTIVE.md Last Session.pending` and `next_action`.
 - Do not claim completion unless the checklist, verification output, and final summary agree.
 - If verification fails, keep the task `[~]` or `[ ]`, add the failure note, and route to `$debug-issue` when appropriate.
@@ -303,6 +330,7 @@ CHANGELOG.md
 context/
 context/project-overview.md
 context/architecture.md
+context/user-preferences.md
 context/code-standards.md
 context/ai-workflow-rules.md
 context/ui-context.md
@@ -377,13 +405,22 @@ Use this as the fallback shape for missing or thin files. Preserve generated blo
 Read these files in order before implementation or architectural decisions:
 1. `context/project-overview.md`
 2. `context/architecture.md`
-3. `context/code-standards.md`
-4. `context/ai-workflow-rules.md`
-5. `context/ui-context.md` if UI/design work
-6. `context/progress-tracker.md`
-7. Active spec in `context/feature-specs/` when implementing a feature
+3. `context/user-preferences.md`
+4. `context/code-standards.md`
+5. `context/ai-workflow-rules.md`
+6. `context/ui-context.md` if UI/design work
+7. `context/progress-tracker.md`
+8. Active spec in `context/feature-specs/` when implementing a feature
 
 Do not read `context/current-issues.md` unless the user explicitly asks for debugging/issue analysis or references that file.
+
+## User Preference Detection
+- Always notice strong user preference language in chat.
+- Treat phrases like `I don't want`, `aku taknak`, `tak nak`, `I want`, `aku nak`, `please remove`, `remove this`, `I don't like`, `aku tak suka`, `I prefer`, `aku prefer`, `make it like this`, `jangan`, `must`, `always`, and `never` as preference candidates.
+- If preference is explicit and durable, draft an update for `context/user-preferences.md` in `SESSION.md`.
+- If preference affects current work, follow it immediately unless it conflicts with safety or repo evidence.
+- If preference is ambiguous, ask once or add it to `context/progress-tracker.md` Open Questions on save.
+- Do not bury durable preferences only in chat, `LOG.md`, or `progress-tracker.md`.
 
 ## Feature Specs
 - Feature specs live in `context/feature-specs/`.
@@ -608,6 +645,42 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+### `context/user-preferences.md`
+
+```md
+# User Preferences
+
+Record only explicit user preferences or decisions confirmed by repeated conversation.
+Do not infer preferences from one ambiguous message.
+Do not store secrets, private logs, or temporary emotions.
+
+Agents should watch for strong preference phrases in chat, including:
+
+- `I don't want`, `I want`, `I don't like`, `I prefer`
+- `aku taknak`, `tak nak`, `aku nak`, `aku tak suka`, `aku prefer`
+- `please remove`, `remove this`, `make it like this`
+- `jangan`, `must`, `always`, `never`
+
+When detected, draft the preference in `SESSION.md` and apply it here on `/safe-code --save`.
+
+## Hard Preferences
+- <!-- Example: Use SVG icons only; do not use emoji icons. -->
+
+## Hard Dislikes / Avoid
+- <!-- Example: Avoid overcomplicated folder structures. -->
+
+## Style Preferences
+- <!-- Tone, UI style, naming, formatting preferences. -->
+
+## Workflow Preferences
+- <!-- How user wants agent to plan, save, ask, or execute. -->
+
+## Confirmed Decisions
+- <!-- Date — decision — reason. -->
+```
+
+---
+
 ### `context/code-standards.md`
 
 ```md
@@ -648,7 +721,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Handling Missing Requirements
 - Do not invent undefined behavior.
-- Add ambiguity to `context/progress-tracker.md` Open Questions before implementing.
+- Draft ambiguity for `context/progress-tracker.md` Open Questions before implementing.
 
 ## Protected Files
 - <!-- Files/folders requiring explicit instruction. -->
@@ -869,7 +942,7 @@ _<DATE> <TIME>_
 <!-- Notes for current step only — discard after step completes -->
 
 ## Carry Forward
-<!-- Important findings to migrate into ACTIVE.md on save -->
+<!-- Important findings to migrate into ACTIVE.md or context docs on save -->
 ```
 
 ---
@@ -967,7 +1040,7 @@ _<DATE>_
 - Do NOT add type hints, docstrings, or comments unless explicitly asked
 - Do NOT reformat adjacent code while fixing something
 - Do NOT refactor things that aren't broken
-- Unrelated issues found → log in BACKLOG.md, do not fix silently
+- Unrelated issues found → draft BACKLOG.md entry in SESSION.md, do not fix silently
 - Every changed line must trace back to the user's request
 
 Test: Can every diff line be justified by the task? If not, revert it.
@@ -1020,13 +1093,14 @@ All paths inside project root. Proceeding.
 1. AGENTS.md
 2. context/project-overview.md
 3. context/architecture.md
-4. context/code-standards.md
-5. context/ai-workflow-rules.md
-6. context/ui-context.md only for UI/design work
-7. context/progress-tracker.md Current Phase / Current Goal / Next Up / Open Questions only
-8. ACTIVE.md Before/Current/Next only, if present
-9. SESSION.md Carry Forward + Draft Updates only, if present
-10. LOG.md last 3 typed entries only, if present
+4. context/user-preferences.md
+5. context/code-standards.md
+6. context/ai-workflow-rules.md
+7. context/ui-context.md only for UI/design work
+8. context/progress-tracker.md Current Phase / Current Goal / Next Up / Open Questions only
+9. ACTIVE.md Before/Current/Next only, if present
+10. SESSION.md Carry Forward + Draft Updates only, if present
+11. LOG.md last 3 typed entries only, if present
 ```
 
 Do not read `context/current-issues.md` unless the user explicitly asks for debugging/issue analysis or references that file.
@@ -1226,7 +1300,7 @@ Orientation:
 Audit:
   - do everything in Orientation
   - scan for risks, stale docs, dead code, and verification gaps
-  - write findings to BACKLOG.md, MEMORY.md, or safe-refactor-code.md
+  - draft findings in SESSION.md for BACKLOG.md, MEMORY.md, or safe-refactor-code.md
   - do not remove code unless the user separately approves a Mode B plan
 
 Cleanup:
@@ -1338,7 +1412,7 @@ if ALL true:
 -> promote to High, log reason
 
 if ANY false:
--> keep Medium, flag in safe-refactor-code.md using structured format, skip silently
+-> keep Medium, draft safe-refactor-code.md entry in SESSION.md using structured format, skip silently
 ```
 
 ---
@@ -1436,6 +1510,7 @@ During work, draft updates in `SESSION.md`. Apply them to persistent docs only o
 | `AGENTS.md` | Missing/stale Read First rules, commands, project facts | Yes |
 | `context/project-overview.md` | Evidence-backed product/project facts | Yes |
 | `context/architecture.md` | Evidence-backed stack, boundaries, invariants | Yes |
+| `context/user-preferences.md` | User-approved preferences, hard dislikes, recurring instructions | Yes |
 | `context/code-standards.md` | Verified conventions | Yes |
 | `context/ai-workflow-rules.md` | Workflow rules discovered from repo/team docs | Yes |
 | `context/ui-context.md` | UI tokens/components only when UI work occurs | Yes |

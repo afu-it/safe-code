@@ -71,6 +71,7 @@ your-project/
 ├── context/
 │   ├── project-overview.md
 │   ├── architecture.md
+│   ├── user-preferences.md
 │   ├── code-standards.md
 │   ├── ai-workflow-rules.md
 │   ├── ui-context.md
@@ -89,6 +90,8 @@ your-project/
 
 - `AGENTS.md` stays at root and tells agents what to read first.
 - `context/` is canonical long-term project brain.
+- `context/user-preferences.md` stores explicit durable user preferences, like “SVG icons only, no emoji icons”.
+- Agents watch for strong preference language like `I don't want`, `aku taknak`, `I prefer`, `please remove`, `jangan`, `always`, and `never`.
 - `context/feature-specs/` holds AI-written build specs, one unit per file.
 - `context/current-issues.md` is manual user scratchpad, never committed.
 - `.codex/agents/` is runtime/session memory.

@@ -53,13 +53,19 @@ Agents read `AGENTS.md` first. `AGENTS.md` points them to:
 
 1. `context/project-overview.md`
 2. `context/architecture.md`
-3. `context/code-standards.md`
-4. `context/ai-workflow-rules.md`
-5. `context/ui-context.md` for UI work
-6. `context/progress-tracker.md`
-7. active spec in `context/feature-specs/`
+3. `context/user-preferences.md`
+4. `context/code-standards.md`
+5. `context/ai-workflow-rules.md`
+6. `context/ui-context.md` for UI work
+7. `context/progress-tracker.md`
+8. active spec in `context/feature-specs/`
 
 Agents do not read `context/current-issues.md` unless you explicitly ask for issue/debug analysis.
+
+Preference capture:
+
+- If you say `I don't want`, `I prefer`, `please remove`, `always`, or `never`, safe-code treats it as a preference candidate.
+- Durable preferences are drafted in `SESSION.md` and saved into `context/user-preferences.md` on `/safe-code --save`.
 
 ## 4. Feature Work
 
