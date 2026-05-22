@@ -1,282 +1,153 @@
-# Tutorial: How to Use safe-code
+# safe-code Tutorial
 
-> **For anyone brand new to coding or AI tools** — we start from scratch, step by step, with visuals.
+safe-code gives any project one root agent entry point, long-term context files, feature specs, and safe session memory.
 
----
-
-## 🤔 What Is a Skill?
-
-Imagine you have an **AI chef**. A skill is like a **recipe** you hand them:
-
-```
-  You           Skill (Recipe)      AI Agent
-  ───           ──────────────      ────────
-  "please        safe-code         "Got it, I
-   clean up       SKILL.md    →     know exactly
-   my code"       (instructions)    what to do"
-```
-
-Without a skill, the AI agent doesn't know the safe procedure for cleaning code. With a skill, it follows the right process — audit first, plan, verify, then delete.
-
----
-
-## ✅ Before You Start — Check These 3 Things
-
-### 1. Do you have Node.js?
-
-Open your **Terminal** (or Command Prompt) and type:
-
-```bash
-node --version
-```
-
-If you see a number like `v20.11.0` → ✅ you're good.
-If you get an error → install it first from [nodejs.org](https://nodejs.org) (pick LTS).
-
-> **What's a Terminal?**
-> The Terminal is a black box where you give your computer instructions by typing.
-> Windows: search for "Command Prompt" or "PowerShell"
-> Mac: go to Applications → Utilities → Terminal
-
-### 2. Do you have Git?
-
-```bash
-git --version
-```
-
-If you see a version number → ✅ you're good.
-If you get an error → install it from [git-scm.com](https://git-scm.com).
-
-### 3. Is your project in a git folder?
-
-```bash
-cd your-project-name
-git status
-```
-
-If you see any output (even "nothing to commit") → ✅ you're good.
-If you see `not a git repository` → run `git init` first.
-
----
-
-## 📦 Step 1 — Install the Skill
-
-Open your terminal, navigate to your project folder, then type:
+## 1. Install
 
 ```bash
 npx skills add afu-it/safe-code
 ```
 
-Hit Enter. Wait a few seconds. You'll see:
+Optional global install:
 
-```
-⠋ Detecting your agent...
-✔ Found: Codex
-⠋ Installing safe-code...
-✔ Installed → ~/.codex/skills/safe-code
-⠋ Installing codebase-pruner...
-✔ Installed → ~/.codex/skills/codebase-pruner
-⠋ Installing safe-refactor-code...
-✔ Installed → ~/.codex/skills/safe-refactor-code
-⠋ Installing senior-dev...
-✔ Installed → ~/.codex/skills/senior-dev
-⠋ Installing build-graph...
-✔ Installed → ~/.codex/skills/build-graph
-⠋ Installing explore-codebase...
-✔ Installed → ~/.codex/skills/explore-codebase
-⠋ Installing review-changes...
-✔ Installed → ~/.codex/skills/review-changes
-⠋ Installing debug-issue...
-✔ Installed → ~/.codex/skills/debug-issue
-✔ Done!
+```bash
+npx skills add afu-it/safe-code -g
 ```
 
-The skills go directly into your agent's folder automatically. **You don't need to know which folder** — it figures that out for you.
+## 2. First Run
 
-> **Want to install for ALL your projects at once?**
-> ```bash
-> npx skills add afu-it/safe-code -g
-> ```
-> `-g` = global (every project on your machine)
+Inside a project, ask your agent:
 
-> **Want to preview what's included before installing?**
-> ```bash
-> npx skills add afu-it/safe-code --list
-> ```
-
----
-
-## 🚀 Step 2 — Use the Skill
-
-Open your project in your **AI agent** (Codex, Claude Code, Cursor, or Windsurf).
-
-Then type this in the chat:
-
-```
+```text
 /safe-code
 ```
 
-Hit Enter. The agent will do all of this automatically:
+safe-code creates or reconciles:
 
+```text
+AGENTS.md
+CHANGELOG.md
+context/
+  project-overview.md
+  architecture.md
+  code-standards.md
+  ai-workflow-rules.md
+  ui-context.md
+  progress-tracker.md
+  current-issues.md
+  feature-specs/00-template.md
+.codex/agents/
+  ACTIVE.md
+  SESSION.md
+  LOG.md
+  BACKLOG.md
+  MEMORY.md
+  safe-refactor-code.md
 ```
-  /safe-code
-      │
-      ▼
-  ┌─────────────────────────────────────────────────────────┐
-  │  Step 0  Detect which agent you use                     │
-  │  Step 1  Create 8 project docs + populate AGENTS.md     │
-  │  Step 2  Load context                                   │
-  │  Step 3  Check git & backup                             │
-  │  Step 4  Scan for dead code                             │
-  │  Step 5  Show plan (asks you first)                     │
-  │  Step 6  Delete dead code slice by slice                │
-  │  Step 7  Refactor + update all docs                     │
-  │  Step 8  Print final report                             │
-  └─────────────────────────────────────────────────────────┘
+
+For Claude, Cursor, or Windsurf, the session folder may be `.claude/agents/`, `.cursor/agents/`, or `.windsurf/agents/`.
+
+## 3. Read Order
+
+Agents read `AGENTS.md` first. `AGENTS.md` points them to:
+
+1. `context/project-overview.md`
+2. `context/architecture.md`
+3. `context/code-standards.md`
+4. `context/ai-workflow-rules.md`
+5. `context/ui-context.md` for UI work
+6. `context/progress-tracker.md`
+7. active spec in `context/feature-specs/`
+
+Agents do not read `context/current-issues.md` unless you explicitly ask for issue/debug analysis.
+
+## 4. Feature Work
+
+Ask for a feature:
+
+```text
+/safe-code build email login with verification
 ```
 
-**You don't need to do anything** — just watch it work. If it's unsure about something, it will ask you before proceeding.
+safe-code should draft an active spec first:
 
-### What happens to AGENTS.md?
-
-On setup, safe-code scans your repo **before deciding what to do with `AGENTS.md`**:
-
-- It reads your `README`, config files, CI workflows, package manager files, and any existing instruction files
-- It extracts real, verified facts — exact commands, your stack, folder structure, quirks
-- If `AGENTS.md` already exists but is mostly empty or just auto-generated boilerplate, it fills it in properly
-- If `AGENTS.md` is short or generic, it treats it as thin and upgrades it into a useful handoff file
-- If `AGENTS.md` already has useful content, it audits and reconciles the file in place without overwriting anything good
-
----
-
-## 💾 Want to End the Session?
-
-If you want to stop and continue tomorrow, or switch to another project:
-
+```text
+context/feature-specs/01-email-login.md
 ```
+
+Then it implements only that spec, verifies, and drafts progress updates in `SESSION.md`.
+
+## 5. Current Issues
+
+`context/current-issues.md` is for you to write manually. It is gitignored and local only.
+
+Use it for errors, reproduction steps, logs, or screenshots notes.
+
+When ready, ask:
+
+```text
+Explore the current-issues.md file and deeply analyze the problem. Only when you have the analysis, give it back to me with the idea of how you're planning to solve it, and then wait for me to give you the green light to execute it.
+```
+
+The agent analyzes first and waits before fixing.
+
+## 6. Existing Projects
+
+For in-progress or finished projects, safe-code does not assume a blank slate.
+
+It inspects repo evidence first:
+
+- README files
+- package manifests and lockfiles
+- routes and entrypoints
+- schemas and migrations
+- tests and configs
+- existing instruction files
+
+Then it backfills context files from proven facts only. Unknowns go into `context/progress-tracker.md` Open Questions.
+
+## 7. Old safe-code Projects
+
+If a project already used the old continuity-only method, `/safe-code` migrates safely:
+
+- keeps old `.codex/agents/*` files
+- drafts new `context/` files from old docs and repo evidence
+- writes final context updates only on `/safe-code --save`
+
+After save, `context/` becomes the canonical project brain.
+
+## 8. Resume Work
+
+Use:
+
+```text
+/safe-code --continue
+```
+
+If you forget and type `/safe-code`, safe-code auto-detects saved unfinished work and resumes anyway.
+
+## 9. Save Work
+
+End a session with:
+
+```text
 /safe-code --save
 ```
 
-It will automatically do **11 things** in a few seconds:
+Save applies drafted context/doc updates, writes resume state, appends safe logs, wipes temporary session memory, and creates a local commit only. It never pushes.
 
-```
-  ✔  Save progress → ACTIVE.md
-  ✔  Write to diary → LOG.md
-  ✔  Update architecture → MEMORY.md
-  ✔  Clear working notes → SESSION.md
-  ✔  git init (if needed)
-  ✔  git add -A
-  ✔  git commit (with auto-generated message)
-  ✔  Print: commit hash + local-only status
-  ✔  Close this safe-code session
-```
+## 10. Helper Skills
 
-Next time you run `/safe-code`, it **auto-detects** the closed session and picks up from `ACTIVE.md`.
+You normally call only `/safe-code`.
 
----
+safe-code internally uses helper skills when needed:
 
-## 📁 What Files Get Created?
+- `senior-dev`
+- `build-graph`
+- `explore-codebase`
+- `codebase-pruner`
+- `safe-refactor-code`
+- `review-changes`
+- `debug-issue`
 
-After the first run, your project will have this structure:
-
-```
-your-project/
-├── AGENTS.md                    ← project rules, stack & real dev commands
-├── CHANGELOG.md                 ← history of changes
-└── .codex/                      ← (or .claude/ .cursor/ .windsurf/)
-    └── agents/
-        ├── ACTIVE.md            ← current status  (like a hard drive 💾)
-        ├── SESSION.md           ← working notes   (like RAM 🧠)
-        ├── LOG.md               ← diary of all decisions
-        ├── BACKLOG.md           ← list of pending tasks
-        ├── MEMORY.md            ← big picture of the project
-        └── safe-refactor-code.md ← refactor rules
-```
-
-> 💡 **ACTIVE.md** = like a hard drive — persists even after you close everything
-> 💡 **SESSION.md** = like RAM — cleared every time you run `/safe-code --save`
-> 💡 **AGENTS.md** = populated with real project context, not generic placeholders
-
----
-
-## 🎛️ Three Commands
-
-You only need these:
-
-| What you want to do | Command |
-|---|---|
-| First-time setup or fresh hygiene pass | `/safe-code` |
-| Continue from saved docs without hallucinating context | `/safe-code --continue` |
-| Save docs, commit locally, and close session | `/safe-code --save` |
-
-safe-code chooses the safest internal mode automatically: orientation, audit, or cleanup. It also auto-runs helper skills for graph build, repo exploration, dead-code pruning, refactor checks, review, and debugging when needed. If `uvx` is available, safe-code can create project-local `.mcp.json` for graph mode automatically.
-
-Every run also keeps a task checklist in `SESSION.md`, so the agent tracks progress instead of guessing what is done.
-
----
-
-## 🔄 Updating the Skill
-
-When a new version is available:
-
-```bash
-# Update all skills
-npx skills update
-
-# Check for updates without installing
-npx skills check
-
-# Update one specific skill
-npx skills update --skill safe-code
-```
-
----
-
-## 🗑️ Removing the Skill
-
-```bash
-# Remove all eight
-npx skills remove safe-code codebase-pruner safe-refactor-code senior-dev build-graph explore-codebase review-changes debug-issue
-
-# Remove just one
-npx skills remove safe-code
-```
-
-> **Note:** Removing the skill does not delete the docs already created in your project (`AGENTS.md`, `.codex/`, etc.). Those stay unless you delete them manually.
-
----
-
-## ❓ Questions Beginners Usually Ask
-
-**"Does the AI delete things without asking me?"**
-No. It shows you the plan first and asks whenever it's unsure. It only deletes code it's confident about — and it verifies each small slice before moving on.
-
-**"What if the agent accidentally deletes something important?"**
-It auto-rolls back if any slice fails verification. And because you have git, you can always run `git checkout -- filename` to restore any file.
-
-**"Do I need internet to use this?"**
-Only during install (`npx skills add ...`). After that, the skills live on your machine — no internet needed.
-
-**"Will this delete my actual source code?"**
-It only removes **dead code** — code that nothing in the project calls or uses anymore. All active code is untouched.
-
-**"Why does AGENTS.md look detailed after the first run?"**
-Because safe-code scans your repo first before writing it. The goal is a file that any AI agent can read and immediately understand your project — your stack, your commands, your quirks — without asking.
-
-**"How do I know if the skill is installed?"**
-```bash
-npx skills list
-```
-
----
-
-## 💡 Tips for Beginners
-
-**Start with `/safe-code`.**
-If your repo is new, dirty, or risky, it will naturally stay in audit/documentation mode.
-
-**Make sure git is clean before starting.**
-Run `git status` first. If you have uncommitted changes, do `git commit` before running the skill. This gives you a safety net.
-
-**Don't be afraid.**
-This skill was designed to be safe. The agent asks you when it has doubts. You are always in control.
+Helper skills analyze first. Cleanup/refactor runs only when scoped and evidence-backed.

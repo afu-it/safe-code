@@ -1,8 +1,8 @@
 # safe-code
 
-> **Three clear commands. Full repo hygiene.** First run, context-safe continue, and clean handoff.
+> **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-2.8-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-2.9-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -25,193 +25,207 @@ Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
 
 ---
 
-## What It Does
+## Three Commands
 
-You run one of three commands. The agent does everything else:
+| Command | What it does |
+|---|---|
+| `/safe-code` | Setup, auto-resume saved work, or run a fresh hygiene pass |
+| `/safe-code --continue` | Explicitly resume saved work |
+| `/safe-code --save` | Finalize context/docs, commit locally, and close session |
+
+If users forget `--continue`, `/safe-code` auto-detects saved unfinished state and resumes.
+
+---
+
+## How It Works
 
 ```
 /safe-code
 ```
 
 ```
- Step 0  →  Detect active agent (Codex / Claude / Cursor / Windsurf)
- Step 1  →  Create 8 continuity docs + populate AGENTS.md with real project context
- Step 2  →  Load first-run context, or use --continue for saved session context
- Step 3  →  Check git state + detect remote platform + update graph when available
- Step 4  →  Audit codebase — find dead code candidates with graph + manual checks
- Step 5  →  Plan + pick execution mode (auto / ask / plan-only)
- Step 6  →  Remove dead code slice by slice, verify each one
- Step 7  →  Refactor affected code + auto-review changes + sync all docs
- Step 8  →  Print full session summary
+ Step 0  →  Detect active agent and project root
+ Step 1  →  Create/reconcile AGENTS.md, context/, and session docs
+ Step 2  →  Load AGENTS.md first, then context files, then saved state if present
+ Step 3  →  Check git rollback safety + graph readiness
+ Step 4  →  Explore/audit repo facts before writing context
+ Step 5  →  Draft or read active feature spec when building a feature
+ Step 6  →  Execute scoped code changes, cleanup, or refactor only when in scope
+ Step 7  →  Verify, review, debug failures if needed
+ Step 8  →  Draft context/doc updates in SESSION.md
+--save   →  Apply final context/docs + local commit only
 ```
 
-Nothing is deleted without a rollback path. Nothing is pushed by safe-code.
-
-safe-code follows a **measure twice, cut once** policy: every run keeps a visible task checklist in `SESSION.md`, verifies each meaningful step before marking it done, and moves unfinished work into `ACTIVE.md` on `/safe-code --save`.
+Nothing is pushed. Nothing risky is deleted without rollback evidence.
 
 ---
 
-## Three Commands. That's It.
+## Context + Session Docs
 
-| Command | What it does |
-|---|---|
-| `/safe-code` | First-time setup or fresh full hygiene pass |
-| `/safe-code --continue` | Resume from continuity docs without hallucinating context |
-| `/safe-code --save` | End the session: update docs, initialize local git if needed, commit locally, clear working memory |
+Every project gets one root entry point, project context, feature specs, and runtime session state:
 
-### Saving a session does 11 things automatically:
-
-```
-1.  Migrate working notes  →  ACTIVE.md
-2.  Update session state   →  ACTIVE.md (Last Session block)
-3.  Append to diary        →  LOG.md
-4.  Update architecture    →  MEMORY.md (if changed)
-5.  Update release notes   →  CHANGELOG.md (if releasable)
-6.  Trim old logs          →  LOG.md (archive if > 200 lines)
-7.  Wipe working memory    →  SESSION.md (reset to blank)
-8.  Ensure local git repo  →  git init if needed
-9.  Stage all changes      →  git add -A
-10. Commit locally         →  git commit -m "safe-code: YYYY-MM-DD - summary"
-11. Report                 →  print commit hash + local-only status + session closed
-```
-
----
-
-## The 8 Continuity Docs
-
-Every project gets these files, created once and kept in sync:
-
-```
+```text
 your-project/
-├── AGENTS.md                    ← rules, stack, coding standards
-├── CHANGELOG.md                 ← release history
-└── .codex/agents/               ← (or .claude/ .cursor/ .windsurf/)
-    ├── ACTIVE.md                ← current task + resume point  💾 hard disk
-    ├── SESSION.md               ← working notes this session   🧠 RAM
-    ├── LOG.md                   ← append-only typed diary
-    ├── BACKLOG.md               ← task queue (High / Medium / Low)
-    ├── MEMORY.md                ← architecture snapshot
-    └── safe-refactor-code.md   ← refactor rules + flagged code
+├── AGENTS.md
+├── CHANGELOG.md
+├── context/
+│   ├── project-overview.md
+│   ├── architecture.md
+│   ├── code-standards.md
+│   ├── ai-workflow-rules.md
+│   ├── ui-context.md
+│   ├── progress-tracker.md
+│   ├── current-issues.md        # local-only, gitignored, user-written
+│   └── feature-specs/
+│       └── 00-template.md
+└── .codex/agents/               # or .claude/.cursor/.windsurf
+    ├── ACTIVE.md
+    ├── SESSION.md
+    ├── LOG.md
+    ├── BACKLOG.md
+    ├── MEMORY.md
+    └── safe-refactor-code.md
 ```
 
-> **ACTIVE.md** persists across sessions (like a hard disk).
-> **SESSION.md** is wiped on every `/safe-code --save` (like RAM).
-
-### How AGENTS.md is maintained
-
-On setup, safe-code **investigates the repo before deciding what to do with `AGENTS.md`**:
-
-- Reads `README*`, manifests, lockfiles, CI workflows, existing instruction files
-- Extracts only high-signal facts: exact commands, stack quirks, folder structure, conventions
-- Creates or populates missing/thin files, and reconciles existing files in place
-- Treats short generic files as thin even if they contain a few project-specific lines
-- Treats an already populated file as `unchanged` only after auditing it against the current repo
-- Every line must answer: *"Would an agent miss this without help?"* — if not, it's left out
+- `AGENTS.md` stays at root and tells agents what to read first.
+- `context/` is canonical long-term project brain.
+- `context/feature-specs/` holds AI-written build specs, one unit per file.
+- `context/current-issues.md` is manual user scratchpad, never committed.
+- `.codex/agents/` is runtime/session memory.
 
 ---
 
-## Eight Skills, One Ecosystem
+## Draft Until Save
 
+During work, safe-code drafts persistent documentation changes in `SESSION.md`.
+
+`/safe-code --save` applies final updates to:
+
+- `context/*.md`
+- `AGENTS.md`
+- `ACTIVE.md`
+- `LOG.md`
+- `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md` when triggered
+- `CHANGELOG.md` only for releasable changes
+
+Exceptions written before save:
+
+- missing scaffold files/folders
+- `/context/current-issues.md` gitignore rule
+- active feature specs in `context/feature-specs/`
+- code changes required by user task
+
+---
+
+## Existing Projects and Old Method Migration
+
+safe-code works for blank, in-progress, finished, and old safe-code projects.
+
+For existing projects:
+
+- reads repo evidence first: README, manifests, routes, schemas, tests, configs
+- backfills context files only from proven facts
+- places unknown facts in `context/progress-tracker.md` Open Questions
+- creates feature specs only for upcoming work, bugs, refactors, or missing documentation units
+
+For old safe-code projects:
+
+- keeps old continuity docs
+- migrates useful facts into `context/` as drafts
+- treats `context/` as canonical project context after `/safe-code --save`
+
+---
+
+## Feature Specs
+
+Feature specs are written by AI from user intent + context + repo evidence.
+
+Example:
+
+```text
+context/feature-specs/
+├── 01-design-system.md
+├── 02-editor.md
+└── 03-auth.md
 ```
-          you
-           │
-           ▼
-      /safe-code          ← first run / fresh pass
-           │
-     ┌─────┬──────┬──────────┬─────────┐
-     ▼     ▼      ▼          ▼         ▼
- senior build  codebase    safe-    review-
- dev    graph   pruner   refactor  changes
-                         code
-     │      │              │
-     ▼      ▼              ▼
- discipline explore      debug-
-            codebase     issue
 
-Step 3f  Step 4 & 6  Step 7  automatic review/debug support
+Each spec includes:
+
+- goal
+- scope and out-of-scope
+- design/behavior
+- likely touched files or areas
+- dependencies
+- verification checklist
+
+safe-code should not implement feature work without an active spec unless the user asks for a tiny direct edit.
+
+---
+
+## Current Issues
+
+`context/current-issues.md` is created by safe-code, but manually written by the user.
+
+It is gitignored:
+
+```gitignore
+/context/current-issues.md
 ```
 
-| Skill | Role | You call it? |
+User prompt inside the template:
+
+> Explore the current-issues.md file and deeply analyze the problem. Only when you have the analysis, give it back to me with the idea of how you're planning to solve it, and then wait for me to give you the green light to execute it.
+
+Agents do not read this file unless explicitly asked.
+
+---
+
+## Helper Skills
+
+Users normally call only `/safe-code`.
+
+| Skill | Role | Called by safe-code? |
 |---|---|---|
-| `safe-code` | Orchestrator — coordinates everything | ✅ Yes |
-| `senior-dev` | Senior engineering discipline, task lists, adversarial strategy critique, clean repo policy | ❌ Auto-applied by safe-code and usable alone |
-| `build-graph` | Builds or updates code-review graph | ❌ Called by safe-code |
-| `explore-codebase` | Graph-backed repo orientation and AGENTS.md facts | ❌ Auto-called by safe-code |
-| `codebase-pruner` | Finds + removes dead code | ❌ Called by safe-code |
-| `safe-refactor-code` | Refactors with graph impact checks + syncs docs | ❌ Called by safe-code |
-| `review-changes` | Delta/PR review with blast radius and tests | ❌ Auto-called after edits |
-| `debug-issue` | Graph-assisted bug tracing | ❌ Auto-called on failures or bugs |
+| `senior-dev` | Task lists, adversarial strategy, clean repo discipline | Yes |
+| `build-graph` | Graph build/update when available | Yes |
+| `explore-codebase` | Repo orientation and facts | Yes |
+| `codebase-pruner` | Dead-code analysis and scoped cleanup | When in scope |
+| `safe-refactor-code` | Refactor with impact checks | When in scope |
+| `review-changes` | Delta review before final summary | After edits/risk |
+| `debug-issue` | Failure/regression tracing | On failures/bugs |
 
-Helper skills are internal automation. Users only need `/safe-code`, `/safe-code --continue`, and `/safe-code --save`.
-
-Graph support comes from `code-review-graph` when available. On first run, safe-code can auto-create a project-local `.mcp.json` that uses `uvx code-review-graph serve` when `uvx` is installed. It does not edit global agent config or run global installs.
-
-If graph tools are unavailable, safe-code falls back to manual `rg`, manifest, config, and test-based analysis.
-
----
-
-## How Dead Code Removal Works
-
-The agent never deletes in bulk. It goes **one slice at a time**:
-
-```
-  Before executing, it prints a plan:
-
-  Slice 1: src/utils/old-helper.js → parseDate()
-    action : delete
-    verify : grep -r "parseDate" . → expect 0 results
-
-  Slice 2: src/api/legacy.js → LegacyRouter
-    action : delete
-    verify : npm test → expect all pass
-
-  Then executes slice 1 → verifies → slice 2 → verifies → ...
-  If any slice fails → rollback that slice only, continue the rest.
-```
+Helper skills analyze first and never make broad changes merely because `/safe-code` ran.
 
 ---
 
 ## Execution Modes
 
-The agent picks the right mode automatically:
-
 | Mode | When | What happens |
 |---|---|---|
-| **A — Auto** | Git clean, all high-confidence, no surprises | Runs fully on its own |
-| **B — Ask** | Dirty worktree, borderline cases, large scope | Shows plan, waits for your approval |
-| **C — Plan only** | No git, no rollback, or explicitly requested | Shows plan, does nothing |
+| **A — Auto** | Git clean, high-confidence, reversible | Runs scoped plan |
+| **B — Ask** | Dirty worktree, borderline, broad scope | Shows plan, waits |
+| **C — Plan only** | No rollback, orientation/audit, or requested | Findings only |
 
 ---
 
 ## What's New
 
-**v2.8** — safe-code now has explicit first-run, continue, and save commands.
+**v2.9** — six-file project context + feature specs.
 
-- `/safe-code` is first-time setup or a fresh hygiene pass.
-- `/safe-code --continue` forces context-safe resume from `AGENTS.md`, `ACTIVE.md`, `SESSION.md`, `LOG.md`, and memory files.
-- `/safe-code --save` saves handoff state, commits locally, wipes session RAM, and closes the session.
-- Deprecated forms `/safe-code save` and `/safe-code continue` now point to the flag commands.
-- Every run now maintains a `SESSION.md` task checklist and migrates unfinished items to `ACTIVE.md` on save.
+- Added `context/` project brain and `context/feature-specs/` build specs.
+- Added local-only `context/current-issues.md` template and gitignore rule.
+- `/safe-code` auto-resumes saved sessions when users forget `--continue`.
+- Persistent context/doc updates are drafted during work and finalized on `/safe-code --save`.
+- Old safe-code continuity docs migrate into new context files safely.
 
-**v2.7** — safe-code now integrates code-review-graph workflows without making them mandatory.
+**v2.8** — explicit first-run, continue, and save commands.
 
-- Added `senior-dev`, `build-graph`, `explore-codebase`, `review-changes`, and `debug-issue`.
-- `codebase-pruner` now uses graph dead-code, callers/importers, and impact-radius evidence when available.
-- `safe-refactor-code` now folds in graph-powered rename previews, affected flows, and post-change review.
-- `/safe-code` now performs a graph readiness check before audit and falls back cleanly when graph tools are missing.
-- `/safe-code` now auto-routes helper skills; users do not need to call helpers manually.
-
-**v2.6** — `/safe-code --save` initializes or uses local git and commits locally only. It never pushes to a remote.
-
-- `AGENTS.md` is audited every setup and only marked `unchanged` after checking it against current repo sources.
-- Missing, thin, and populated files all follow the same compact, verified, high-signal authoring rules.
-- `/safe-code` infers an internal profile: Orientation, Audit, or Cleanup. New/risky repos stay docs-and-audit only; stable repos with rollback can proceed to safe cleanup.
-- Replaced by v2.8 command contract: `/safe-code`, `/safe-code --continue`, and `/safe-code --save`.
+**v2.7** — code-review-graph and helper-skill orchestration.
 
 ---
 
 ## New to skills?
 
-Read the tutorial for a step-by-step setup guide:
+Read the tutorial for step-by-step setup:
 - [English tutorial](./TUTORIAL-EN.md)
 - [Tutorial Bahasa Melayu](./TUTORIAL-BM.md)

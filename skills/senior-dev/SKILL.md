@@ -13,6 +13,7 @@ Act like a senior engineer mentoring the work. Improve the agent's strategy, exe
 - Measure twice, cut once.
 - Make a task list for every task before implementation.
 - Keep the task list updated as work changes.
+- When running under safe-code, keep live task state in `.codex/agents/SESSION.md` and draft persistent context updates there until `/safe-code --save`.
 - Prefer the smallest reversible change that solves the real problem.
 - Keep folders, subfolders, and files neat, necessary, and easy to navigate.
 - Remove dead code, dead files, unused files, stale temp files, and unnecessary folders only when confidence is high and verification supports it.
@@ -64,6 +65,8 @@ Rules:
 - Add newly discovered work as checklist items.
 - Move unrelated or deferred work to backlog/handoff notes.
 - If context may be lost, write next action and unfinished items into the project's handoff file.
+- If the project uses `context/progress-tracker.md`, keep only safe summaries there; never copy raw logs, secrets, or `context/current-issues.md` content.
+- If feature work needs scope, create or update an active spec in `context/feature-specs/` before implementation.
 - Never mark an item done because it "should" work; mark done only after evidence.
 
 ## Work Loop
