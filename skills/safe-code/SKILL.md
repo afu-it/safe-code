@@ -1,6 +1,6 @@
 ---
 name: safe-code
-description: "Full repo hygiene in one pass. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Detects the active agent, initializes AGENTS.md, context files, and session docs inside the current project only, audits dead code in safe slices, refactors only when scoped, and drafts docs until /safe-code --save. /safe-code --save creates or uses a local git repo and commits locally only — it never pushes to a remote. Universal git remote detection is informational only. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
+description: "Full repo hygiene in one pass. Triggered by /safe-code and any host wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code) — all map to the same skill. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Initializes AGENTS.md, context files, and session docs in a single .agents/ folder inside the current project only, audits dead code in safe slices, refactors only when scoped, and drafts docs until /safe-code --save. /safe-code --save creates or uses a local git repo and commits locally only — it never pushes to a remote. Universal git remote detection is informational only. Use when asked to do a full cleanup, full hygiene pass, /safe-code (in any prefix form), or maintain a repo in one go."
 version: "3.0"
 ---
 
@@ -143,13 +143,37 @@ When two files disagree, prefer executable repo evidence first, then canonical h
 
 ---
 
+## Command Recognition (Read Before Parsing Any Command)
+
+Different hosts wrap skill invocation differently. Treat **all** of the following as the same `safe-code` invocation, then parse the trailing argument (if any) to pick the mode:
+
+```
+/safe-code            /skill:safe-code        /skills safe-code
+/skill safe-code      /skill safe-code        $safe-code
+@safe-code            safe-code               run safe-code
+```
+
+Normalization rule:
+
+1. Strip any host prefix or wrapper (`/`, `$`, `@`, `skill:`, `skill `, `skills `, `run `) and the `safe-code` name.
+2. Whatever remains is the **argument**. Map it to a mode:
+   - empty -> `/safe-code` (setup / auto-resume / fresh pass)
+   - `--continue`, `continue`, `-c`, `resume` -> continue mode
+   - `--save`, `save`, `-s`, `finish`, `end` -> save mode
+   - `fresh pass`, `fresh setup`, `ignore saved state` -> force a fresh pass
+3. The canonical forms are `/safe-code`, `/safe-code --continue`, `/safe-code --save`. Use them in your own output, but accept any wrapper the host produced.
+
+If the argument is unrecognized, default to plain `/safe-code` behavior and note which form you received. Never refuse a run just because the host used a different prefix.
+
+---
+
 ## Command: `/safe-code`
 
 Run setup, auto-resume, or a fresh hygiene pass.
 
 Behavior:
 
-1. Detect project root and active agent.
+1. Locate project root and the single `.agents/` folder.
 2. If saved unfinished safe-code state exists, automatically behave like `/safe-code --continue` and print: `Saved safe-code session found; resuming automatically. Say "fresh pass" to ignore saved state.`
 3. If no saved state exists, initialize/reconcile doc structure.
 4. If old safe-code continuity docs exist but `context/` is missing, run old-method migration.
