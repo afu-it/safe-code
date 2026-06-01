@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Full repo hygiene in one pass. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Detects the active agent, initializes AGENTS.md, context files, and session docs inside the current project only, audits dead code in safe slices, refactors only when scoped, and drafts docs until /safe-code --save. /safe-code --save creates or uses a local git repo and commits locally only — it never pushes to a remote. Universal git remote detection is informational only. Use when asked to do a full cleanup, full hygiene pass, /safe-code, or maintain a repo in one go."
-version: "2.9"
+version: "3.0"
 ---
 
 # Safe Code
@@ -15,14 +15,14 @@ Apply `$senior-dev` discipline throughout the run: task list first, measure twic
 **Everything operates inside the current project root only.**
 
 - Never read from or write to paths outside the current project root
-- Never use `~/`, `~/.codex/`, `~/.claude/`, or any home directory path
+- Never use `~/`, `~/.agents/`, or any home directory path
 - All paths are relative to the project root
 - The project root is the directory where the agent was invoked
 - Graph MCP bootstrap may create or update `<project-root>/.mcp.json` only. Do not auto-edit global agent MCP config.
 
 ```
-CORRECT: <project-root>/.codex/agents/ACTIVE.md
-WRONG:   ~/.codex/agents/ACTIVE.md
+CORRECT: <project-root>/.agents/ACTIVE.md
+WRONG:   ~/.agents/ACTIVE.md
 ```
 
 ---
@@ -44,19 +44,18 @@ WRONG:   ~/.codex/agents/ACTIVE.md
 │   ├── current-issues.md          <- local-only manual user scratchpad; gitignored
 │   └── feature-specs/             <- AI-written feature specs, one build unit per file
 │       └── 00-template.md
-└── .codex/
-    └── agents/                    <- safe-code runtime/session memory
-        ├── ACTIVE.md              <- saved resume point; written on /safe-code --save
-        ├── SESSION.md             <- working memory + draft doc/context updates
-        ├── LOG.md                 <- append-only safe diary; no raw secrets/log dumps
-        ├── BACKLOG.md             <- operational task queue
-        ├── MEMORY.md              <- temporary audit/refactor architecture notes
-        └── safe-refactor-code.md  <- refactor rules and flagged candidates
+└── .agents/                       <- safe-code runtime/session memory (agent-agnostic)
+    ├── ACTIVE.md                  <- saved resume point; written on /safe-code --save
+    ├── SESSION.md                 <- working memory + draft doc/context updates
+    ├── LOG.md                     <- append-only safe diary; no raw secrets/log dumps
+    ├── BACKLOG.md                 <- operational task queue
+    ├── MEMORY.md                  <- temporary audit/refactor architecture notes
+    └── safe-refactor-code.md      <- refactor rules and flagged candidates
 ```
 
-Same runtime/session structure for other agents: `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`.
+Session state lives in one shared `.agents/` folder at the project root, regardless of which agent (Codex, Claude, Cursor, Windsurf) is running. Continuity belongs to the project, not the tool.
 
-`context/` is canonical project context. `.codex/agents/` is operational session state.
+`context/` is canonical project context. `.agents/` is operational session state.
 
 ---
 
@@ -108,7 +107,7 @@ Do not load detail files unless the trigger condition is met.
 
 ## Project Context vs Session State
 
-| | `context/` | `.codex/agents/` |
+| | `context/` | `.agents/` |
 |---|---|---|
 | Purpose | Long-term project brain | Runtime/session memory |
 | Updated | Draft during work, finalize on `/safe-code --save` | `SESSION.md` during work; others on save |
@@ -136,9 +135,9 @@ Avoid duplicate truth. Each fact has exactly one canonical home:
 | Feature scope | `context/feature-specs/<nn-name>.md` | Do not spread feature requirements across progress notes |
 | Release/user-visible history | `CHANGELOG.md` | Use for Added/Changed/Removed/Fixed/Security entries only |
 | Raw issue data | `context/current-issues.md` | Local-only, user-written, gitignored |
-| Resume point | `<agents-folder>/ACTIVE.md` | Operational state only |
-| Live task list and drafts | `<agents-folder>/SESSION.md` | Wiped on save |
-| Cleanup/refactor candidates | `<agents-folder>/safe-refactor-code.md` | Not general architecture truth |
+| Resume point | `.agents/ACTIVE.md` | Operational state only |
+| Live task list and drafts | `.agents/SESSION.md` | Wiped on save |
+| Cleanup/refactor candidates | `.agents/safe-refactor-code.md` | Not general architecture truth |
 
 When two files disagree, prefer executable repo evidence first, then canonical home, then session notes. Record mismatch in `SESSION.md` and fix canonical home on `/safe-code --save`.
 
@@ -246,7 +245,7 @@ Default checklist:
 
 ```md
 ## Task List
-- [ ] Detect active agent and docs folder
+- [ ] Locate project root and `.agents/` folder
 - [ ] Initialize or reconcile AGENTS.md, context, and session docs
 - [ ] Detect saved state or old-method migration need
 - [ ] Load required context for this command
@@ -304,17 +303,15 @@ Reasoning:
 
 ---
 
-## Step 0: Detect Active Agent
+## Step 0: Locate Project Root
+
+Session state lives in a single agent-agnostic folder at the project root:
 
 ```
-if <project-root>/.codex/ exists    -> agents folder = <project-root>/.codex/agents/
-if <project-root>/.claude/ exists   -> agents folder = <project-root>/.claude/agents/
-if <project-root>/.cursor/ exists   -> agents folder = <project-root>/.cursor/agents/
-if <project-root>/.windsurf/ exists -> agents folder = <project-root>/.windsurf/agents/
-if none detected                    -> create <project-root>/.codex/agents/ and use it
+agents folder = <project-root>/.agents/
 ```
 
-Multiple folders found → reason which matches current agent. Do not ask user.
+No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.agents/` folder so continuity belongs to the project, not the tool. Create `<project-root>/.agents/` if it does not exist.
 
 ---
 
@@ -338,12 +335,12 @@ context/progress-tracker.md
 context/current-issues.md
 context/feature-specs/
 context/feature-specs/00-template.md
-<agents-folder>/ACTIVE.md
-<agents-folder>/SESSION.md
-<agents-folder>/LOG.md
-<agents-folder>/BACKLOG.md
-<agents-folder>/MEMORY.md
-<agents-folder>/safe-refactor-code.md
+.agents/ACTIVE.md
+.agents/SESSION.md
+.agents/LOG.md
+.agents/BACKLOG.md
+.agents/MEMORY.md
+.agents/safe-refactor-code.md
 ```
 
 Rules:
@@ -370,12 +367,12 @@ If the repo already has code, docs, manifests, routes, schemas, tests, or config
 Detect old-method projects by existing continuity docs with no `context/` folder:
 
 ```
-<agents-folder>/ACTIVE.md
-<agents-folder>/SESSION.md
-<agents-folder>/LOG.md
-<agents-folder>/BACKLOG.md
-<agents-folder>/MEMORY.md
-<agents-folder>/safe-refactor-code.md
+.agents/ACTIVE.md
+.agents/SESSION.md
+.agents/LOG.md
+.agents/BACKLOG.md
+.agents/MEMORY.md
+.agents/safe-refactor-code.md
 ```
 
 Migration mapping:
@@ -392,686 +389,27 @@ Migration rules:
 - Do not copy raw logs, secrets, stack traces, private URLs, or `current-issues.md` content into context files.
 - Mark uncertain migrated facts as Open Questions.
 - Store migration draft in `SESSION.md` first; apply final migrated context files on `/safe-code --save`.
-- After save, `context/` is canonical project context; `.codex/agents/` remains session state.
+- After save, `context/` is canonical project context; `.agents/` remains session state.
 
-### `<project-root>/AGENTS.md`
+### Doc + Session Templates (loaded on demand)
 
-Use this as the fallback shape for missing or thin files. Preserve generated blocks and verified existing project guidance.
+Do not inline template bodies here. When creating or reconciling scaffold files in Step 1, read the fallback shapes from the skill's `references/` folder and apply them only to missing files:
 
-```md
-# AGENTS.md
+- `references/agents-md-authoring.md` — `AGENTS.md` template **and** the canonical AGENTS.md authoring rules. This is the single source of truth for how to write `AGENTS.md`; helper skills defer to it when run under safe-code.
+- `references/doc-templates.md` — fallback shapes for `CHANGELOG.md`, every `context/*.md` file, and every `.agents/*.md` session file (ACTIVE, SESSION, BACKLOG, LOG, MEMORY, safe-refactor-code), including the Flagged Dead Code entry format.
 
-## Read First
-Read these files in order before implementation or architectural decisions:
-1. `context/project-overview.md`
-2. `context/architecture.md`
-3. `context/user-preferences.md`
-4. `context/code-standards.md`
-5. `context/ai-workflow-rules.md`
-6. `context/ui-context.md` if UI/design work
-7. `context/progress-tracker.md`
-8. Active spec in `context/feature-specs/` when implementing a feature
+Rules when applying templates:
 
-Do not read `context/current-issues.md` unless the user explicitly asks for debugging/issue analysis or references that file.
-
-## User Preference Detection
-- Always notice strong user preference language in chat.
-- Treat phrases like `I don't want`, `aku taknak`, `tak nak`, `I want`, `aku nak`, `please remove`, `remove this`, `I don't like`, `aku tak suka`, `I prefer`, `aku prefer`, `make it like this`, `jangan`, `must`, `always`, and `never` as preference candidates.
-- If preference is explicit and durable, draft an update for `context/user-preferences.md` in `SESSION.md`.
-- If preference affects current work, follow it immediately unless it conflicts with safety or repo evidence.
-- If preference is ambiguous, ask once or add it to `context/progress-tracker.md` Open Questions on save.
-- Do not bury durable preferences only in chat, `LOG.md`, or `progress-tracker.md`.
-
-## Feature Specs
-- Feature specs live in `context/feature-specs/`.
-- AI may draft feature specs from user intent, repo evidence, and context files.
-- Do not implement a feature until there is an active spec, unless the user explicitly asks for a tiny direct edit.
-- For new projects, create specs in planned build order: `01-design-system.md`, `02-editor.md`, etc.
-- For existing or in-progress projects, create specs only for upcoming work or unclear areas.
-- Each spec must include goal, scope, likely touched areas, acceptance checks, and out-of-scope items.
-
-## Session State
-Read before resuming safe-code work:
-- `<agents-folder>/ACTIVE.md`
-- `<agents-folder>/SESSION.md`
-
-## Project Facts
-<!-- Exact commands, env vars, setup gotchas, package manager, non-obvious repo facts. -->
-
-## Key Rules
-- Never read or write outside the project root.
-- Keep context updates drafted during work and finalized on `/safe-code --save`.
-- Verify before claiming completion.
-- Do not commit or publish `context/current-issues.md`.
-```
-
-When creating, populating, or reconciling `AGENTS.md`, do not fill the template blindly. Follow authoring rules below.
-
----
-
-#### AGENTS.md authoring rules (agent init style)
-
-Create or update `AGENTS.md` for this repository.
-
-The goal is a compact instruction file that helps future agent sessions avoid mistakes and ramp up quickly. Follow these rules instead of improvising.
-
-If the user provides focus or constraints in the `/safe-code` request, honor them while still verifying facts from the repo. Examples: "focus on onboarding agents", "document test commands", "preserve Claude/Cursor rules", or "do not mention deployment".
-
-**Decision test for every line**
-
-- Every line must answer: "Would an agent likely miss this without help?" If not, leave it out.
-- Prefer a smaller but accurate file over a long, vague one.
-
-**How to investigate**
-
-Always investigate the repo before editing `AGENTS.md`. Read the highest-value sources first, stopping when you have enough signal:
-
-- `README*`, root manifests, workspace config, and lockfiles
-  (for example: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `nx.json`, `pnpm-lock.yaml`, `bun.lockb`).
-- Build, test, lint, formatter, typecheck, and codegen config
-  (for example: `next.config.*`, `vite.config.*`, `tsconfig.json`, `eslint*`, `prettier*`, `tailwind.config.*`, `postcss.config.*`).
-- CI workflows, pre-commit hooks, and task runners
-  (for example: `.github/workflows`, `.husky/`, `.lintstagedrc*`, `lefthook.yml`, `justfile`, `Makefile`, `flake.nix`, Git hooks, monorepo task tools).
-- Existing instruction files
-  (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, `.cursorrules`, `.github/copilot-instructions.md`, or equivalents).
-
-If architecture is still unclear after reading config and docs, inspect a **small** number of representative code files to find the real entrypoints, package boundaries, and execution flow. Prefer files that explain how the system is wired together over random leaf files.
-
-**Source-of-truth rule**
-
-- Prefer executable sources of truth over prose. If docs conflict with scripts or config, trust the executable source.
-- Do not document anything you could not verify directly from the repo or from clearly trustworthy instruction files.
-
-**What to extract**
-
-Focus on high-signal facts that materially change how an agent should work in this repo:
-
-- Exact developer commands, especially non-obvious ones
-  (dev, build, lint, typecheck, unit tests, integration tests, migrations, codegen, seeding).
-- Missing expected commands when that absence matters
-  (for example: no `test` script, no `typecheck` script, no migration command wrapper).
-- How to run a single test, a single package, or a focused verification step.
-- Required command order when it matters (for example: `lint → typecheck → test`).
-- Setup prerequisites and required environment variables, especially database URLs, auth secrets, API keys, local services, and seed data.
-- Monorepo or multi-package layout: package boundaries, major directories, and real app/library entrypoints.
-- Framework or toolchain quirks: generated code, migrations, codegen outputs, build artefacts, special env loading, dev server behaviour, infra deploy flow.
-- Repo-specific style or workflow conventions that differ from common defaults.
-- Testing quirks: fixtures, integration test prerequisites, required services, snapshot workflows, slow or flaky suites.
-- Important constraints from existing instruction files that are still correct and useful.
-
-Good AGENTS.md content is hard-earned context that usually required reading multiple files to infer.
-
-**What to exclude**
-
-Do **not** put these into `AGENTS.md`:
-
-- Generic language or framework advice.
-- Long tutorials, how-tos, or exhaustive file trees.
-- Obvious conventions that any competent developer or model would already know.
-- Speculative statements, guesses, or anything not verified from the repo.
-- Content that belongs in another dedicated document already referenced from config.
-- Tool-specific config files unless they matter to universal agent handoff.
-
-When in doubt, omit.
-
-**Behaviour when AGENTS.md is missing vs existing**
-
-- If `AGENTS.md` is **missing**, effectively empty, or thin:
-  - Create or repopulate it using the authoring rules above and the template as a fallback shape.
-  - Include only sections backed by real, verified project details from the investigation above.
-  - Preserve any existing generated comment blocks at the top and append your sections after them.
-  - Ensure the result is useful as a first-read handoff for another AI agent without requiring it to inspect every config file first.
-- If `AGENTS.md` already contains real project context:
-  - Improve it in place rather than rewriting blindly.
-  - Preserve guidance that is still correct and high-signal.
-  - Delete or rewrite content that is clearly stale, generic, or contradicted by the current codebase.
-  - Reconcile differences in favour of executable sources (config, scripts, CI) while keeping any still-valid nuance from older instructions.
-  - Add missing high-signal facts discovered during investigation, even when the existing file is not empty.
-  - Do not report "AGENTS.md already has real project context, so it was not rewritten" as the decision. The required decision is whether it was `reconciled` or audited and `unchanged`, with a short reason.
-
-**Minimum quality bar after writing**
-
-Before marking `AGENTS.md` done, verify it answers these for the current repo:
-
-- What is this project and who/what uses it?
-- What exact commands should an agent run for dev, build, lint, typecheck, tests, migrations, codegen, or seeds when those exist?
-- What expected commands are intentionally absent or must be run through `npx`/tooling instead?
-- What env vars, local services, databases, or setup prerequisites are required?
-- What verification order should an agent use before claiming work is done?
-- What are the true runtime/framework/database/auth/i18n/styling/package-manager facts?
-- What directories and files are real entrypoints or source-of-truth wiring?
-- What repo-specific gotchas would an agent likely miss without this file?
-- Are any existing `AGENTS.md` claims contradicted by executable sources?
-- What existing instruction files or generated blocks must be preserved?
-
-If two or more answers are missing and discoverable from the repo, keep editing `AGENTS.md`; do not mark it `unchanged`, and do not finish with only a one-line reconciliation.
-
-If any existing `AGENTS.md` claim is contradicted by executable sources, fix that claim before finishing even when the file is otherwise compact and useful.
-
-**Questions to the user**
-
-- Only ask the user questions if the repo genuinely cannot answer something important:
-  - Undocumented team conventions or policies.
-  - Branch / PR / release expectations.
-  - Setup or test prerequisites that are known but not written down.
-- Ask at most one short batch of questions if needed.
-- Do **not** ask about anything the repo already makes clear.
-
-**Length and density**
-
-- For small repos, keep `AGENTS.md` short but ensure all critical commands, structure, and constraints are covered.
-- For larger repos, summarize only the structural facts and workflows that actually change how an agent should work.
-- Prefer short sections and bullets over long paragraphs.
-
----
-
-### `<project-root>/CHANGELOG.md`
-
-```md
-# CHANGELOG.md
-
-All notable changes documented here.
-Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-
----
-
-## [Unreleased]
-### Added
-- Project initialized
-
----
-<!-- ## [X.Y.Z] - YYYY-MM-DD -->
-<!-- ### Added / Changed / Deprecated / Removed / Fixed / Security -->
-```
-
----
-
-### `context/project-overview.md`
-
-```md
-# Project Overview
-
-## Overview
-<!-- What this project does, who it serves, and the problem it solves. -->
-
-## Goals
-1. <!-- Specific measurable goal. -->
-
-## Core User Flow
-1. <!-- Main path to value. -->
-
-## Features
-- <!-- Feature/category. -->
-
-## Scope
-### In Scope
-- <!-- Included work. -->
-
-### Out of Scope
-- <!-- Explicitly excluded work. -->
-
-## Success Criteria
-1. <!-- Verifiable condition. -->
-```
-
----
-
-### `context/architecture.md`
-
-```md
-# Architecture
-
-## Stack
-| Layer | Technology | Role |
-|---|---|---|
-| Runtime | | |
-| Framework | | |
-| UI | | |
-| Database | | |
-
-## System Boundaries
-- `folder/` — <!-- Ownership and responsibility. -->
-
-## Storage Model
-- **Database**: <!-- Metadata, ownership, relationships. -->
-- **File/Blob Storage**: <!-- Media, generated files, large artifacts. -->
-
-## Auth and Access Model
-- <!-- Authentication, ownership, authorization. -->
-
-## Invariants
-1. <!-- Rule the codebase must never violate. -->
-```
-
----
-
-### `context/user-preferences.md`
-
-```md
-# User Preferences
-
-Record only explicit user preferences or decisions confirmed by repeated conversation.
-Do not infer preferences from one ambiguous message.
-Do not store secrets, private logs, or temporary emotions.
-
-Agents should watch for strong preference phrases in chat, including:
-
-- `I don't want`, `I want`, `I don't like`, `I prefer`
-- `aku taknak`, `tak nak`, `aku nak`, `aku tak suka`, `aku prefer`
-- `please remove`, `remove this`, `make it like this`
-- `jangan`, `must`, `always`, `never`
-
-When detected, draft the preference in `SESSION.md` and apply it here on `/safe-code --save`.
-
-## Hard Preferences
-- <!-- Example: Use SVG icons only; do not use emoji icons. -->
-
-## Hard Dislikes / Avoid
-- <!-- Example: Avoid overcomplicated folder structures. -->
-
-## Style Preferences
-- <!-- Tone, UI style, naming, formatting preferences. -->
-
-## Workflow Preferences
-- <!-- How user wants agent to plan, save, ask, or execute. -->
-
-## Confirmed Decisions
-- <!-- Date — decision — reason. -->
-```
-
----
-
-### `context/code-standards.md`
-
-```md
-# Code Standards
-
-## General
-- <!-- Principle. -->
-
-## Language / Framework
-- <!-- Convention. -->
-
-## Styling
-- <!-- Rule. -->
-
-## API / Data Access
-- <!-- Rule. -->
-
-## File Organization
-- `folder/` — <!-- What belongs here. -->
-```
-
----
-
-### `context/ai-workflow-rules.md`
-
-```md
-# AI Workflow Rules
-
-## Approach
-- Work spec-first and incrementally.
-- Context files define what to build.
-- Keep implementation inside the active spec scope.
-
-## Scoping Rules
-- Work on one feature unit at a time.
-- Prefer small verifiable increments.
-- Do not combine unrelated boundaries in one step.
-
-## Handling Missing Requirements
-- Do not invent undefined behavior.
-- Draft ambiguity for `context/progress-tracker.md` Open Questions before implementing.
-
-## Protected Files
-- <!-- Files/folders requiring explicit instruction. -->
-
-## Before Moving On
-1. Active unit works within scope.
-2. No `context/architecture.md` invariant is violated.
-3. Verification passes or blocked reason is recorded.
-4. Draft progress update is ready for `/safe-code --save`.
-```
-
----
-
-### `context/ui-context.md`
-
-```md
-# UI Context
-
-## Theme
-<!-- Visual language, dark/light mode, density. -->
-
-## Colors
-| Role | CSS Variable | Value |
-|---|---|---|
-| Page background | `--bg-base` | |
-| Surface | `--bg-surface` | |
-| Primary text | `--text-primary` | |
-| Accent | `--accent-primary` | |
-| Border | `--border-default` | |
-
-## Typography
-| Role | Font | Variable |
-|---|---|---|
-| UI text | | `--font-sans` |
-| Code | | `--font-mono` |
-
-## Component Library
-<!-- e.g. shadcn/ui, Mantine, native components. -->
-
-## Layout Patterns
-- <!-- Common layouts. -->
-```
-
----
-
-### `context/progress-tracker.md`
-
-```md
-# Progress Tracker
-
-Update with safe summaries on `/safe-code --save`.
-
-## Current Phase
-- Not started
-
-## Current Goal
-- <!-- What is being built now. -->
-
-## Completed
-- None yet.
-
-## In Progress
-- None yet.
-
-## Next Up
-- <!-- First unit to build. -->
-
-## Open Questions
-- <!-- Unknown product/technical facts. -->
-
-## Architecture Decisions
-- <!-- Safe summaries only; include why. -->
-
-## Session Notes
-- <!-- Safe resume notes. No secrets, raw logs, or private URLs. -->
-```
-
----
-
-### `context/current-issues.md` — local-only manual scratchpad
-
-Add `/context/current-issues.md` to `.gitignore`.
-
-```md
-# Current Issues
-
-This file is a local-only manual scratchpad for the user.
-Do not commit this file.
-Do not paste secrets unless you understand the risk.
-AI agents should read this file only when the user explicitly asks for issue/debug analysis.
-
-## How To Ask The Agent
-
-Copy/paste this prompt when ready:
-
-> Explore the current-issues.md file and deeply analyze the problem. Only when you have the analysis, give it back to me with the idea of how you're planning to solve it, and then wait for me to give you the green light to execute it.
-
-## Issue
-<!-- Manually describe the problem here. -->
-
-## Error / Logs
-<!-- Manually paste error messages, stack traces, or relevant logs here. -->
-
-## Steps To Reproduce
-1. <!-- Step one -->
-2. <!-- Step two -->
-3. <!-- Step three -->
-
-## Expected Result
-<!-- What should happen instead. -->
-
-## Actual Result
-<!-- What happens now. -->
-
-## Notes
-<!-- URLs, screenshot notes, environment details, recent changes. -->
-```
-
----
-
-### `context/feature-specs/00-template.md`
-
-```md
-# Unit NN: Feature Name
-
-## Goal
-<!-- 1-2 sentences. Concrete output when complete. -->
-
-## Scope
-### In Scope
-- <!-- What will be built. -->
-
-### Out of Scope
-- <!-- What must not be touched. -->
-
-## Design / Behavior
-<!-- UI, API, data, and behavior decisions. Reference context files. -->
-
-## Implementation Notes
-- <!-- Files/areas likely touched. -->
-
-## Dependencies
-- <!-- package-name (reason), or None. -->
-
-## Verify When Done
-- [ ] <!-- Specific acceptance condition. -->
-- [ ] Build/typecheck/test command passes if available.
-- [ ] No unrelated changes.
-```
-
----
-
-### `<agents-folder>/ACTIVE.md` — persistent state only
-
-```md
-# ACTIVE.md
-_<DATE>_
-
-## Before
-last_saved: -
-completed_last: none
-
-## Current
-task: init
-step: step 1 — initialize doc structure
-mode: -
-
-## Blocked
-none
-
-## Next
-- <what comes after current task>
-
----
-
-## Last Session
-status: none
-saved_at: -
-completed: []
-pending: []
-next_action: none
-```
-
----
-
-### `<agents-folder>/SESSION.md` — working memory RAM (wipe on save)
-
-```md
-# SESSION.md
-_<DATE> <TIME>_
-> Temporary working memory. Auto-wiped on /safe-code --save.
-> Do NOT rely on this for persistent state — use ACTIVE.md.
-
-## Working Now
-<!-- What is being actively processed this moment -->
-
-## Task List
-- [ ] Detect active agent and docs folder
-- [ ] Initialize or reconcile AGENTS.md, context, and session docs
-- [ ] Detect saved state or old-method migration need
-- [ ] Load required context for this command
-- [ ] Draft or update active feature spec if needed
-- [ ] Check git state and rollback safety
-- [ ] Check or bootstrap graph support when useful
-- [ ] Explore repo facts before context backfill
-- [ ] Audit dead code and stale files only when in scope
-- [ ] Decide run profile and execution mode
-- [ ] Execute scoped code changes if requested
-- [ ] Review changes and test coverage
-- [ ] Debug verification failures, if any
-- [ ] Draft docs/context updates in SESSION.md
-- [ ] Save final docs/context updates on /safe-code --save
-
-## Temp Decisions
-<!-- Decisions made mid-session, not yet committed to ACTIVE.md -->
-
-## Mid-Step Notes
-<!-- Notes for current step only — discard after step completes -->
-
-## Carry Forward
-<!-- Important findings to migrate into ACTIVE.md or context docs on save -->
-```
-
----
-
-### `<agents-folder>/BACKLOG.md`
-
-```md
-# BACKLOG.md
-_<DATE>_
-
-## High
-- [ ] <task>
-
-## Medium
-- [ ] <task>
-
-## Low / Nice to Have
-- [ ] <task>
-
-## Ideas
-- <not committed yet>
-
----
-> Move to ACTIVE.md when starting. Mark done with [x] + date.
-```
-
----
-
-### `<agents-folder>/LOG.md`
-
-```md
-# LOG.md
-> Append-only. Newest at top. Auto-trimmed when > 200 lines.
-> Each entry uses typed format: type, scope, topic, before, change, why, after.
-
-Valid types: init | decision | refactor | bugfix | risk | blocked | verify
-
----
-
-## <DATE TIME>
-type: init
-scope: project root
-topic: scaffold
-before: no doc structure existed
-change: created AGENTS.md, context files, CHANGELOG.md, and safe-code session docs
-why: first run of /safe-code — initializing context and session docs
-after: scaffold created, proceeding to Step 2
-
----
-```
-
----
-
-### `<agents-folder>/MEMORY.md`
-
-```md
-# MEMORY.md
-_<DATE>_
-
-## Architecture
-<!-- Current structure of the codebase -->
-
-## Source of Truth Files
-<!-- Files that define core behavior -->
-
-## Active Workarounds
-<!-- Temporary fixes still in place -->
-
-## Follow-up
-<!-- Things that still need to be done -->
-```
-
----
-
-### `<agents-folder>/safe-refactor-code.md`
-
-```md
-# safe-refactor-code.md
-
-## Safe to Touch
-<!-- Modules or files safe to refactor freely -->
-
-## Dangerous / Generated
-<!-- Files that should not be edited directly -->
-
-## Verification Commands
-<!-- e.g. npm run lint, npm test -->
-
-## Conventions
-<!-- Naming, import order, file structure rules -->
-
-## Surgical Change Rules
-- Touch only lines that directly fix the task — nothing else
-- Match existing style: quotes, spacing, naming, indent — even if you'd do it differently
-- Do NOT add type hints, docstrings, or comments unless explicitly asked
-- Do NOT reformat adjacent code while fixing something
-- Do NOT refactor things that aren't broken
-- Unrelated issues found → draft BACKLOG.md entry in SESSION.md, do not fix silently
-- Every changed line must trace back to the user's request
-
-Test: Can every diff line be justified by the task? If not, revert it.
-
-## Flagged Dead Code
-<!-- Structured entries below. Requires explicit user approval before deletion in Execute mode. -->
-
-## Pitfalls
-<!-- Things that broke before or are easy to get wrong -->
-```
-
-**Flagged Dead Code entry format:**
-
-```md
-### [<DATE>] <path/to/file>:<functionOrModule>
-scope: file | module | subsystem
-topic: <e.g. routing, auth, billing>
-confidence: High | Medium | Low
-reason: <why it is suspected dead>
-risk: Zero | Local | Cross-module | External
-action: auto-delete | manual review | skip
-```
-
+- Never overwrite a file that already exists; create missing files with the template shape only.
+- When creating, populating, or reconciling `AGENTS.md`, follow the authoring rules in `references/agents-md-authoring.md` instead of filling the template blindly.
+- Draft real content in `SESSION.md` and finalize on `/safe-code --save`, except scaffold files and active feature specs.
 ---
 
 ### 1c. Confirm Initialization
 
 ```
 Project root: <path>
-Agent: <agent>
-Agents folder: <project-root>/<agent-folder>/agents/
+Agents folder: <project-root>/.agents/
 
 Root:    AGENTS.md - <created|exists|populated>  |  CHANGELOG.md - <created|exists>
 Context: context/ - <created|exists|migrated>   |  feature-specs/ - <created|exists>
@@ -1532,11 +870,10 @@ Do not copy raw `current-issues.md` content, secrets, stack traces, private URLs
 ## Step 8: Final Summary
 
 ```
-=== safe-code v2.9 session complete ===
+=== safe-code v3.0 session complete ===
 
 Project root: <path>
-Agent: <agent>
-Agents folder: <agents-folder>
+Agents folder: <project-root>/.agents/
 Execution mode: <A | B | C>
 Run profile: <Orientation | Audit | Cleanup>
 Session type: <fresh | resumed from <saved_at>>

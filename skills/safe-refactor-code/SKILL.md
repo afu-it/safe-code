@@ -2,7 +2,7 @@
 name: safe-refactor-code
 description: "Refactor code safely in small verified slices while keeping repo continuity docs in sync. Uses code-review graph tools for rename previews, impact radius, affected flows, and post-change review when available. Use when an agent is asked to refactor, restructure, clean up, remove or replace code, modernize modules, or do follow-up hygiene in a repo."
 metadata:
-  version: "1.4"
+  version: "3.0"
 ---
 
 # Safe Refactor Code
@@ -38,34 +38,30 @@ Refactor code in small verified slices, then update the repo's continuity files 
 - If the host environment has its own global or shared memory system, treat that as separate from repo-local docs.
 - If the current repo uses different handoff files, adapt carefully but preserve the same responsibilities.
 
-## Step 0: Detect Active Agent and Doc Folder
+## Step 0: Locate Doc Folder
 
-Before editing code or docs, detect which agent is running:
+Session and continuity docs live in a single agent-agnostic folder at the repo root:
 
 ```
-if .codex/ exists    → agent = codex,     doc folder = .codex/memory/
-if .claude/ exists   → agent = claude,    doc folder = .claude/memory/
-if .cursor/ exists   → agent = cursor,    doc folder = .cursor/memory/
-if .windsurf/ exists → agent = windsurf,  doc folder = .windsurf/memory/
-if none found        → doc folder = repo root
+doc folder = <repo-root>/.agents/
 ```
 
-If multiple agent folders exist, prefer the one matching the current running agent.
-
-Create `<agent-folder>/memory/` if it does not exist yet.
+No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.agents/` folder so continuity belongs to the repo, not the tool. Create `<repo-root>/.agents/` if it does not exist yet.
 
 Doc file locations:
 
 | File | Path |
 |---|---|
 | `AGENTS.md` | repo root (always) |
-| `MEMORY.md` | `<agent-folder>/memory/MEMORY.md` |
-| `CHANGELOG.md` | `<agent-folder>/memory/CHANGELOG.md` |
-| `safe-refactor-code.md` | `<agent-folder>/memory/safe-refactor-code.md` |
+| `MEMORY.md` | `.agents/MEMORY.md` |
+| `CHANGELOG.md` | repo root (always) |
+| `safe-refactor-code.md` | `.agents/safe-refactor-code.md` |
 
 ## Step 0.5: Assess and Write AGENTS.md
 
 This step is **mandatory**. Run it before reading or touching any code.
+
+> **Canonical authoring rules:** When running under `safe-code`, the single source of truth for how to write `AGENTS.md` is the safe-code skill's `references/agents-md-authoring.md` (decision test, investigation order, what to extract/exclude, minimum quality bar). Follow it instead of improvising. The compact rules below are the standalone fallback when that reference is not available.
 
 ### Detect if AGENTS.md is effectively empty
 
@@ -111,9 +107,9 @@ Preserve any existing generated blocks (`<!-- BEGIN:xxx -->`). Append the orient
 After writing `AGENTS.md`, inspect these files when present:
 
 - `AGENTS.md` at repo root (already written in Step 0.5)
-- `<agent-folder>/memory/safe-refactor-code.md`
-- `<agent-folder>/memory/MEMORY.md`
-- `<agent-folder>/memory/CHANGELOG.md`
+- `.agents/safe-refactor-code.md`
+- `.agents/MEMORY.md`
+- `.agents/CHANGELOG.md`
 
 If one is missing, create it only if the refactor work makes it useful.
 
@@ -156,7 +152,7 @@ Before syncing docs:
 
 ### 5. Sync Docs Before Finishing
 
-After real code changes, update the continuity files in the detected doc folder:
+After real code changes, update the continuity files in `.agents/` (and `AGENTS.md` + `CHANGELOG.md` at repo root):
 
 - `AGENTS.md` (repo root) — current state, key decisions, blockers, handoff notes
 - `safe-refactor-code.md` — repo-specific refactor constraints and recurring cleanup rules

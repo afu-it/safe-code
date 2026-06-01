@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-2.9-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-3.0-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -35,6 +35,16 @@ Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
 
 If users forget `--continue`, `/safe-code` auto-detects saved unfinished state and resumes.
 
+### Verify (optional)
+
+The conventions above are normally maintained by the agent. To check them deterministically — for a human, a CI step, or the agent itself — run the bundled script from anywhere inside the project:
+
+```bash
+bash scripts/check.sh
+```
+
+It verifies `AGENTS.md`, the `context/` files, and the `.agents/` session docs exist, flags a stale `SESSION.md`, detects legacy `.codex/agents` layouts to migrate, and **fails** (exit 1) if `context/current-issues.md` was accidentally committed. Warnings are advisory; only that hard check fails the run.
+
 ---
 
 ## How It Works
@@ -44,7 +54,7 @@ If users forget `--continue`, `/safe-code` auto-detects saved unfinished state a
 ```
 
 ```
- Step 0  →  Detect active agent and project root
+ Step 0  →  Locate project root (single agent-agnostic `.agents/` folder)
  Step 1  →  Create/reconcile AGENTS.md, context/, and session docs
  Step 2  →  Load AGENTS.md first, then context files, then saved state if present
  Step 3  →  Check git rollback safety + graph readiness
@@ -79,7 +89,7 @@ your-project/
 │   ├── current-issues.md        # local-only, gitignored, user-written
 │   └── feature-specs/
 │       └── 00-template.md
-└── .codex/agents/               # or .claude/.cursor/.windsurf
+└── .agents/                     # agent-agnostic session memory (Codex/Claude/Cursor/Windsurf)
     ├── ACTIVE.md
     ├── SESSION.md
     ├── LOG.md
@@ -94,7 +104,7 @@ your-project/
 - Agents watch for strong preference language like `I don't want`, `aku taknak`, `I prefer`, `please remove`, `jangan`, `always`, and `never`.
 - `context/feature-specs/` holds AI-written build specs, one unit per file.
 - `context/current-issues.md` is manual user scratchpad, never committed.
-- `.codex/agents/` is runtime/session memory.
+- `.agents/` is runtime/session memory, shared across agents.
 
 ---
 
@@ -212,6 +222,14 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v3.0** — unified session folder + leaner skill (breaking change).
+
+- **Breaking:** session/continuity docs now live in one agent-agnostic `.agents/` folder at the project root, replacing per-agent `.codex/agents/`, `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`, and the helper skills' `.codex/memory/`. Move existing `.codex/agents/*` files into `.agents/` to keep continuity.
+- Removed per-agent detection from the skills; continuity now belongs to the project, not the tool.
+- `CHANGELOG.md` is now consistently at the project root across all skills.
+- Slimmed `safe-code/SKILL.md` by moving doc/session templates into `skills/safe-code/references/`, loaded on demand per the Agent Skills spec.
+- AGENTS.md authoring rules now have one canonical home (`references/agents-md-authoring.md`); helper skills defer to it.
 
 **v2.9** — six-file project context + feature specs.
 

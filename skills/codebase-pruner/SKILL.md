@@ -32,19 +32,17 @@ Use this path before manual scanning when graph tools are available:
 
 If graph tools are unavailable, empty, or fail, continue with the manual entrypoint and reference graph workflow below. Do not lower deletion confidence because graph data is missing.
 
-## Step 0: Detect Active Agent and Doc Folder
+## Step 0: Locate Doc Folder
 
-Before reporting or editing, detect which agent is running:
+Session and continuity docs live in a single agent-agnostic folder at the repo root:
 
 ```
-if .codex/ exists    → agent = codex,     doc folder = .codex/memory/
-if .claude/ exists   → agent = claude,    doc folder = .claude/memory/
-if .cursor/ exists   → agent = cursor,    doc folder = .cursor/memory/
-if .windsurf/ exists → agent = windsurf,  doc folder = .windsurf/memory/
-if none found        → doc folder = repo root
+doc folder = <repo-root>/.agents/
 ```
 
-When flagging candidates that are not auto-deleted, write a note into `<agent-folder>/memory/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.
+No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.agents/` folder so continuity belongs to the repo, not the tool. Create `<repo-root>/.agents/` if it does not exist yet.
+
+When flagging candidates that are not auto-deleted, write a note into `.agents/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.
 
 `AGENTS.md` at repo root is always updated when significant dead code is found or removed.
 
@@ -221,7 +219,7 @@ Return:
 ### Audit Output
 
 ```text
-Agent detected: codex → doc folder: .codex/memory/
+Doc folder: .agents/
 Entrypoints mapped: 7
 Files scanned: 184
 
@@ -254,7 +252,7 @@ Slice 2 - Remove orphaned module src/adapters/old-client.ts
 
 Flagged for manual review:
   src/handlers/webhook-v1.ts:handleEvent - dynamic dispatch risk
-  → noted in .codex/memory/safe-refactor-code.md
+  → noted in .agents/safe-refactor-code.md
 ```
 
 ### Execute Output
@@ -267,9 +265,9 @@ Slice 2 complete: removed src/adapters/old-client.ts
   Verification: lint passed, import scan clean
 
 Summary:
-  Agent: codex → docs saved to .codex/memory/
+  Agent: docs saved to .agents/
   Removed: 1 file, 1 function, 5 commented blocks
-  Flagged: 1 candidate (noted in .codex/memory/safe-refactor-code.md)
+  Flagged: 1 candidate (noted in .agents/safe-refactor-code.md)
 ```
 
 ## Hard Rules
@@ -283,4 +281,4 @@ Summary:
 
 ## Escalation
 
-If widespread dead code appears beyond the user's requested area, switch to full-repo `Audit` mode before deleting more. Always note flagged but unremoved candidates in `<agent-folder>/memory/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.
+If widespread dead code appears beyond the user's requested area, switch to full-repo `Audit` mode before deleting more. Always note flagged but unremoved candidates in `.agents/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.

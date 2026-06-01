@@ -13,7 +13,7 @@ Act like a senior engineer mentoring the work. Improve the agent's strategy, exe
 - Measure twice, cut once.
 - Make a task list for every task before implementation.
 - Keep the task list updated as work changes.
-- When running under safe-code, keep live task state in `.codex/agents/SESSION.md` and draft persistent context updates there until `/safe-code --save`.
+- When running under safe-code, keep live task state in `.agents/SESSION.md` and draft persistent context updates there until `/safe-code --save`.
 - Prefer the smallest reversible change that solves the real problem.
 - Keep folders, subfolders, and files neat, necessary, and easy to navigate.
 - Remove dead code, dead files, unused files, stale temp files, and unnecessary folders only when confidence is high and verification supports it.

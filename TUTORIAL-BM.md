@@ -36,7 +36,7 @@ context/
   progress-tracker.md
   current-issues.md
   feature-specs/00-template.md
-.codex/agents/
+.agents/
   ACTIVE.md
   SESSION.md
   LOG.md
@@ -45,7 +45,7 @@ context/
   safe-refactor-code.md
 ```
 
-Untuk Claude, Cursor, atau Windsurf, folder session mungkin `.claude/agents/`, `.cursor/agents/`, atau `.windsurf/agents/`.
+Folder `.agents/` adalah agent-agnostic dan dikongsi merentas Codex, Claude, Cursor, dan Windsurf, jadi kesinambungan session kekal dengan projek.
 
 ## 3. Urutan Baca
 
@@ -116,7 +116,7 @@ Lepas itu baru backfill context dari fakta yang terbukti. Fakta yang tidak pasti
 
 Jika projek pernah guna method lama, `/safe-code` migrate dengan selamat:
 
-- kekalkan fail lama `.codex/agents/*`
+- kekalkan fail lama `.codex/agents/*` atau `.agents/*`
 - draft fail `context/` baru dari old docs dan repo evidence
 - tulis final context updates hanya bila `/safe-code --save`
 

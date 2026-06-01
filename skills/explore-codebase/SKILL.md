@@ -26,7 +26,9 @@ Use the code-review graph to understand the repository before editing.
 
 ## AGENTS.md Use
 
-When helping safe-code write or reconcile `AGENTS.md`, prefer graph-backed facts:
+When helping safe-code write or reconcile `AGENTS.md`, follow the canonical authoring rules in the safe-code skill's `references/agents-md-authoring.md` (decision test, investigation order, what to extract/exclude). This skill's job is to supply graph-backed facts that feed those rules, not to define a separate authoring process.
+
+Prefer graph-backed facts:
 
 - major communities and files
 - entry points and flows

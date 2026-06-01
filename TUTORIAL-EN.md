@@ -36,7 +36,7 @@ context/
   progress-tracker.md
   current-issues.md
   feature-specs/00-template.md
-.codex/agents/
+.agents/
   ACTIVE.md
   SESSION.md
   LOG.md
@@ -45,7 +45,7 @@ context/
   safe-refactor-code.md
 ```
 
-For Claude, Cursor, or Windsurf, the session folder may be `.claude/agents/`, `.cursor/agents/`, or `.windsurf/agents/`.
+The `.agents/` folder is agent-agnostic and shared across Codex, Claude, Cursor, and Windsurf, so session continuity stays with the project.
 
 ## 3. Read Order
 
@@ -116,7 +116,7 @@ Then it backfills context files from proven facts only. Unknowns go into `contex
 
 If a project already used the old continuity-only method, `/safe-code` migrates safely:
 
-- keeps old `.codex/agents/*` files
+- keeps old `.codex/agents/*` or `.agents/*` files
 - drafts new `context/` files from old docs and repo evidence
 - writes final context updates only on `/safe-code --save`
 
