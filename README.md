@@ -45,6 +45,15 @@ bash scripts/check.sh
 
 It verifies `AGENTS.md`, the `context/` files, and the `.agents/` session docs exist, flags a stale `SESSION.md`, detects legacy `.codex/agents` layouts to migrate, and **fails** (exit 1) if `context/current-issues.md` was accidentally committed. Warnings are advisory; only that hard check fails the run.
 
+Upgrading from a pre-3.0 install? Move legacy session folders into `.agents/` automatically:
+
+```bash
+bash scripts/migrate.sh           # preview (dry-run)
+bash scripts/migrate.sh --apply   # move files (uses git mv when tracked)
+```
+
+It never overwrites existing `.agents/` files, uses `git mv` to preserve history, and cleans up the empty legacy folders afterward.
+
 ---
 
 ## How It Works
@@ -225,7 +234,7 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 
 **v3.0** — unified session folder + leaner skill (breaking change).
 
-- **Breaking:** session/continuity docs now live in one agent-agnostic `.agents/` folder at the project root, replacing per-agent `.codex/agents/`, `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`, and the helper skills' `.codex/memory/`. Move existing `.codex/agents/*` files into `.agents/` to keep continuity.
+- **Breaking:** session/continuity docs now live in one agent-agnostic `.agents/` folder at the project root, replacing per-agent `.codex/agents/`, `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`, and the helper skills' `.codex/memory/`. Run `bash scripts/migrate.sh --apply` to move existing files into `.agents/` and keep continuity.
 - Removed per-agent detection from the skills; continuity now belongs to the project, not the tool.
 - `CHANGELOG.md` is now consistently at the project root across all skills.
 - Slimmed `safe-code/SKILL.md` by moving doc/session templates into `skills/safe-code/references/`, loaded on demand per the Agent Skills spec.

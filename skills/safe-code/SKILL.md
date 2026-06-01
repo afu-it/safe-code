@@ -397,6 +397,7 @@ Do not inline template bodies here. When creating or reconciling scaffold files 
 
 - `references/agents-md-authoring.md` — `AGENTS.md` template **and** the canonical AGENTS.md authoring rules. This is the single source of truth for how to write `AGENTS.md`; helper skills defer to it when run under safe-code.
 - `references/doc-templates.md` — fallback shapes for `CHANGELOG.md`, every `context/*.md` file, and every `.agents/*.md` session file (ACTIVE, SESSION, BACKLOG, LOG, MEMORY, safe-refactor-code), including the Flagged Dead Code entry format.
+- `references/examples.md` — worked end-to-end examples of correct runs (Orientation / Audit / Cleanup profiles and `--save`), plus anti-patterns. Read it when unsure what the *shape* of a good run looks like.
 
 Rules when applying templates:
 
