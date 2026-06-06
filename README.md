@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-3.1-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-3.2-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -231,6 +231,11 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v3.2** — context economy for long runs.
+
+- **Helper Execution Mode** — when the host supports fresh-context subagents (Claude Code Agent tool, Codex subtasks), read-only helpers (`$explore-codebase`, pruner audit, Step 4b config scan, review analysis) dispatch as subagents and return summaries, keeping the main context lean. Write-capable helpers stay inline. No subagent support → identical inline behavior as before.
+- **Context Checkpoint Rule** — `SESSION.md` is updated at phase boundaries (orientation/audit/config-audit done, each verified slice) and on context-pressure signals, so `ACTIVE.md` auto-resume survives mid-run compaction or session death. High pressure mid-run → checkpoint, then suggest `--save` + `--continue` in a fresh session instead of pushing through degraded context.
 
 **v3.1** — agent config trust audit.
 

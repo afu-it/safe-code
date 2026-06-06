@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Full repo hygiene in one pass. Triggered by /safe-code and any host wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code) — all map to the same skill. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Initializes AGENTS.md, context files, and session docs in a single .agents/ folder inside the current project only, audits dead code in safe slices, audits repo agent-config trust artifacts (.claude, .mcp.json, hooks, skills) for poisoned-config risk, refactors only when scoped, and drafts docs until /safe-code --save. /safe-code --save creates or uses a local git repo and commits locally only — it never pushes to a remote. Universal git remote detection is informational only. Use when asked to do a full cleanup, full hygiene pass, /safe-code (in any prefix form), or maintain a repo in one go."
-version: "3.1"
+version: "3.2"
 ---
 
 # Safe Code
@@ -581,6 +581,26 @@ This keeps LOG.md scannable without losing history.
 
 ---
 
+## Context Checkpoint Rule
+
+Long runs lose context to compaction. Unsaved state must never be the casualty.
+
+A checkpoint = update `SESSION.md` now (task list states, draft updates, current slice) so auto-resume from `ACTIVE.md`/`SESSION.md` works even if the session dies right after.
+
+Checkpoint triggers:
+
+```
+- A run phase completes: orientation done, audit done, config audit done,
+  each execute slice verified
+- Scope grows unexpectedly mid-run
+- The host warns about context pressure/compaction, or own output starts
+  referring to stale facts
+```
+
+If context pressure is high mid-run: checkpoint first, then suggest the user run `/safe-code --save` and resume with `/safe-code --continue` in a fresh session. Do not push through with degraded context.
+
+---
+
 ## Step 3: Git + Remote Check
 
 ### 3a. Check git repo state
@@ -754,6 +774,24 @@ Reasoning:
 | A test fails, verification fails, or user asks about a bug/regression | Run `$debug-issue` |
 
 Helper skills must not make broad changes merely because `/safe-code` ran. Their findings feed `SESSION.md` drafts and the safe-code task list first. If a helper skill cannot run, use its documented fallback behavior inside `/safe-code` and record the fallback in the final summary.
+
+### Helper Execution Mode
+
+When the host supports fresh-context subagents (Claude Code Agent tool, Codex subtasks, or equivalent), prefer dispatching **read-only** helpers as subagents so the main context stays lean on long runs:
+
+```
+Subagent-eligible (read-only): $explore-codebase, $codebase-pruner Audit mode,
+                               Step 4b config scan, $review-changes analysis
+Inline-only (writes or session state): $safe-refactor-code, $codebase-pruner Execute
+                               mode, $debug-issue fixes, all doc/session updates
+```
+
+Rules:
+
+- Dispatch with the query AND the run objective, so the subagent knows what matters in its summary.
+- Subagents return findings as summaries; merge them into `SESSION.md` drafts. Subagents never edit files or session docs.
+- Evaluate every subagent summary before accepting it; send a follow-up dispatch when key facts are missing (max 2 follow-ups, then continue with what exists).
+- No subagent support -> run helpers inline exactly as before. Outcomes must not depend on subagent availability.
 
 ---
 
@@ -929,7 +967,7 @@ Do not copy raw `current-issues.md` content, secrets, stack traces, private URLs
 ## Step 8: Final Summary
 
 ```
-=== safe-code v3.1 session complete ===
+=== safe-code v3.2 session complete ===
 
 Project root: <path>
 Agents folder: <project-root>/.agents/
