@@ -151,7 +151,7 @@ Tutup session dengan:
 /safe-code --save
 ```
 
-Save akan apply draft context/docs, tulis resume state, append safe logs, wipe temporary session memory, dan buat local commit sahaja. Ia tidak push.
+Save akan apply draft context/docs, tulis resume state, append safe logs, wipe temporary session memory, dan pecahkan session jadi beberapa atomic conventional commit — local sahaja. Ia tidak push.
 
 Six-File Save Rule: setiap `/safe-code --save` update semua enam fail session dalam `.safe-code/`; fail yang tiada content baru tetap dapat date stamp terkini.
 

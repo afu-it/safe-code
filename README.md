@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.1-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.2-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -235,6 +235,10 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.2** — atomic commits on save.
+
+- **Atomic Commit Split** — `/safe-code --save` now splits one session into several atomic conventional commits grouped by logical change (code/behavior tasks first, then one final `docs:` bookkeeping commit for the `.safe-code/` session files), instead of one mixed commit. Tasks are annotated at completion with their touched paths + commit type so each maps cleanly to one commit. The commit gate is unchanged — still local-only, never pushed — and the split degrades safely to the old single-commit behavior when changes cannot be cleanly separated (logged as `atomic split skipped: <reason>`).
 
 **v4.1** — portable project brain: proactive context, cross-provider bridges, issue tracking, idea history, freshness checks, and a context self-test.
 

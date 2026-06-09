@@ -151,7 +151,7 @@ End a session with:
 /safe-code --save
 ```
 
-Save applies drafted context/doc updates, writes resume state, appends safe logs, wipes temporary session memory, and creates a local commit only. It never pushes.
+Save applies drafted context/doc updates, writes resume state, appends safe logs, wipes temporary session memory, and splits the session into atomic conventional commits — local only. It never pushes.
 
 Six-File Save Rule: every `/safe-code --save` updates all six session files in `.safe-code/`; files with no new content get a fresh date stamp.
 
