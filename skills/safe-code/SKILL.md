@@ -1,7 +1,7 @@
 ---
 name: safe-code
-description: "Full repo hygiene in one pass. Triggered by /safe-code and any host wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code) — all map to the same skill. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Source of truth is AGENTS.md + one .safe-code/ folder (context files, CHANGELOG.md, six session docs); also writes thin provider-bridge pointers so every host loads the same brain — never stores state in .codex/, .claude/, or .agents/. Every command auto-migrates legacy layouts and patches old config to the new version. /safe-code --save updates all six session files, then commits locally only — never pushes. First run reads the codebase and writes AGENTS.md + context files from repo evidence so agents don't hallucinate, plus provider-bridge pointers (CLAUDE.md, GEMINI.md, .github/copilot-instructions.md, .cursor) so Claude/Gemini/Copilot/Cursor auto-load the same brain in a fresh chat; tracks issues in the local-only current-issues.md when the user reports an error ('fix this', 'failed', 'got error'); and writes status-tracked feature-spec suggestions for every new feature idea, then verifies the written context with a closed-book self-test. Audits dead code in safe slices and repo agent-config trust artifacts (.claude, .mcp.json, hooks, skills) for poisoned-config risk. Use when asked to do a full cleanup, full hygiene pass, /safe-code (in any prefix form), or maintain a repo in one go."
-version: "4.1"
+description: "Full repo hygiene in one pass. Triggered by /safe-code and any host wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code) — all map to the same skill. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Source of truth is AGENTS.md + one .safe-code/ folder (context files, CHANGELOG.md, six session docs); also writes thin provider-bridge pointers so every host loads the same brain — never stores state in .codex/, .claude/, or .agents/. Every command auto-migrates legacy layouts and patches old config to the new version. /safe-code --save updates all six session files, then creates atomic conventional commits locally only — never pushes. First run reads the codebase and writes AGENTS.md + context files from repo evidence so agents don't hallucinate, plus provider-bridge pointers (CLAUDE.md, GEMINI.md, .github/copilot-instructions.md, .cursor) so Claude/Gemini/Copilot/Cursor auto-load the same brain in a fresh chat; tracks issues in the local-only current-issues.md when the user reports an error ('fix this', 'failed', 'got error'); and writes status-tracked feature-spec suggestions for every new feature idea, then verifies the written context with a closed-book self-test. Audits dead code in safe slices and repo agent-config trust artifacts (.claude, .mcp.json, hooks, skills) for poisoned-config risk. Use when asked to do a full cleanup, full hygiene pass, /safe-code (in any prefix form), or maintain a repo in one go."
+version: "4.2"
 ---
 
 # Safe Code
@@ -230,11 +230,45 @@ Save does these things:
    - safe-refactor-code.md -> apply flagged candidates and guardrail changes
 5. Update .safe-code/CHANGELOG.md only for releasable changes
 6. Ensure local git repo exists when allowed by current repo state
-7. Stage changes and create local commit only
-8. Report commit hash + local-only status + next action
+7. Split the session into atomic commits (Atomic Commit Split Rule below)
+8. Report commit hashes + types + local-only status + next action
 ```
 
 Do not push.
+
+### Atomic Commit Split Rule
+
+`/safe-code --save` turns the session's **one** save into **several atomic commits** grouped by logical change. The commit gate is unchanged: this still happens only at `--save`, stays **local-only, and never pushes**.
+
+Split procedure (best-effort):
+
+1. Read `SESSION.md` completed tasks and each task's recorded touched paths + commit type (Task Annotation, Measure Twice section).
+2. Order commits: code/behavior tasks first in task order, then ONE final bookkeeping commit for the `.safe-code/` session files + `context/` updates.
+3. For each group, stage only that group's paths (`git add <paths>`) and commit with a conventional `type: subject` message derived from the task. Never use `--no-verify`.
+4. The six session files + `context/` updates are ALWAYS the last commit, never mixed with code: `docs: sync .safe-code session files`.
+5. Do not re-run verification between commits — each task was already verified per-slice during the run (Step 6). The split is a staging/commit operation over already-good changes. If a task's changes cannot stand alone, merge it with its dependency into one commit rather than emit a broken commit.
+
+Commit type mapping:
+
+| Work | type |
+|---|---|
+| dead-code removal, rename, restructure (Step 6/7) | `refactor` |
+| bug fix (`$debug-issue` / issue tracker) | `fix` |
+| new feature from a feature spec | `feat` |
+| test additions/changes | `test` |
+| `.safe-code/` session files, `context/`, `CHANGELOG.md`, `AGENTS.md` | `docs` |
+| config/tooling/`.gitignore` | `chore` |
+
+Fallback (degrade to single commit):
+
+```
+if hunks overlap across tasks, the task list is thin/unannotated,
+or changes cannot be cleanly separated:
+  -> stage everything, make ONE local commit (today's behavior)
+  -> append LOG.md note: "atomic split skipped: <reason>"
+```
+
+The save **never fails or blocks** because of splitting. Atomic splitting can only ever improve a save, never break one.
 
 ### Six-File Save Rule
 
@@ -296,6 +330,13 @@ Rules:
 - On `/safe-code --save`, migrate unfinished checklist items into `ACTIVE.md Last Session.pending` and `next_action`.
 - Do not claim completion unless the checklist, verification output, and final summary agree.
 - If verification fails, keep the task `[~]` or `[ ]`, add the failure note, and route to `$debug-issue` when appropriate.
+- When marking a task `[x]`, annotate it with the paths it touched and its commit type, so `/safe-code --save` can map each task to one atomic commit (Atomic Commit Split Rule). Record paths while the info is fresh; never reconstruct at save time. A missing annotation is a thin task list — the split falls back to a single commit.
+
+Task annotation format:
+
+```md
+- [x] remove unused dateUtil  · type: refactor · files: src/utils/dateUtil.ts
+```
 
 Default checklist:
 
@@ -1173,7 +1214,7 @@ Do not copy raw `current-issues.md` content, secrets, stack traces, private URLs
 ## Step 8: Final Summary
 
 ```
-=== safe-code v4.1 session complete ===
+=== safe-code v4.2 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
@@ -1185,6 +1226,7 @@ Graph:  <ready | unavailable | partial> | files: <count> | nodes: <count> | edge
 Git:    <repo found | not found> | <commit count> commits | branch: <branch>
 Remote: <URL | none>  [Bucket <A | B | C>]
 Save:   local commit only; no push
+Commits: <n atomic: type:subject, … | 1 (atomic split skipped: <reason>)>
 
 Files:
   Root:    AGENTS.md <created|populated|reconciled|unchanged>
