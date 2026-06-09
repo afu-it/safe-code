@@ -16,6 +16,7 @@ There are no tests or linters in the usual sense. The deterministic contract is 
 bash scripts/check.sh [project-root]      # verify safe-code conventions in a TARGET project
 bash scripts/migrate.sh                    # preview legacy-layout migration (dry-run)
 bash scripts/migrate.sh --apply [root]     # perform the migration (uses git mv when tracked)
+bash scripts/check-version.sh              # MAINTAINER guard: assert version agrees across SKILL.md + README
 ```
 
 - `check.sh` is the only thing that "fails" (exit 1) — and only on one hard check: a committed `.safe-code/context/current-issues.md` (it may hold secrets/logs). Everything else is an advisory warning. Both scripts locate the project root by walking up to the git toplevel / a safe-code marker, so they run against a *consumer* project, not this repo.
@@ -42,7 +43,7 @@ Because of this, **never inline template bodies or long detail into `SKILL.md`**
 
 ## Conventions that span multiple files (get these right)
 
-- **Version bumps are not single-edit.** A version string lives in at least five places that must move together: `SKILL.md` frontmatter `version:`, the Step 8 summary banner (`=== safe-code vX.Y session complete ===`), the `README.md` badge, the `README.md` "What's New" section, and both tutorials. A version change that only touches the frontmatter is incomplete — grep the whole repo for the old number before considering it done. (`safe-refactor-code/SKILL.md` carries its own `metadata.version` and can lag intentionally.)
+- **Version bumps are not single-edit.** A version string lives in at least five places that must move together: `SKILL.md` frontmatter `version:`, the Step 8 summary banner (`=== safe-code vX.Y session complete ===`), the `README.md` badge, the `README.md` "What's New" section, and both tutorials. A version change that only touches the frontmatter is incomplete — run `bash scripts/check-version.sh` (source of truth = `SKILL.md` frontmatter; it fails on any mismatch) and grep the repo for the old number before considering it done. (`safe-refactor-code/SKILL.md` carries its own `metadata.version` and can lag intentionally.)
 - **`scripts/check.sh` and `scripts/migrate.sh` encode SKILL.md's conventions.** If you add, rename, or move a session file or `context/` file in SKILL.md, update the hardcoded file lists in both scripts so the deterministic contract stays in sync with the prose.
 - **`--save` never pushes.** Any edit that touches the save flow must preserve "local commit only." (The current in-flight v4.2 work in `docs/superpowers/` splits that one commit into atomic conventional commits — still local-only.)
 - **Tutorials are bilingual.** `TUTORIAL-EN.md` and `TUTORIAL-BM.md` are parallel; user-facing behavior changes should update both.
