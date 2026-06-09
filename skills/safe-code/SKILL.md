@@ -59,7 +59,7 @@ WRONG:   ~/.safe-code/ACTIVE.md
 
 `/safe-code` keeps all continuity in **one** place — `AGENTS.md` + the `.safe-code/` folder are the single source of truth. It also writes thin **provider-bridge pointers** (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`) so hosts that do not auto-read `AGENTS.md` still load the same brain. Bridges hold no state — they only redirect to `AGENTS.md` and `.safe-code/`. Never store session/context docs in `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` — those are legacy layouts that get migrated into `.safe-code/` and removed (the bridge pointers above are not session state and are preserved).
 
-Everything lives in one shared `.safe-code/` folder at the project root, regardless of which agent (Codex, Claude, Cursor, Windsurf, Copilot, Gemini) is running. Continuity belongs to the project, not the tool. Not every host auto-reads `AGENTS.md` (Claude reads `CLAUDE.md`, Gemini reads `GEMINI.md`, Copilot reads `.github/copilot-instructions.md`, Cursor reads `.cursor/rules/`), so the provider bridges guarantee every host is pointed at the same `AGENTS.md` + `.safe-code/context/` brain.
+Everything lives in one shared `.safe-code/` folder at the project root, regardless of which agent (Codex, Claude, Cursor, Windsurf, Copilot, Gemini) is running — continuity belongs to the project, not the tool. (Per-host bridge mechanics are defined once in the Provider Bridge section, Step 1.)
 
 The six session files (`ACTIVE.md`, `SESSION.md`, `LOG.md`, `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md`) sit directly inside `.safe-code/`. `.safe-code/context/` is canonical project context; the six session files are operational session state.
 
@@ -591,19 +591,7 @@ All paths inside project root. Proceeding.
 
 ### 2a. Load Layer 1 (always, every session)
 
-```
-1. AGENTS.md
-2. .safe-code/context/project-overview.md
-3. .safe-code/context/architecture.md
-4. .safe-code/context/user-preferences.md
-5. .safe-code/context/code-standards.md
-6. .safe-code/context/ai-workflow-rules.md
-7. .safe-code/context/ui-context.md only for UI/design work
-8. .safe-code/context/progress-tracker.md Current Phase / Current Goal / Next Up / Open Questions only
-9. ACTIVE.md Before/Current/Next only, if present
-10. SESSION.md Carry Forward + Draft Updates only, if present
-11. LOG.md last 3 typed entries only, if present
-```
+Load the **Layer 1 — Entry** file set defined in *Loading Layers* above, reading only the indicated slice of each file. Do not keep a second copy of the list here (single source of truth).
 
 Do not read `.safe-code/context/current-issues.md` during normal work. Read and append to it on issue triggers ("fix this", "failed", "got error", pasted stack trace) or when the user references that file (Issue Tracking Rule).
 
@@ -651,25 +639,7 @@ if /safe-code --save:
   -> set next_action to first unfinished task
 ```
 
-Default checklist must include:
-
-```md
-- [ ] Load AGENTS.md and context files
-- [ ] Detect saved state / migration need
-- [ ] Check context freshness (drift vs last_synced_commit)
-- [ ] Draft or update active feature spec if needed
-- [ ] Check git state and rollback safety
-- [ ] Check graph readiness when useful
-- [ ] Explore repo facts before context backfill
-- [ ] Run context self-test after backfill (verify brain is sufficient)
-- [ ] Audit dead code/stale files only when in scope
-- [ ] Audit agent config trust artifacts when in scope
-- [ ] Select Orientation/Audit/Cleanup profile
-- [ ] Execute scoped code changes if requested
-- [ ] Verify changed behavior
-- [ ] Draft .safe-code/context/doc updates in SESSION.md
-- [ ] Save final .safe-code/context/session updates on /safe-code --save
-```
+Use the canonical **Default checklist** from the *Measure Twice, Cut Once Policy* section above as the base — do not maintain a second, divergent copy here (single source of truth). Then adapt it per the mode block above (fresh / resume / save).
 
 Update checklist after every major step. Never wait until final summary to mark progress.
 
