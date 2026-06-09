@@ -1,7 +1,10 @@
 # safe-code Skill Hardening Plan (#2 slim-down + #3 behavioral tests)
 
-> Status: **#3 started** (baseline run recorded, scaffold in `tests/safe-code/`).
-> **#2 is gated on #3** — do not start it until the test suite below is green.
+> Status: **#3 done** (7 invariants tested; results in `tests/safe-code/README.md`).
+> **#2 done, but rescoped** — a full reading showed SKILL.md is dense decision-logic,
+> not bloat, and the tests cover rules not step-execution, so an aggressive slim-down
+> was NOT warranted. #2 was scoped to safe internal dedup (see Outcome below).
+> #1 and #4 shipped earlier this session.
 
 **Why this order:** `SKILL.md` is ~1,250 lines / ~9,200 words of live behavioral
 instructions that the maintainer depends on daily. The `superpowers:writing-skills`
@@ -39,6 +42,23 @@ detail into `references/` (Layer 3), keeping `SKILL.md` a router of triggers + r
 - [ ] Target: meaningfully smaller Layer-1 load with zero behavioral regression. Do not chase an arbitrary word count at the cost of clarity.
 
 **Done when:** entry body is materially smaller AND every Task 3 scenario still passes.
+
+### Outcome — 2026-06-09 (rescoped)
+
+Full read of all 1,257 lines: the bulk is decision logic and behavioral contracts,
+not filler. The "<500 words" rubric target is for small, every-chat skills; safe-code
+is a heavy on-demand orchestrator (different class). The #3 tests protect *rules*, not
+*step execution*, so moving step procedures to references would be an unprotected,
+high-risk edit on a daily-driver skill. Decision: **do not** force an aggressive
+slim-down. Instead, fix the genuine defect the read surfaced — the skill violates its
+own **Source-of-Truth Ownership** rule with internal duplication:
+
+- Default checklist was written twice and had **diverged** (18 items vs 15) — consolidated to the canonical one in *Measure Twice*.
+- Layer-1 file list was duplicated (Loading Layers + Step 2a) — Step 2a now points at the canonical definition.
+- Provider-bridge mechanics were explained ~3× — trimmed the redundant prose, kept the canonical Provider Bridge section.
+
+Result: −30 lines, a real consistency bug fixed, every tested rule left inline and intact.
+No behavioral change → the 12 subagent scenarios did not need re-running.
 
 ## Risks
 
