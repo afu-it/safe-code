@@ -155,7 +155,17 @@ Save akan apply draft context/docs, tulis resume state, append safe logs, wipe t
 
 Six-File Save Rule: setiap `/safe-code --save` update semua enam fail session dalam `.safe-code/`; fail yang tiada content baru tetap dapat date stamp terkini.
 
-## 10. Helper Skills
+## 10. Explain Projek Anda (read-only)
+
+Lupa projek sendiri buat apa? Minta penerangan bahasa mudah:
+
+```text
+/safe-code --explain
+```
+
+Ayat biasa macam "explain my project" atau "apa projek aku" pun jadi. safe-code baca otak projek dan beritahu anda, dalam bahasa mudah, app ni buat apa, stack-nya, status sekarang, apa yang tengah dibuat, dan soalan terbuka. Ia tidak ubah apa-apa dan tidak commit.
+
+## 11. Helper Skills
 
 Biasanya anda hanya panggil `/safe-code`.
 

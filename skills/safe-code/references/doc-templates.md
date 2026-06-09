@@ -437,7 +437,8 @@ _<DATE>_
 ```md
 # LOG.md
 > Append-only. Newest at top. Auto-trimmed when > 200 lines.
-> Each entry uses typed format: type, scope, topic, before, change, why, after.
+> Each entry uses typed format: type, scope, topic, before, change, why, after, plain.
+> `plain:` is one sentence in plain language a non-coder can read.
 
 Valid types: init | decision | refactor | bugfix | risk | blocked | verify
 
@@ -451,6 +452,7 @@ before: no doc structure existed
 change: created AGENTS.md, context files, .safe-code/CHANGELOG.md, and safe-code session docs
 why: first run of /safe-code — initializing context and session docs
 after: scaffold created, proceeding to Step 2
+plain: set up the project's memory so any AI can pick up where we left off.
 
 ---
 ```

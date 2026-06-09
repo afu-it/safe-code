@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.2-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.3-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -25,13 +25,14 @@ Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
 
 ---
 
-## Three Commands
+## Commands
 
 | Command | What it does |
 |---|---|
 | `/safe-code` | Setup, auto-resume saved work, or run a fresh hygiene pass |
 | `/safe-code --continue` | Explicitly resume saved work |
 | `/safe-code --save` | Finalize context/docs, commit locally, and close session |
+| `/safe-code --explain` | Read-only: explain the project back in plain language (no changes) |
 
 If users forget `--continue`, `/safe-code` auto-detects saved unfinished state and resumes.
 
@@ -235,6 +236,13 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.3** — vibe-coder companion.
+
+- **`/safe-code --explain`** — a read-only command (also triggers on "explain my project") that reads the project brain back in plain language: what the app does, the stack in plain terms, current state, what's in progress, and open questions. No edits, no commits — for when you forget what your own project does.
+- **Smoke-verify after changes** — when code changed, safe-code runs the project's *documented* build/test command as a smoke check before the summary (routing failures to debugging); if none is known it says so. It never invents a command or drives the app.
+- **Plain-language LOG recap** — every `--save` LOG entry now carries a `plain:` one-line recap a non-coder can read, so the committed history is legible.
+- **Never-lose-context reminder (opt-in)** — an optional Claude Code hook (`integrations/claude-code/`) that nudges you to run `/safe-code --save` when a session ends with unsaved work. It only reminds — never commits.
 
 **v4.2** — atomic commits on save.
 

@@ -155,7 +155,17 @@ Save applies drafted context/doc updates, writes resume state, appends safe logs
 
 Six-File Save Rule: every `/safe-code --save` updates all six session files in `.safe-code/`; files with no new content get a fresh date stamp.
 
-## 10. Helper Skills
+## 10. Explain Your Project (read-only)
+
+Forgot what your own project does? Ask for a plain-language briefing:
+
+```text
+/safe-code --explain
+```
+
+Plain phrases like "explain my project" work too. safe-code reads the project brain and tells you, in plain words, what the app does, the stack, where it's at, what's in progress, and any open questions. It makes no changes and no commits.
+
+## 11. Helper Skills
 
 You normally call only `/safe-code`.
 

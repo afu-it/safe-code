@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.2"
+version: "4.3"
 ---
 
 # Safe Code
@@ -166,8 +166,9 @@ Normalization rule:
    - empty -> `/safe-code` (setup / auto-resume / fresh pass)
    - `--continue`, `continue`, `-c`, `resume` -> continue mode
    - `--save`, `save`, `-s`, `finish`, `end` -> save mode
+   - `--explain`, `explain`, `explain my project`, `what does my app do`, `apa projek` -> explain mode (read-only briefing)
    - `fresh pass`, `fresh setup`, `ignore saved state` -> force a fresh pass
-3. The canonical forms are `/safe-code`, `/safe-code --continue`, `/safe-code --save`. Use them in your own output, but accept any wrapper the host produced.
+3. The canonical forms are `/safe-code`, `/safe-code --continue`, `/safe-code --save`, `/safe-code --explain`. Use them in your own output, but accept any wrapper the host produced.
 
 If the argument is unrecognized, default to plain `/safe-code` behavior and note which form you received. Never refuse a run just because the host used a different prefix.
 
@@ -224,7 +225,8 @@ Save does these things:
 4. Update ALL SIX session files (Six-File Save Rule below):
    - ACTIVE.md            -> Last Session block + next_action
    - SESSION.md           -> wipe to clean carry-forward template
-   - LOG.md               -> append safe typed summary (then apply trim rule)
+   - LOG.md               -> append safe typed summary + a `plain:` one-line recap
+                            a non-coder can read (then apply trim rule)
    - BACKLOG.md           -> sync queue from SESSION.md drafts
    - MEMORY.md            -> apply drafted audit/refactor notes
    - safe-refactor-code.md -> apply flagged candidates and guardrail changes
@@ -278,7 +280,7 @@ Every `/safe-code --save` MUST update all six session files in `.safe-code/` —
 |---|---|
 | `ACTIVE.md` | Last Session block, pending list, `next_action` |
 | `SESSION.md` | Wiped to clean carry-forward template with fresh date stamp |
-| `LOG.md` | One new typed entry appended (even a short `verify`/`decision` entry) |
+| `LOG.md` | One new typed entry appended (even a short `verify`/`decision` entry), each carrying a `plain:` one-line recap a non-coder can read |
 | `BACKLOG.md` | Drafted items applied; otherwise refresh the `_<DATE>_` stamp |
 | `MEMORY.md` | Drafted notes applied; otherwise refresh the `_<DATE>_` stamp |
 | `safe-refactor-code.md` | Flagged candidates applied; otherwise refresh the `_<DATE>_` stamp |
@@ -299,6 +301,29 @@ Exceptions:
 - Update code files as required by the user task.
 
 The agent may append issue entries to `.safe-code/context/current-issues.md`, but must never copy its raw content (secrets, stack traces, private URLs) into any committed file.
+
+---
+
+## Command: `/safe-code --explain`
+
+Read the project brain back to the user in plain language. **Read-only: make no edits, no commits, no save, and run no hygiene pass.** This is for a non-technical user who wants to remember what their own project does.
+
+Behavior:
+
+1. If `.safe-code/context/` is missing or empty -> say there is no project brain yet and suggest running `/safe-code` first, then stop.
+2. Otherwise load `project-overview.md`, `architecture.md`, and `progress-tracker.md`, and brief the user in plain language — no jargon dumps, no raw file contents:
+
+```
+What it does:   <one or two sentences, and who it's for>
+Built with:     <stack in plain terms>
+Where it's at:  <current phase / what works now>
+In progress:    <current goal / next up>
+Open questions: <unknowns from progress-tracker, if any>
+```
+
+3. If the brain conflicts with executable repo evidence, trust the repo and say so briefly.
+
+Do not load Layer 3, run helpers, audit, or touch git. `--explain` answers a question; it never changes the repo.
 
 ---
 
@@ -1151,6 +1176,17 @@ Graph-aware refactors:
 
 Then automatically run `$review-changes` when code changed or graph/manual impact analysis reports Medium or High risk. Skip only for pure documentation/session updates.
 
+### Smoke-Verify After Changes
+
+When code changed, confirm nothing obviously broke before the final summary:
+
+- Run the project's **documented** build/test/run command (from `.safe-code/context/code-standards.md` or `architecture.md`) as a smoke check. Never invent a command.
+- Pass -> record `smoke-verify: passed (<command>)` in the final summary.
+- Fail -> route to `$debug-issue` on the failure before asking the user for help.
+- No documented command exists -> record `smoke-verify: no command available` and move on.
+
+Running a build/test does not mutate source, so this stays inside the existing safety mode.
+
 If verification fails or a regression appears, automatically run `$debug-issue` on the failing symptom before asking the user for help.
 
 ### Draft-Until-Save Sync Table
@@ -1184,7 +1220,7 @@ Do not copy raw `current-issues.md` content, secrets, stack traces, private URLs
 ## Step 8: Final Summary
 
 ```
-=== safe-code v4.2 session complete ===
+=== safe-code v4.3 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
@@ -1219,6 +1255,7 @@ Config audit: <clean | High: n, Medium: n | skipped: not in scope>
 Context self-test: <answerable n/n | gaps filled: n | open: n | skipped: not first-run>
 Refactors: <summary>
 Review:    <review-changes run | skipped: docs-only | unavailable fallback>
+Smoke:     <passed (<command>) | failed -> debug | no command available | skipped: docs-only>
 Debug:     <debug-issue run | not needed | unresolved blocker>
 Task list: <completed>/<total> complete; unfinished moved to <ACTIVE.md|BACKLOG.md|none>
 Follow-up saved for next `/safe-code --continue`: <list>
