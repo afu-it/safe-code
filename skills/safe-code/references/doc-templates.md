@@ -1,9 +1,9 @@
 # safe-code reference: doc + session templates
 
 > Loaded on demand by `/safe-code` during Step 1 (Initialize Doc Structure).
-> Fallback shapes for CHANGELOG.md, context/*.md, and .agents/*.md. Do not overwrite existing files.
+> Fallback shapes for .safe-code/CHANGELOG.md, .safe-code/context/*.md, and .safe-code/*.md. Do not overwrite existing files.
 
-### `<project-root>/CHANGELOG.md`
+### `<project-root>/.safe-code/CHANGELOG.md`
 
 ```md
 # CHANGELOG.md
@@ -24,7 +24,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
-### `context/project-overview.md`
+### `.safe-code/context/project-overview.md`
 
 ```md
 # Project Overview
@@ -54,7 +54,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
-### `context/architecture.md`
+### `.safe-code/context/architecture.md`
 
 ```md
 # Architecture
@@ -83,7 +83,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
-### `context/user-preferences.md`
+### `.safe-code/context/user-preferences.md`
 
 ```md
 # User Preferences
@@ -119,7 +119,7 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 
 ---
 
-### `context/code-standards.md`
+### `.safe-code/context/code-standards.md`
 
 ```md
 # Code Standards
@@ -142,7 +142,7 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 
 ---
 
-### `context/ai-workflow-rules.md`
+### `.safe-code/context/ai-workflow-rules.md`
 
 ```md
 # AI Workflow Rules
@@ -159,21 +159,21 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 
 ## Handling Missing Requirements
 - Do not invent undefined behavior.
-- Draft ambiguity for `context/progress-tracker.md` Open Questions before implementing.
+- Draft ambiguity for `.safe-code/context/progress-tracker.md` Open Questions before implementing.
 
 ## Protected Files
 - <!-- Files/folders requiring explicit instruction. -->
 
 ## Before Moving On
 1. Active unit works within scope.
-2. No `context/architecture.md` invariant is violated.
+2. No `.safe-code/context/architecture.md` invariant is violated.
 3. Verification passes or blocked reason is recorded.
 4. Draft progress update is ready for `/safe-code --save`.
 ```
 
 ---
 
-### `context/ui-context.md`
+### `.safe-code/context/ui-context.md`
 
 ```md
 # UI Context
@@ -205,7 +205,7 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 
 ---
 
-### `context/progress-tracker.md`
+### `.safe-code/context/progress-tracker.md`
 
 ```md
 # Progress Tracker
@@ -239,9 +239,9 @@ Update with safe summaries on `/safe-code --save`.
 
 ---
 
-### `context/current-issues.md` — local-only manual scratchpad
+### `.safe-code/context/current-issues.md` — local-only manual scratchpad
 
-Add `/context/current-issues.md` to `.gitignore`.
+Add `/.safe-code/context/current-issues.md` to `.gitignore`.
 
 ```md
 # Current Issues
@@ -280,7 +280,7 @@ Copy/paste this prompt when ready:
 
 ---
 
-### `context/feature-specs/00-template.md`
+### `.safe-code/context/feature-specs/00-template.md`
 
 ```md
 # Unit NN: Feature Name
@@ -312,7 +312,7 @@ Copy/paste this prompt when ready:
 
 ---
 
-### `.agents/ACTIVE.md` — persistent state only
+### `.safe-code/ACTIVE.md` — persistent state only
 
 ```md
 # ACTIVE.md
@@ -345,7 +345,7 @@ next_action: none
 
 ---
 
-### `.agents/SESSION.md` — working memory RAM (wipe on save)
+### `.safe-code/SESSION.md` — working memory RAM (wipe on save)
 
 ```md
 # SESSION.md
@@ -357,9 +357,9 @@ _<DATE> <TIME>_
 <!-- What is being actively processed this moment -->
 
 ## Task List
-- [ ] Locate project root and `.agents/` folder
+- [ ] Locate project root and `.safe-code/` folder
 - [ ] Initialize or reconcile AGENTS.md, context, and session docs
-- [ ] Detect saved state or old-method migration need
+- [ ] Detect saved state or legacy layout migration need
 - [ ] Load required context for this command
 - [ ] Draft or update active feature spec if needed
 - [ ] Check git state and rollback safety
@@ -385,7 +385,7 @@ _<DATE> <TIME>_
 
 ---
 
-### `.agents/BACKLOG.md`
+### `.safe-code/BACKLOG.md`
 
 ```md
 # BACKLOG.md
@@ -409,7 +409,7 @@ _<DATE>_
 
 ---
 
-### `.agents/LOG.md`
+### `.safe-code/LOG.md`
 
 ```md
 # LOG.md
@@ -425,7 +425,7 @@ type: init
 scope: project root
 topic: scaffold
 before: no doc structure existed
-change: created AGENTS.md, context files, CHANGELOG.md, and safe-code session docs
+change: created AGENTS.md, context files, .safe-code/CHANGELOG.md, and safe-code session docs
 why: first run of /safe-code — initializing context and session docs
 after: scaffold created, proceeding to Step 2
 
@@ -434,7 +434,7 @@ after: scaffold created, proceeding to Step 2
 
 ---
 
-### `.agents/MEMORY.md`
+### `.safe-code/MEMORY.md`
 
 ```md
 # MEMORY.md
@@ -455,10 +455,11 @@ _<DATE>_
 
 ---
 
-### `.agents/safe-refactor-code.md`
+### `.safe-code/safe-refactor-code.md`
 
 ```md
 # safe-refactor-code.md
+_<DATE>_
 
 ## Safe to Touch
 <!-- Modules or files safe to refactor freely -->

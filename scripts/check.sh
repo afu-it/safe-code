@@ -48,7 +48,7 @@ info() { printf "  %s%s%s\n" "$C_DIM" "$1" "$C_RST"; }
 # it is run inside:
 #   1. explicit arg
 #   2. git toplevel (natural project boundary; will not walk past it)
-#   3. walk up for safe-code markers (AGENTS.md / .agents/) when not in git
+#   3. walk up for safe-code markers (AGENTS.md / .safe-code/ / legacy .agents/)
 #   4. current directory
 find_root() {
 	if [ "${1:-}" != "" ] && [ -d "$1" ]; then
@@ -62,7 +62,7 @@ find_root() {
 	local dir
 	dir="$(pwd)"
 	while [ "$dir" != "/" ]; do
-		if [ -f "$dir/AGENTS.md" ] || [ -d "$dir/.agents" ]; then
+		if [ -f "$dir/AGENTS.md" ] || [ -d "$dir/.safe-code" ] || [ -d "$dir/.agents" ]; then
 			echo "$dir"
 			return
 		fi
@@ -92,63 +92,66 @@ git_tracked() { # is path tracked by git?
 # ---- 1. root entry point ----------------------------------------------------
 echo "Root files"
 [ -f AGENTS.md ] && pass "AGENTS.md present" || warn "AGENTS.md missing (run /safe-code to scaffold)"
-[ -f CHANGELOG.md ] && pass "CHANGELOG.md present" || warn "CHANGELOG.md missing"
+[ -f .safe-code/CHANGELOG.md ] && pass ".safe-code/CHANGELOG.md present" || warn ".safe-code/CHANGELOG.md missing"
 echo
 
-# ---- 2. context/ project brain ----------------------------------------------
-echo "context/ project brain"
-if [ -d context ]; then
-	pass "context/ present"
+# ---- 2. .safe-code/context/ project brain ------------------------------------
+echo ".safe-code/context/ project brain"
+if [ -d .safe-code/context ]; then
+	pass ".safe-code/context/ present"
 	for f in project-overview architecture user-preferences code-standards \
 		ai-workflow-rules ui-context progress-tracker; do
-		[ -f "context/$f.md" ] && pass "context/$f.md" || warn "context/$f.md missing"
+		[ -f ".safe-code/context/$f.md" ] && pass "context/$f.md" || warn "context/$f.md missing"
 	done
-	[ -d context/feature-specs ] && pass "context/feature-specs/" ||
+	[ -d .safe-code/context/feature-specs ] && pass "context/feature-specs/" ||
 		warn "context/feature-specs/ missing"
 else
-	warn "context/ missing (run /safe-code to scaffold)"
+	warn ".safe-code/context/ missing (run /safe-code to scaffold)"
 fi
 echo
 
-# ---- 3. .agents/ session state ----------------------------------------------
-echo ".agents/ session state"
-if [ -d .agents ]; then
-	pass ".agents/ present"
+# ---- 3. .safe-code/ session state ---------------------------------------------
+echo ".safe-code/ session state"
+if [ -d .safe-code ]; then
+	pass ".safe-code/ present"
 	for f in ACTIVE SESSION LOG BACKLOG MEMORY safe-refactor-code; do
-		[ -f ".agents/$f.md" ] && pass ".agents/$f.md" || warn ".agents/$f.md missing"
+		[ -f ".safe-code/$f.md" ] && pass ".safe-code/$f.md" || warn ".safe-code/$f.md missing"
 	done
 	# stale SESSION.md: working memory is meant to be wiped on --save.
-	if [ -f .agents/SESSION.md ]; then
-		if find .agents/SESSION.md -mtime +7 >/dev/null 2>&1 &&
-			[ -n "$(find .agents/SESSION.md -mtime +7 2>/dev/null)" ]; then
-			warn ".agents/SESSION.md not touched in 7+ days (stale? run /safe-code --save)"
+	if [ -f .safe-code/SESSION.md ]; then
+		if find .safe-code/SESSION.md -mtime +7 >/dev/null 2>&1 &&
+			[ -n "$(find .safe-code/SESSION.md -mtime +7 2>/dev/null)" ]; then
+			warn ".safe-code/SESSION.md not touched in 7+ days (stale? run /safe-code --save)"
 		fi
 	fi
 else
-	warn ".agents/ missing (run /safe-code to scaffold)"
+	warn ".safe-code/ missing (run /safe-code to scaffold)"
 fi
-# legacy layout detection
-for legacy in .codex/agents .claude/agents .cursor/agents .windsurf/agents .codex/memory; do
+# legacy layout detection (pre-v3 per-agent dirs + v3 .agents/ + v3 root context/)
+for legacy in .codex/agents .claude/agents .cursor/agents .windsurf/agents .codex/memory .agents; do
 	if [ -d "$legacy" ]; then
-		warn "legacy session folder '$legacy' found — move its *.md into .agents/ (v3.0)"
+		warn "legacy session folder '$legacy' found — run 'bash scripts/migrate.sh --apply' (v4.0)"
 	fi
 done
+if [ -d context ] && [ -f context/progress-tracker.md ]; then
+	warn "legacy v3 root context/ found — run 'bash scripts/migrate.sh --apply' (v4.0)"
+fi
 echo
 
 # ---- 4. current-issues.md must stay local (HARD) ----------------------------
 echo "current-issues.md (local-only, gitignored)"
-if [ -f context/current-issues.md ]; then
-	if git_tracked context/current-issues.md; then
-		fail "context/current-issues.md is COMMITTED to git — it may contain secrets/logs. Run: git rm --cached context/current-issues.md"
+if [ -f .safe-code/context/current-issues.md ]; then
+	if git_tracked .safe-code/context/current-issues.md; then
+		fail ".safe-code/context/current-issues.md is COMMITTED to git — it may contain secrets/logs. Run: git rm --cached .safe-code/context/current-issues.md"
 	else
-		pass "context/current-issues.md present and not tracked"
+		pass ".safe-code/context/current-issues.md present and not tracked"
 	fi
 fi
-if [ -f .gitignore ] && grep -qE '(^|/)context/current-issues\.md' .gitignore; then
-	pass ".gitignore covers context/current-issues.md"
+if [ -f .gitignore ] && grep -qE '(^|/)\.safe-code/context/current-issues\.md' .gitignore; then
+	pass ".gitignore covers .safe-code/context/current-issues.md"
 else
-	if [ -f context/current-issues.md ] || [ -d context ]; then
-		warn "add '/context/current-issues.md' to .gitignore"
+	if [ -f .safe-code/context/current-issues.md ] || [ -d .safe-code/context ]; then
+		warn "add '/.safe-code/context/current-issues.md' to .gitignore"
 	fi
 fi
 echo

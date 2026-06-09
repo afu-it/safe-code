@@ -11,14 +11,14 @@ Repo-controlled agent config is an execution surface. Poisoned project files can
 ```
 .claude/                       settings.json, settings.local.json, hooks/, commands/, skills/, agents/
 .mcp.json                      project-scoped MCP servers
-.agents/                       skill/rule files only — NOT session docs safe-code itself writes
-.cursor/  .windsurf/  .codex/  rules and config equivalents
+.agents/                       legacy v3 layout, if still present — skill/rule files only
+.cursor/  .windsurf/  .codex/  rules and config equivalents (legacy layouts flagged for migration)
 AGENTS.md  CLAUDE.md  GEMINI.md  and any rules/ folder they reference
 .vscode/settings.json          tasks/automation keys only
 .github/workflows/             only steps that invoke an AI agent or pipe remote content to shell
 ```
 
-Exclude: `.agents/ACTIVE.md`, `SESSION.md`, `LOG.md`, `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md` (safe-code session state), and `context/current-issues.md` (never read in normal work).
+Exclude: the six `.safe-code/` session docs (`ACTIVE.md`, `SESSION.md`, `LOG.md`, `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md` — safe-code writes these itself) and `.safe-code/context/current-issues.md` (never read in normal work).
 
 ## Checks
 

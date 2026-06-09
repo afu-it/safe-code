@@ -12,7 +12,7 @@ runs vary with the repo, but the discipline shown here should not.
 
 ## Example 1 — Orientation profile (fresh/empty repo)
 
-**Situation:** new repo, no commits, thin or missing `AGENTS.md`, no `context/`.
+**Situation:** new repo, no commits, thin or missing `AGENTS.md`, no `.safe-code/`.
 
 **Correct behavior:** scaffold docs, write only evidence-backed facts, touch no code.
 
@@ -28,10 +28,11 @@ Reasoning:
 
 What the run does:
 
-- Creates `AGENTS.md`, `context/*.md`, `.agents/*.md`, `context/feature-specs/`.
-- Adds `/context/current-issues.md` to `.gitignore`.
+- Creates `AGENTS.md` and the single `.safe-code/` folder: six session files,
+  `CHANGELOG.md`, `context/*.md`, and `context/feature-specs/` inside it.
+- Adds `/.safe-code/context/current-issues.md` to `.gitignore`.
 - Reads README, manifests, configs — writes facts it can prove into `SESSION.md`
-  as drafts (not yet into `context/`).
+  as drafts (not yet into `.safe-code/context/`).
 - Puts anything unverifiable into `progress-tracker.md` Open Questions.
 - Removes/refactors nothing. Execution mode is **C — Plan only**.
 
@@ -39,7 +40,7 @@ Good `SESSION.md` task list at this point:
 
 ```md
 ## Task List
-- [x] Locate project root and .agents/ folder
+- [x] Locate project root and .safe-code/ folder
 - [x] Initialize AGENTS.md, context, and session docs
 - [~] Explore repo facts before context backfill
 - [ ] Draft docs/context updates in SESSION.md
@@ -148,23 +149,26 @@ What `--save` does, in order:
 
 ```
 1. Review SESSION.md draft updates
-2. Apply approved updates to context/*.md and AGENTS.md
+2. Apply approved updates to .safe-code/context/*.md and AGENTS.md
 3. Update progress-tracker.md (safe summary only)
-4. Update ACTIVE.md Last Session + next_action
-5. Append a typed entry to LOG.md
-6. Update CHANGELOG.md ONLY for releasable changes
-7. Wipe SESSION.md to a clean carry-forward template
-8. Ensure a local git repo exists
-9. Stage + create a LOCAL commit only
-10. Report commit hash + local-only status + next action
+4. Update ALL SIX session files in .safe-code/ (Six-File Save Rule):
+   ACTIVE.md, SESSION.md (wiped), LOG.md (entry appended),
+   BACKLOG.md, MEMORY.md, safe-refactor-code.md
+   — files with no new content get a fresh date stamp
+5. Update .safe-code/CHANGELOG.md ONLY for releasable changes
+6. Ensure a local git repo exists
+7. Stage + create a LOCAL commit only
+8. Verify all six session files appear in the commit diff
+9. Report commit hash + local-only status + next action
 ```
 
 Sample close-out:
 
 ```
-=== safe-code v3.0 session complete ===
+=== safe-code v4.0 session complete ===
 Save: local commit only; no push
 Commit: a1b2c3d
+Six-file save: ACTIVE ✓ SESSION ✓ LOG ✓ BACKLOG ✓ MEMORY ✓ safe-refactor-code ✓
 Removed: src/utils/format.ts:legacyDate, src/legacy/old-uploader.ts
 Task list: 12/12 complete; unfinished: none
 Next /safe-code --continue: resume from "wire new uploader into routes"
@@ -191,7 +195,11 @@ it > Saved safe-code session found; resuming automatically.
 - Marking a task `[x]` before its verification ran. Done means *verified*.
 - Auto-promoting a MEDIUM candidate that has dynamic-dispatch/reflection risk.
 - Deleting code with no rollback path (no git, or dirty tree) without approval.
-- Writing real content into `context/*.md` mid-session instead of drafting in
-  `SESSION.md` and applying on `--save`.
+- Writing real content into `.safe-code/context/*.md` mid-session instead of
+  drafting in `SESSION.md` and applying on `--save`.
+- Creating `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` session
+  folders — `.safe-code/` is the only folder safe-code creates.
+- Saving without touching all six session files — an untouched file means an
+  incomplete save.
 - Pushing to a remote. safe-code never pushes.
 - Copying secrets, raw logs, or `current-issues.md` content into persistent docs.

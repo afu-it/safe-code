@@ -12,27 +12,27 @@ Use this as the fallback shape for missing or thin files. Preserve generated blo
 
 ## Read First
 Read these files in order before implementation or architectural decisions:
-1. `context/project-overview.md`
-2. `context/architecture.md`
-3. `context/user-preferences.md`
-4. `context/code-standards.md`
-5. `context/ai-workflow-rules.md`
-6. `context/ui-context.md` if UI/design work
-7. `context/progress-tracker.md`
-8. Active spec in `context/feature-specs/` when implementing a feature
+1. `.safe-code/context/project-overview.md`
+2. `.safe-code/context/architecture.md`
+3. `.safe-code/context/user-preferences.md`
+4. `.safe-code/context/code-standards.md`
+5. `.safe-code/context/ai-workflow-rules.md`
+6. `.safe-code/context/ui-context.md` if UI/design work
+7. `.safe-code/context/progress-tracker.md`
+8. Active spec in `.safe-code/context/feature-specs/` when implementing a feature
 
-Do not read `context/current-issues.md` unless the user explicitly asks for debugging/issue analysis or references that file.
+Do not read `.safe-code/context/current-issues.md` unless the user explicitly asks for debugging/issue analysis or references that file.
 
 ## User Preference Detection
 - Always notice strong user preference language in chat.
 - Treat phrases like `I don't want`, `aku taknak`, `tak nak`, `I want`, `aku nak`, `please remove`, `remove this`, `I don't like`, `aku tak suka`, `I prefer`, `aku prefer`, `make it like this`, `jangan`, `must`, `always`, and `never` as preference candidates.
-- If preference is explicit and durable, draft an update for `context/user-preferences.md` in `SESSION.md`.
+- If preference is explicit and durable, draft an update for `.safe-code/context/user-preferences.md` in `SESSION.md`.
 - If preference affects current work, follow it immediately unless it conflicts with safety or repo evidence.
-- If preference is ambiguous, ask once or add it to `context/progress-tracker.md` Open Questions on save.
+- If preference is ambiguous, ask once or add it to `.safe-code/context/progress-tracker.md` Open Questions on save.
 - Do not bury durable preferences only in chat, `LOG.md`, or `progress-tracker.md`.
 
 ## Feature Specs
-- Feature specs live in `context/feature-specs/`.
+- Feature specs live in `.safe-code/context/feature-specs/`.
 - AI may draft feature specs from user intent, repo evidence, and context files.
 - Do not implement a feature until there is an active spec, unless the user explicitly asks for a tiny direct edit.
 - For new projects, create specs in planned build order: `01-design-system.md`, `02-editor.md`, etc.
@@ -41,8 +41,8 @@ Do not read `context/current-issues.md` unless the user explicitly asks for debu
 
 ## Session State
 Read before resuming safe-code work:
-- `.agents/ACTIVE.md`
-- `.agents/SESSION.md`
+- `.safe-code/ACTIVE.md`
+- `.safe-code/SESSION.md`
 
 ## Project Facts
 <!-- Exact commands, env vars, setup gotchas, package manager, non-obvious repo facts. -->
@@ -51,7 +51,7 @@ Read before resuming safe-code work:
 - Never read or write outside the project root.
 - Keep context updates drafted during work and finalized on `/safe-code --save`.
 - Verify before claiming completion.
-- Do not commit or publish `context/current-issues.md`.
+- Do not commit or publish `.safe-code/context/current-issues.md`.
 ```
 
 When creating, populating, or reconciling `AGENTS.md`, do not fill the template blindly. Follow authoring rules below.

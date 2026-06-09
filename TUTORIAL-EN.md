@@ -22,50 +22,51 @@ Inside a project, ask your agent:
 /safe-code
 ```
 
-safe-code creates or reconciles:
+safe-code creates or reconciles only two artifacts at the repo root:
 
 ```text
 AGENTS.md
-CHANGELOG.md
-context/
-  project-overview.md
-  architecture.md
-  code-standards.md
-  ai-workflow-rules.md
-  ui-context.md
-  progress-tracker.md
-  current-issues.md
-  feature-specs/00-template.md
-.agents/
+.safe-code/
   ACTIVE.md
   SESSION.md
   LOG.md
   BACKLOG.md
   MEMORY.md
   safe-refactor-code.md
+  CHANGELOG.md
+  context/
+    project-overview.md
+    architecture.md
+    user-preferences.md
+    code-standards.md
+    ai-workflow-rules.md
+    ui-context.md
+    progress-tracker.md
+    current-issues.md
+    feature-specs/00-template.md
 ```
 
-The `.agents/` folder is agent-agnostic and shared across Codex, Claude, Cursor, and Windsurf, so session continuity stays with the project.
+`AGENTS.md` stays at the root as the universal entry point every AI host auto-reads. `.safe-code/` is the only folder safe-code creates. It is agent-agnostic and shared across Codex, Claude, Cursor, and Windsurf, so session continuity stays with the project.
 
 ## 3. Read Order
 
 Agents read `AGENTS.md` first. `AGENTS.md` points them to:
 
-1. `context/project-overview.md`
-2. `context/architecture.md`
-3. `context/user-preferences.md`
-4. `context/code-standards.md`
-5. `context/ai-workflow-rules.md`
-6. `context/ui-context.md` for UI work
-7. `context/progress-tracker.md`
-8. active spec in `context/feature-specs/`
+1. `.safe-code/context/project-overview.md`
+2. `.safe-code/context/architecture.md`
+3. `.safe-code/context/user-preferences.md`
+4. `.safe-code/context/code-standards.md`
+5. `.safe-code/context/ai-workflow-rules.md`
+6. `.safe-code/context/ui-context.md` for UI work
+7. `.safe-code/context/progress-tracker.md`
+8. active spec in `.safe-code/context/feature-specs/`
 
-Agents do not read `context/current-issues.md` unless you explicitly ask for issue/debug analysis.
+Agents do not read `.safe-code/context/current-issues.md` unless you explicitly ask for issue/debug analysis.
 
 Preference capture:
 
 - If you say `I don't want`, `I prefer`, `please remove`, `always`, or `never`, safe-code treats it as a preference candidate.
-- Durable preferences are drafted in `SESSION.md` and saved into `context/user-preferences.md` on `/safe-code --save`.
+- Durable preferences are drafted in `SESSION.md` and saved into `.safe-code/context/user-preferences.md` on `/safe-code --save`.
 
 ## 4. Feature Work
 
@@ -78,14 +79,14 @@ Ask for a feature:
 safe-code should draft an active spec first:
 
 ```text
-context/feature-specs/01-email-login.md
+.safe-code/context/feature-specs/01-email-login.md
 ```
 
 Then it implements only that spec, verifies, and drafts progress updates in `SESSION.md`.
 
 ## 5. Current Issues
 
-`context/current-issues.md` is for you to write manually. It is gitignored and local only.
+`.safe-code/context/current-issues.md` is for you to write manually. It is gitignored (`/.safe-code/context/current-issues.md`) and local only.
 
 Use it for errors, reproduction steps, logs, or screenshots notes.
 
@@ -110,17 +111,21 @@ It inspects repo evidence first:
 - tests and configs
 - existing instruction files
 
-Then it backfills context files from proven facts only. Unknowns go into `context/progress-tracker.md` Open Questions.
+Then it backfills context files from proven facts only. Unknowns go into `.safe-code/context/progress-tracker.md` Open Questions.
 
 ## 7. Old safe-code Projects
 
-If a project already used the old continuity-only method, `/safe-code` migrates safely:
+If a project already used an old layout, every safe-code command (`/safe-code`, `--continue`, `--save`) migrates safely:
 
-- keeps old `.codex/agents/*` or `.agents/*` files
-- drafts new `context/` files from old docs and repo evidence
-- writes final context updates only on `/safe-code --save`
+- auto-detects old layouts: pre-v3 `.codex/agents/`, `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`, and v3 `.agents/` + root `context/` + root `CHANGELOG.md`
+- moves the files into `.safe-code/`
+- patches old config to the new version (`.gitignore` entry, `AGENTS.md` path references)
+- removes the emptied legacy folders
+- never overwrites existing destination files — conflicts are reported for manual merge
 
-After save, `context/` becomes the canonical project brain.
+You can also run the same migration deterministically with `bash scripts/migrate.sh --apply` (dry-run by default without `--apply`).
+
+After migration, `.safe-code/context/` becomes the canonical project brain.
 
 ## 8. Resume Work
 
@@ -141,6 +146,8 @@ End a session with:
 ```
 
 Save applies drafted context/doc updates, writes resume state, appends safe logs, wipes temporary session memory, and creates a local commit only. It never pushes.
+
+Six-File Save Rule: every `/safe-code --save` updates all six session files in `.safe-code/`; files with no new content get a fresh date stamp.
 
 ## 10. Helper Skills
 

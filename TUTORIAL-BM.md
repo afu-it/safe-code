@@ -22,50 +22,51 @@ Dalam projek, minta agent:
 /safe-code
 ```
 
-safe-code akan create atau reconcile:
+safe-code akan create atau reconcile dua artifact sahaja di root repo:
 
 ```text
 AGENTS.md
-CHANGELOG.md
-context/
-  project-overview.md
-  architecture.md
-  code-standards.md
-  ai-workflow-rules.md
-  ui-context.md
-  progress-tracker.md
-  current-issues.md
-  feature-specs/00-template.md
-.agents/
+.safe-code/
   ACTIVE.md
   SESSION.md
   LOG.md
   BACKLOG.md
   MEMORY.md
   safe-refactor-code.md
+  CHANGELOG.md
+  context/
+    project-overview.md
+    architecture.md
+    user-preferences.md
+    code-standards.md
+    ai-workflow-rules.md
+    ui-context.md
+    progress-tracker.md
+    current-issues.md
+    feature-specs/00-template.md
 ```
 
-Folder `.agents/` adalah agent-agnostic dan dikongsi merentas Codex, Claude, Cursor, dan Windsurf, jadi kesinambungan session kekal dengan projek.
+`AGENTS.md` kekal di root sebagai pintu masuk universal yang setiap AI host auto-baca. `.safe-code/` ialah satu-satunya folder yang safe-code create. Ia agent-agnostic dan dikongsi merentas Codex, Claude, Cursor, dan Windsurf, jadi kesinambungan session kekal dengan projek.
 
 ## 3. Urutan Baca
 
 Agent baca `AGENTS.md` dahulu. `AGENTS.md` arahkan agent baca:
 
-1. `context/project-overview.md`
-2. `context/architecture.md`
-3. `context/user-preferences.md`
-4. `context/code-standards.md`
-5. `context/ai-workflow-rules.md`
-6. `context/ui-context.md` untuk kerja UI
-7. `context/progress-tracker.md`
-8. spec aktif dalam `context/feature-specs/`
+1. `.safe-code/context/project-overview.md`
+2. `.safe-code/context/architecture.md`
+3. `.safe-code/context/user-preferences.md`
+4. `.safe-code/context/code-standards.md`
+5. `.safe-code/context/ai-workflow-rules.md`
+6. `.safe-code/context/ui-context.md` untuk kerja UI
+7. `.safe-code/context/progress-tracker.md`
+8. spec aktif dalam `.safe-code/context/feature-specs/`
 
-Agent tidak baca `context/current-issues.md` kecuali anda minta debug/issue analysis secara jelas.
+Agent tidak baca `.safe-code/context/current-issues.md` kecuali anda minta debug/issue analysis secara jelas.
 
 Preference capture:
 
 - Jika anda kata `aku taknak`, `aku nak`, `aku prefer`, `jangan`, `please remove`, `always`, atau `never`, safe-code anggap ia preference candidate.
-- Durable preferences akan draft dalam `SESSION.md` dan disimpan ke `context/user-preferences.md` masa `/safe-code --save`.
+- Durable preferences akan draft dalam `SESSION.md` dan disimpan ke `.safe-code/context/user-preferences.md` masa `/safe-code --save`.
 
 ## 4. Feature Work
 
@@ -78,14 +79,14 @@ Minta feature:
 safe-code patut tulis active spec dahulu:
 
 ```text
-context/feature-specs/01-email-login.md
+.safe-code/context/feature-specs/01-email-login.md
 ```
 
 Lepas itu baru implement ikut spec sahaja, verify, dan draft progress update dalam `SESSION.md`.
 
 ## 5. Current Issues
 
-`context/current-issues.md` ialah fail manual untuk anda tulis sendiri. Fail ini gitignored dan local sahaja.
+`.safe-code/context/current-issues.md` ialah fail manual untuk anda tulis sendiri. Fail ini gitignored (`/.safe-code/context/current-issues.md`) dan local sahaja.
 
 Guna untuk error, steps reproduce, logs, atau nota screenshot.
 
@@ -110,17 +111,21 @@ Ia inspect evidence repo dahulu:
 - tests dan configs
 - instruction files sedia ada
 
-Lepas itu baru backfill context dari fakta yang terbukti. Fakta yang tidak pasti masuk `context/progress-tracker.md` Open Questions.
+Lepas itu baru backfill context dari fakta yang terbukti. Fakta yang tidak pasti masuk `.safe-code/context/progress-tracker.md` Open Questions.
 
 ## 7. Projek safe-code Lama
 
-Jika projek pernah guna method lama, `/safe-code` migrate dengan selamat:
+Jika projek pernah guna layout lama, setiap command safe-code (`/safe-code`, `--continue`, `--save`) akan migrate dengan selamat:
 
-- kekalkan fail lama `.codex/agents/*` atau `.agents/*`
-- draft fail `context/` baru dari old docs dan repo evidence
-- tulis final context updates hanya bila `/safe-code --save`
+- auto-detect layout lama: pre-v3 `.codex/agents/`, `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`, dan v3 `.agents/` + `context/` di root + `CHANGELOG.md` di root
+- pindahkan fail ke dalam `.safe-code/`
+- patch config lama ke version baru (entry `.gitignore`, rujukan path dalam `AGENTS.md`)
+- buang folder legacy yang sudah kosong
+- tidak akan overwrite fail destination sedia ada — conflict akan dilapor untuk merge manual
 
-Selepas save, `context/` jadi project brain utama.
+Boleh juga jalankan migration yang sama secara deterministik dengan `bash scripts/migrate.sh --apply` (tanpa `--apply` ia dry-run sahaja).
+
+Selepas migrate, `.safe-code/context/` jadi project brain utama.
 
 ## 8. Sambung Kerja
 
@@ -141,6 +146,8 @@ Tutup session dengan:
 ```
 
 Save akan apply draft context/docs, tulis resume state, append safe logs, wipe temporary session memory, dan buat local commit sahaja. Ia tidak push.
+
+Six-File Save Rule: setiap `/safe-code --save` update semua enam fail session dalam `.safe-code/`; fail yang tiada content baru tetap dapat date stamp terkini.
 
 ## 10. Helper Skills
 

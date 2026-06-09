@@ -37,12 +37,12 @@ If graph tools are unavailable, empty, or fail, continue with the manual entrypo
 Session and continuity docs live in a single agent-agnostic folder at the repo root:
 
 ```
-doc folder = <repo-root>/.agents/
+doc folder = <repo-root>/.safe-code/
 ```
 
-No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.agents/` folder so continuity belongs to the repo, not the tool. Create `<repo-root>/.agents/` if it does not exist yet.
+No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.safe-code/` folder so continuity belongs to the repo, not the tool. Create `<repo-root>/.safe-code/` if it does not exist yet.
 
-When flagging candidates that are not auto-deleted, write a note into `.agents/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.
+When flagging candidates that are not auto-deleted, write a note into `.safe-code/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.
 
 `AGENTS.md` at repo root is always updated when significant dead code is found or removed.
 
@@ -219,7 +219,7 @@ Return:
 ### Audit Output
 
 ```text
-Doc folder: .agents/
+Doc folder: .safe-code/
 Entrypoints mapped: 7
 Files scanned: 184
 
@@ -252,7 +252,7 @@ Slice 2 - Remove orphaned module src/adapters/old-client.ts
 
 Flagged for manual review:
   src/handlers/webhook-v1.ts:handleEvent - dynamic dispatch risk
-  → noted in .agents/safe-refactor-code.md
+  → noted in .safe-code/safe-refactor-code.md
 ```
 
 ### Execute Output
@@ -265,9 +265,9 @@ Slice 2 complete: removed src/adapters/old-client.ts
   Verification: lint passed, import scan clean
 
 Summary:
-  Agent: docs saved to .agents/
+  Agent: docs saved to .safe-code/
   Removed: 1 file, 1 function, 5 commented blocks
-  Flagged: 1 candidate (noted in .agents/safe-refactor-code.md)
+  Flagged: 1 candidate (noted in .safe-code/safe-refactor-code.md)
 ```
 
 ## Hard Rules
@@ -281,4 +281,4 @@ Summary:
 
 ## Escalation
 
-If widespread dead code appears beyond the user's requested area, switch to full-repo `Audit` mode before deleting more. Always note flagged but unremoved candidates in `.agents/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.
+If widespread dead code appears beyond the user's requested area, switch to full-repo `Audit` mode before deleting more. Always note flagged but unremoved candidates in `.safe-code/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.

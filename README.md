@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-3.2-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.0-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -43,16 +43,16 @@ The conventions above are normally maintained by the agent. To check them determ
 bash scripts/check.sh
 ```
 
-It verifies `AGENTS.md`, the `context/` files, and the `.agents/` session docs exist, flags a stale `SESSION.md`, detects legacy `.codex/agents` layouts to migrate, and **fails** (exit 1) if `context/current-issues.md` was accidentally committed. Warnings are advisory; only that hard check fails the run.
+It verifies `AGENTS.md` and the `.safe-code/` folder (context files + six session docs) exist, flags a stale `SESSION.md`, detects legacy layouts to migrate (`.codex/agents`, v3 `.agents/` + root `context/`), and **fails** (exit 1) if `.safe-code/context/current-issues.md` was accidentally committed. Warnings are advisory; only that hard check fails the run.
 
-Upgrading from a pre-3.0 install? Move legacy session folders into `.agents/` automatically:
+Upgrading from an older install? `/safe-code` migrates automatically on its next run, or do it deterministically:
 
 ```bash
 bash scripts/migrate.sh           # preview (dry-run)
 bash scripts/migrate.sh --apply   # move files (uses git mv when tracked)
 ```
 
-It never overwrites existing `.agents/` files, uses `git mv` to preserve history, and cleans up the empty legacy folders afterward.
+It moves everything into `.safe-code/`, patches old config (`.gitignore` entry, `AGENTS.md` paths) to the new version, never overwrites existing `.safe-code/` files, uses `git mv` to preserve history, and removes the emptied legacy folders afterward — including old `.codex/` folders.
 
 ---
 
@@ -63,8 +63,8 @@ It never overwrites existing `.agents/` files, uses `git mv` to preserve history
 ```
 
 ```
- Step 0  →  Locate project root (single agent-agnostic `.agents/` folder)
- Step 1  →  Create/reconcile AGENTS.md, context/, and session docs
+ Step 0  →  Locate project root (single agent-agnostic `.safe-code/` folder)
+ Step 1  →  Create/reconcile AGENTS.md + .safe-code/ docs; migrate legacy layouts
  Step 2  →  Load AGENTS.md first, then context files, then saved state if present
  Step 3  →  Check git rollback safety + graph readiness
  Step 4  →  Explore/audit repo facts before writing context
@@ -81,39 +81,39 @@ Nothing is pushed. Nothing risky is deleted without rollback evidence.
 
 ## Context + Session Docs
 
-Every project gets one root entry point, project context, feature specs, and runtime session state:
+Every project gets exactly **two root artifacts**: `AGENTS.md` and one `.safe-code/` folder. No `.codex/`, no `.claude/`, no `.agents/` clutter.
 
 ```text
 your-project/
-├── AGENTS.md
-├── CHANGELOG.md
-├── context/
-│   ├── project-overview.md
-│   ├── architecture.md
-│   ├── user-preferences.md
-│   ├── code-standards.md
-│   ├── ai-workflow-rules.md
-│   ├── ui-context.md
-│   ├── progress-tracker.md
-│   ├── current-issues.md        # local-only, gitignored, user-written
-│   └── feature-specs/
-│       └── 00-template.md
-└── .agents/                     # agent-agnostic session memory (Codex/Claude/Cursor/Windsurf)
-    ├── ACTIVE.md
-    ├── SESSION.md
-    ├── LOG.md
-    ├── BACKLOG.md
-    ├── MEMORY.md
-    └── safe-refactor-code.md
+├── AGENTS.md                    # universal entry point — every AI host auto-reads this
+└── .safe-code/                  # the ONLY folder safe-code creates
+    ├── ACTIVE.md                # ┐
+    ├── SESSION.md               # │
+    ├── LOG.md                   # │ six session files — ALL updated
+    ├── BACKLOG.md               # │ on every /safe-code --save
+    ├── MEMORY.md                # │
+    ├── safe-refactor-code.md    # ┘
+    ├── CHANGELOG.md
+    └── context/
+        ├── project-overview.md
+        ├── architecture.md
+        ├── user-preferences.md
+        ├── code-standards.md
+        ├── ai-workflow-rules.md
+        ├── ui-context.md
+        ├── progress-tracker.md
+        ├── current-issues.md    # local-only, gitignored, user-written
+        └── feature-specs/
+            └── 00-template.md
 ```
 
-- `AGENTS.md` stays at root and tells agents what to read first.
-- `context/` is canonical long-term project brain.
-- `context/user-preferences.md` stores explicit durable user preferences, like “SVG icons only, no emoji icons”.
+- `AGENTS.md` stays at root and tells agents what to read first — its Read First section points into `.safe-code/`, which is how every UI/model/provider discovers the folder.
+- `.safe-code/context/` is canonical long-term project brain.
+- `.safe-code/context/user-preferences.md` stores explicit durable user preferences, like “SVG icons only, no emoji icons”.
 - Agents watch for strong preference language like `I don't want`, `aku taknak`, `I prefer`, `please remove`, `jangan`, `always`, and `never`.
-- `context/feature-specs/` holds AI-written build specs, one unit per file.
-- `context/current-issues.md` is manual user scratchpad, never committed.
-- `.agents/` is runtime/session memory, shared across agents.
+- `.safe-code/context/feature-specs/` holds AI-written build specs, one unit per file.
+- `.safe-code/context/current-issues.md` is manual user scratchpad, never committed.
+- The six session files are runtime/session memory, shared across agents.
 
 ---
 
@@ -123,18 +123,16 @@ During work, safe-code drafts persistent documentation changes in `SESSION.md`.
 
 `/safe-code --save` applies final updates to:
 
-- `context/*.md`
+- `.safe-code/context/*.md`
 - `AGENTS.md`
-- `ACTIVE.md`
-- `LOG.md`
-- `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md` when triggered
-- `CHANGELOG.md` only for releasable changes
+- **all six session files, every save** (Six-File Save Rule): `ACTIVE.md`, `SESSION.md` (wiped), `LOG.md` (entry appended), `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md` — files with no new content get a fresh date stamp
+- `.safe-code/CHANGELOG.md` only for releasable changes
 
 Exceptions written before save:
 
 - missing scaffold files/folders
-- `/context/current-issues.md` gitignore rule
-- active feature specs in `context/feature-specs/`
+- `/.safe-code/context/current-issues.md` gitignore rule
+- active feature specs in `.safe-code/context/feature-specs/`
 - code changes required by user task
 
 ---
@@ -147,14 +145,16 @@ For existing projects:
 
 - reads repo evidence first: README, manifests, routes, schemas, tests, configs
 - backfills context files only from proven facts
-- places unknown facts in `context/progress-tracker.md` Open Questions
+- places unknown facts in `.safe-code/context/progress-tracker.md` Open Questions
 - creates feature specs only for upcoming work, bugs, refactors, or missing documentation units
 
-For old safe-code projects:
+For old safe-code projects, every command (`/safe-code`, `--continue`, `--save`) detects old setup config and updates it to the new version:
 
-- keeps old continuity docs
-- migrates useful facts into `context/` as drafts
-- treats `context/` as canonical project context after `/safe-code --save`
+- moves session docs from `.codex/agents/` (pre-v3) or `.agents/` (v3) into `.safe-code/`
+- moves v3 root `context/` and `CHANGELOG.md` into `.safe-code/`
+- patches old config: `.gitignore` entry and `AGENTS.md` path references
+- removes the emptied legacy folders — your repo ends up with just `AGENTS.md` + `.safe-code/`
+- never overwrites existing files; conflicts are reported for manual merge
 
 ---
 
@@ -165,7 +165,7 @@ Feature specs are written by AI from user intent + context + repo evidence.
 Example:
 
 ```text
-context/feature-specs/
+.safe-code/context/feature-specs/
 ├── 01-design-system.md
 ├── 02-editor.md
 └── 03-auth.md
@@ -186,12 +186,12 @@ safe-code should not implement feature work without an active spec unless the us
 
 ## Current Issues
 
-`context/current-issues.md` is created by safe-code, but manually written by the user.
+`.safe-code/context/current-issues.md` is created by safe-code, but manually written by the user.
 
 It is gitignored:
 
 ```gitignore
-/context/current-issues.md
+/.safe-code/context/current-issues.md
 ```
 
 User prompt inside the template:
@@ -231,6 +231,12 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.0** — one universal `.safe-code/` folder (breaking change).
+
+- **Breaking:** everything safe-code manages now lives in a single `.safe-code/` folder at the project root — the six session files, `CHANGELOG.md`, and `context/` all inside it. Only `AGENTS.md` stays at root as the universal entry point every AI host auto-reads. `/safe-code` creates exactly two root artifacts and nothing else — no more `.codex/`, `.claude/`, or `.agents/` folders in your repo.
+- **Auto-migration on every command** — `/safe-code`, `--continue`, and `--save` all detect old setup config (pre-v3 `.codex/agents/` etc., v3 `.agents/` + root `context/`), move it into `.safe-code/`, patch `.gitignore` and `AGENTS.md` paths to the new version, and remove the emptied legacy folders. `bash scripts/migrate.sh --apply` does the same deterministically.
+- **Six-File Save Rule** — every `/safe-code --save` now updates all six session files (`ACTIVE.md`, `SESSION.md`, `LOG.md`, `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md`); files with no new content get a fresh date stamp so every save is provably complete.
 
 **v3.2** — context economy for long runs.
 

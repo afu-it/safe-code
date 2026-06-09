@@ -2,7 +2,7 @@
 name: safe-refactor-code
 description: "Refactor code safely in small verified slices while keeping repo continuity docs in sync. Uses code-review graph tools for rename previews, impact radius, affected flows, and post-change review when available. Use when an agent is asked to refactor, restructure, clean up, remove or replace code, modernize modules, or do follow-up hygiene in a repo."
 metadata:
-  version: "3.0"
+  version: "4.0"
 ---
 
 # Safe Refactor Code
@@ -14,7 +14,7 @@ Refactor code in small verified slices, then update the repo's continuity files 
 - Treat `AGENTS.md` at repo root as the main long-term repo memory. Preserve existing content and update it carefully instead of rewriting blindly.
 - Keep agent-local `MEMORY.md` short. It is a working summary for the repo, not a replacement for any shared or tool-managed memory system.
 - Keep `safe-refactor-code.md` focused on the repo's refactor rules, guardrails, and recurring cleanup workflow.
-- Update `CHANGELOG.md` on real code changes using today's section: `## [YYYY-MM-DD]`.
+- Update `.safe-code/CHANGELOG.md` on real code changes using today's section: `## [YYYY-MM-DD]`.
 - Prefer additive or scoped edits to docs. Do not wipe user-written history unless the user explicitly asks.
 - After refactors, scan for obvious dead code, unused imports, stale helpers, and outdated doc references before finishing.
 - Use code-review graph tools when available. Fall back to direct source search and verification when graph tools are unavailable or empty.
@@ -43,19 +43,19 @@ Refactor code in small verified slices, then update the repo's continuity files 
 Session and continuity docs live in a single agent-agnostic folder at the repo root:
 
 ```
-doc folder = <repo-root>/.agents/
+doc folder = <repo-root>/.safe-code/
 ```
 
-No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.agents/` folder so continuity belongs to the repo, not the tool. Create `<repo-root>/.agents/` if it does not exist yet.
+No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.safe-code/` folder so continuity belongs to the repo, not the tool. Create `<repo-root>/.safe-code/` if it does not exist yet.
 
 Doc file locations:
 
 | File | Path |
 |---|---|
 | `AGENTS.md` | repo root (always) |
-| `MEMORY.md` | `.agents/MEMORY.md` |
-| `CHANGELOG.md` | repo root (always) |
-| `safe-refactor-code.md` | `.agents/safe-refactor-code.md` |
+| `MEMORY.md` | `.safe-code/MEMORY.md` |
+| `CHANGELOG.md` | `.safe-code/CHANGELOG.md` |
+| `safe-refactor-code.md` | `.safe-code/safe-refactor-code.md` |
 
 ## Step 0.5: Assess and Write AGENTS.md
 
@@ -107,9 +107,9 @@ Preserve any existing generated blocks (`<!-- BEGIN:xxx -->`). Append the orient
 After writing `AGENTS.md`, inspect these files when present:
 
 - `AGENTS.md` at repo root (already written in Step 0.5)
-- `.agents/safe-refactor-code.md`
-- `.agents/MEMORY.md`
-- `.agents/CHANGELOG.md`
+- `.safe-code/safe-refactor-code.md`
+- `.safe-code/MEMORY.md`
+- `.safe-code/CHANGELOG.md`
 
 If one is missing, create it only if the refactor work makes it useful.
 
@@ -152,7 +152,7 @@ Before syncing docs:
 
 ### 5. Sync Docs Before Finishing
 
-After real code changes, update the continuity files in `.agents/` (and `AGENTS.md` + `CHANGELOG.md` at repo root):
+After real code changes, update the continuity files in `.safe-code/` (and `AGENTS.md` at repo root):
 
 - `AGENTS.md` (repo root) — current state, key decisions, blockers, handoff notes
 - `safe-refactor-code.md` — repo-specific refactor constraints and recurring cleanup rules
