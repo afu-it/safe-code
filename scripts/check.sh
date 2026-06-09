@@ -156,6 +156,25 @@ else
 fi
 echo
 
+# ---- 4b. provider bridges (advisory) ----------------------------------------
+echo "Provider bridges (auto-load context in other hosts)"
+if [ -f AGENTS.md ]; then
+	for b in "CLAUDE.md" "GEMINI.md" ".github/copilot-instructions.md" ".cursor/rules/safe-code.mdc"; do
+		if [ -f "$b" ]; then
+			if grep -qE 'safe-code:bridge|AGENTS\.md|\.safe-code' "$b" 2>/dev/null; then
+				pass "$b points at AGENTS.md/.safe-code"
+			else
+				warn "$b exists but does not reference AGENTS.md/.safe-code"
+			fi
+		else
+			warn "$b missing (run /safe-code to write provider bridge)"
+		fi
+	done
+else
+	info "AGENTS.md missing — skipping bridge checks"
+fi
+echo
+
 # ---- 5. light hygiene scan --------------------------------------------------
 echo "Hygiene"
 tmp_hits="$(find . -path ./.git -prune -o \

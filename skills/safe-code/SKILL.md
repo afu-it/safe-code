@@ -1,7 +1,7 @@
 ---
 name: safe-code
-description: "Full repo hygiene in one pass. Triggered by /safe-code and any host wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code) — all map to the same skill. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Creates exactly two root artifacts: AGENTS.md and one .safe-code/ folder (context files, CHANGELOG.md, six session docs) — never .codex/, .claude/, or .agents/. Every command auto-migrates legacy layouts and patches old config to the new version. /safe-code --save updates all six session files, then commits locally only — never pushes. Audits dead code in safe slices and repo agent-config trust artifacts (.claude, .mcp.json, hooks, skills) for poisoned-config risk. Use when asked to do a full cleanup, full hygiene pass, /safe-code (in any prefix form), or maintain a repo in one go."
-version: "4.0"
+description: "Full repo hygiene in one pass. Triggered by /safe-code and any host wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code) — all map to the same skill. Uses /safe-code for first-time setup, /safe-code --continue for context-safe resume, and /safe-code --save for handoff + local commit. Source of truth is AGENTS.md + one .safe-code/ folder (context files, CHANGELOG.md, six session docs); also writes thin provider-bridge pointers so every host loads the same brain — never stores state in .codex/, .claude/, or .agents/. Every command auto-migrates legacy layouts and patches old config to the new version. /safe-code --save updates all six session files, then commits locally only — never pushes. First run reads the codebase and writes AGENTS.md + context files from repo evidence so agents don't hallucinate, plus provider-bridge pointers (CLAUDE.md, GEMINI.md, .github/copilot-instructions.md, .cursor) so Claude/Gemini/Copilot/Cursor auto-load the same brain in a fresh chat; tracks issues in the local-only current-issues.md when the user reports an error ('fix this', 'failed', 'got error'); and writes status-tracked feature-spec suggestions for every new feature idea, then verifies the written context with a closed-book self-test. Audits dead code in safe slices and repo agent-config trust artifacts (.claude, .mcp.json, hooks, skills) for poisoned-config risk. Use when asked to do a full cleanup, full hygiene pass, /safe-code (in any prefix form), or maintain a repo in one go."
+version: "4.1"
 ---
 
 # Safe Code
@@ -31,8 +31,12 @@ WRONG:   ~/.safe-code/ACTIVE.md
 
 ```
 <project-root>/
-├── AGENTS.md                      <- root entry point; tells agents what to read first
-└── .safe-code/                    <- the ONLY folder safe-code creates (universal, agent-agnostic)
+├── AGENTS.md                      <- canonical entry point + Read First order (source of truth)
+├── CLAUDE.md                      <- ┐
+├── GEMINI.md                      <- │ provider bridges: thin pointers to AGENTS.md so each
+├── .github/copilot-instructions.md<- │ host auto-loads the same brain (no state, just redirect)
+├── .cursor/rules/safe-code.mdc    <- ┘
+└── .safe-code/                    <- the project brain + all session state (continuity)
     ├── ACTIVE.md                  <- saved resume point; written on /safe-code --save
     ├── SESSION.md                 <- working memory + draft doc/context updates
     ├── LOG.md                     <- append-only safe diary; no raw secrets/log dumps
@@ -48,14 +52,14 @@ WRONG:   ~/.safe-code/ACTIVE.md
         ├── ai-workflow-rules.md   <- agent workflow and scoping rules
         ├── ui-context.md          <- UI/design conventions (read only for UI work)
         ├── progress-tracker.md    <- phase, current goal, decisions, safe session notes
-        ├── current-issues.md      <- local-only manual user scratchpad; gitignored
-        └── feature-specs/         <- AI-written feature specs, one build unit per file
+        ├── current-issues.md      <- issue tracker: user + AI-appended; local-only, gitignored
+        └── feature-specs/         <- AI-written specs w/ status field; suggestions + active units
             └── 00-template.md
 ```
 
-`/safe-code` creates exactly two root artifacts: `AGENTS.md` and `.safe-code/`. Never create `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` folders — those are legacy layouts that get migrated into `.safe-code/` and removed.
+`/safe-code` keeps all continuity in **one** place — `AGENTS.md` + the `.safe-code/` folder are the single source of truth. It also writes thin **provider-bridge pointers** (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`) so hosts that do not auto-read `AGENTS.md` still load the same brain. Bridges hold no state — they only redirect to `AGENTS.md` and `.safe-code/`. Never store session/context docs in `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` — those are legacy layouts that get migrated into `.safe-code/` and removed (the bridge pointers above are not session state and are preserved).
 
-Everything lives in one shared `.safe-code/` folder at the project root, regardless of which agent (Codex, Claude, Cursor, Windsurf) is running. Continuity belongs to the project, not the tool. `AGENTS.md` stays at the root because every host auto-reads it; its Read First section points into `.safe-code/`, which is how any UI/model/provider discovers the folder.
+Everything lives in one shared `.safe-code/` folder at the project root, regardless of which agent (Codex, Claude, Cursor, Windsurf, Copilot, Gemini) is running. Continuity belongs to the project, not the tool. Not every host auto-reads `AGENTS.md` (Claude reads `CLAUDE.md`, Gemini reads `GEMINI.md`, Copilot reads `.github/copilot-instructions.md`, Cursor reads `.cursor/rules/`), so the provider bridges guarantee every host is pointed at the same `AGENTS.md` + `.safe-code/context/` brain.
 
 The six session files (`ACTIVE.md`, `SESSION.md`, `LOG.md`, `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md`) sit directly inside `.safe-code/`. `.safe-code/context/` is canonical project context; the six session files are operational session state.
 
@@ -79,7 +83,7 @@ SESSION.md                        — Carry Forward + draft updates only, if pre
 LOG.md                            — last 3 typed entries only, if present
 ```
 
-Do not read `.safe-code/context/current-issues.md` during normal work. Read it only when the user explicitly asks to debug/fix an issue or references that file.
+Do not read `.safe-code/context/current-issues.md` during normal work. Read **and append to** it when the user reports an issue — trigger phrases like "fix this", "failed", "got error", "bug", "crash", "tak jalan", "rosak", or a pasted stack trace — or when the user references that file. See the Issue Tracking Rule.
 
 ### Layer 2 — Resume (`/safe-code --continue` or auto-continue)
 
@@ -116,7 +120,7 @@ Do not load detail files unless the trigger condition is met.
 | Canonical for | Product, architecture, standards, workflow, progress | Resume point, logs, cleanup/refactor notes |
 | Secrets/raw logs | Never | Avoid; keep summaries only |
 
-`.safe-code/context/current-issues.md` is special: safe-code creates a blank template and gitignores it, but the user writes it manually. It may contain raw errors, URLs, or secrets. Never copy it into persistent docs.
+`.safe-code/context/current-issues.md` is special: safe-code creates the template and gitignores it. Both the user and the agent write it — the user pastes raw context, and the agent appends/updates issue entries on error triggers (see the Issue Tracking Rule). It stays gitignored and may contain raw errors, URLs, or secrets, so never copy its raw content into committed docs; a sanitized one-line summary of a fixed bug goes to `LOG.md` instead.
 
 `.safe-code/context/user-preferences.md` captures explicit, durable user preferences from conversation. Add only when the user clearly says they want/avoid something, or repeats a preference. Draft changes in `SESSION.md` and apply on `/safe-code --save`.
 
@@ -134,9 +138,9 @@ Avoid duplicate truth. Each fact has exactly one canonical home:
 | Agent workflow | `.safe-code/context/ai-workflow-rules.md` | `SESSION.md` may hold temporary execution notes |
 | UI design system | `.safe-code/context/ui-context.md` | Read only for UI/design work |
 | Current phase and safe decisions | `.safe-code/context/progress-tracker.md` | `ACTIVE.md` stores resume state, not project history |
-| Feature scope | `.safe-code/context/feature-specs/<nn-name>.md` | Do not spread feature requirements across progress notes |
+| Feature scope + idea history | `.safe-code/context/feature-specs/<nn-name>.md` | Each spec carries a `status:` field (suggested/approved/in-progress/done/rejected); do not spread feature requirements across progress notes |
 | Release/user-visible history | `.safe-code/CHANGELOG.md` | Use for Added/Changed/Removed/Fixed/Security entries only |
-| Raw issue data | `.safe-code/context/current-issues.md` | Local-only, user-written, gitignored |
+| Issue tracking | `.safe-code/context/current-issues.md` | Local-only, gitignored; user + agent-written. Sanitized fixed-bug summary may also go to `LOG.md` |
 | Resume point | `.safe-code/ACTIVE.md` | Operational state only |
 | Live task list and drafts | `.safe-code/SESSION.md` | Wiped on save |
 | Cleanup/refactor candidates | `.safe-code/safe-refactor-code.md` | Not general architecture truth |
@@ -215,7 +219,8 @@ Save does these things:
    .safe-code/ on the new version
 1. Review SESSION.md draft updates
 2. Apply approved context/doc updates
-3. Update .safe-code/context/progress-tracker.md with safe summary only
+3. Update .safe-code/context/progress-tracker.md with safe summary only; set
+   last_synced_commit to current HEAD and context_synced_at to today (Context Freshness Check)
 4. Update ALL SIX session files (Six-File Save Rule below):
    - ACTIVE.md            -> Last Session block + next_action
    - SESSION.md           -> wipe to clean carry-forward template
@@ -254,10 +259,12 @@ Exceptions:
 
 - Create missing scaffold files/folders needed for safe operation.
 - Add `/.safe-code/context/current-issues.md` to `.gitignore` during setup.
-- Write an active feature spec before implementation when feature work needs a contract.
+- **First-Run Population** (see Step 1): on the first `/safe-code` run, populate empty scaffold `AGENTS.md` + evidence-derivable context files immediately, so agents have real context without waiting for `--save`.
+- Append/update issue entries in `.safe-code/context/current-issues.md` on error triggers (see the Issue Tracking Rule). This file is local-only/gitignored, so it is never part of a commit.
+- Write a feature spec (including a `status: suggested` idea) before implementation, or whenever a new feature is proposed (see the Feature Suggestion Rule).
 - Update code files as required by the user task.
 
-Never write content into `.safe-code/context/current-issues.md`; only create the blank template if missing.
+The agent may append issue entries to `.safe-code/context/current-issues.md`, but must never copy its raw content (secrets, stack traces, private URLs) into any committed file.
 
 ---
 
@@ -298,10 +305,12 @@ Default checklist:
 - [ ] Initialize or reconcile AGENTS.md, context, and session docs
 - [ ] Detect saved state or legacy layout migration need
 - [ ] Load required context for this command
+- [ ] Check context freshness (drift vs last_synced_commit)
 - [ ] Draft or update active feature spec if needed
 - [ ] Check git state and rollback safety
 - [ ] Check or bootstrap graph support when useful
 - [ ] Explore repo facts before context backfill
+- [ ] Run context self-test after backfill (verify brain is sufficient)
 - [ ] Audit dead code and stale files only when in scope
 - [ ] Audit agent config trust artifacts when in scope
 - [ ] Decide run profile and execution mode
@@ -363,7 +372,7 @@ safe-code folder = <project-root>/.safe-code/
 
 No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.safe-code/` folder so continuity belongs to the project, not the tool. Create `<project-root>/.safe-code/` if it does not exist.
 
-HARD RULE: never create `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` folders for session state. If any of them exist with safe-code docs inside, run Legacy Layout Migration (Step 1) — migrate their content into `.safe-code/` and remove them.
+HARD RULE: never create `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` folders **for session state**. If any of them exist with safe-code docs inside, run Legacy Layout Migration (Step 1) — migrate their content into `.safe-code/` and remove them. Exception: the Provider Bridge (Step 1) may write a thin read-pointer in a host's native config location (e.g. `.cursor/rules/safe-code.mdc`, `.github/copilot-instructions.md`); these hold no state, only a redirect to `AGENTS.md`/`.safe-code/`, and are never treated as legacy.
 
 ---
 
@@ -375,6 +384,10 @@ Create missing folders/files:
 
 ```
 AGENTS.md
+CLAUDE.md                        (provider bridge — pointer only)
+GEMINI.md                        (provider bridge — pointer only)
+.github/copilot-instructions.md  (provider bridge — pointer only)
+.cursor/rules/safe-code.mdc      (provider bridge — pointer only)
 .safe-code/CHANGELOG.md
 .safe-code/context/
 .safe-code/context/project-overview.md
@@ -400,9 +413,9 @@ Rules:
 - If a file exists, do not overwrite it.
 - Create missing context files with templates only.
 - Add `/.safe-code/context/current-issues.md` to `.gitignore` if absent.
-- Never write user issue content into `.safe-code/context/current-issues.md`; it is a manual local scratchpad.
-- For project facts, inspect repo evidence first, then draft updates in `SESSION.md`.
-- Final .safe-code/context/doc writes happen on `/safe-code --save` unless a scaffold file or active feature spec is required now.
+- The user owns `.safe-code/context/current-issues.md`; the agent only appends issue entries on error triggers (Issue Tracking Rule) and never copies its raw content into committed files.
+- For project facts, inspect repo evidence first.
+- On the **first run** (empty scaffold), populate evidence-derivable context files immediately (First-Run Population below). On later runs, draft updates in `SESSION.md` and apply on `/safe-code --save` unless a scaffold file or active feature spec is required now.
 
 ### Existing Project Backfill
 
@@ -411,8 +424,50 @@ If the repo already has code, docs, manifests, routes, schemas, tests, or config
 - Treat the repo as source of truth.
 - Backfill `.safe-code/context/*.md` from evidence only.
 - Put unverifiable product or architecture facts into `.safe-code/context/progress-tracker.md` Open Questions.
-- Generate feature specs only for upcoming work, active bugs, refactors, or missing documentation units.
+- Generate feature specs for upcoming work, active bugs, refactors, or missing documentation units; record new feature ideas as `status: suggested` specs (Feature Suggestion Rule).
 - Do not create fake historical specs for completed features unless the user asks.
+
+### First-Run Population
+
+The whole point of the first run is that any agent can read real context afterward and not hallucinate. So on the **first** `/safe-code` run — when the target file is still an empty scaffold — write context immediately instead of waiting for `--save`:
+
+| File | First-run write |
+|---|---|
+| `AGENTS.md` | Yes — Read First order + verified project facts/commands |
+| `.safe-code/context/project-overview.md` | Yes — from README, manifests, package metadata |
+| `.safe-code/context/architecture.md` | Yes — stack, boundaries, invariants, **and a Navigation map (where things live / entry points)** from manifests/folders/configs |
+| `.safe-code/context/code-standards.md` | Yes — conventions from linter/formatter/tsconfig/editorconfig |
+| `.safe-code/context/ai-workflow-rules.md` | Only if repo/team docs reveal real workflow; else leave template |
+| `.safe-code/context/progress-tracker.md` | Yes — Current Phase + Open Questions (unverifiable facts) |
+| `.safe-code/context/user-preferences.md` | No — conversation-derived only, no repo evidence |
+| `.safe-code/context/ui-context.md` | No — only when UI/design work occurs |
+| `.safe-code/context/current-issues.md` | No — manual + issue-trigger only |
+
+Rules:
+
+- This immediate-write exception applies only while a file is an empty scaffold. Once it holds real content, later edits revert to Draft-Until-Save.
+- Never invent facts. Anything not provable from repo evidence is an Open Question, not a populated claim.
+- Still draft *this session's* ongoing changes in `SESSION.md`; First-Run Population is about seeding empty context, not about live edits.
+- After populating, run the **Context Self-Test** to verify the brain is sufficient; fill or flag any gaps it finds.
+
+### Provider Bridge
+
+`AGENTS.md` + `.safe-code/` are the source of truth, but not every host auto-reads `AGENTS.md`. So safe-code writes thin **pointer** files in each major host's native config location, so a fresh chat in any provider loads the same brain without the user invoking safe-code:
+
+| Host | Bridge file | Mechanism |
+|---|---|---|
+| Claude Code | `CLAUDE.md` | `@AGENTS.md` import + read-context instruction |
+| Gemini CLI | `GEMINI.md` | read-`AGENTS.md`-and-context instruction |
+| GitHub Copilot | `.github/copilot-instructions.md` | read-`AGENTS.md`-and-context instruction |
+| Cursor | `.cursor/rules/safe-code.mdc` | `alwaysApply` rule pointing at `AGENTS.md` |
+
+Rules:
+
+- Bridges are **pointers, not state** — each is a few lines that redirect to `AGENTS.md` + `.safe-code/context/`. Never duplicate project facts into them.
+- **Never overwrite** an existing host file. If it exists and does not already point at `AGENTS.md`/`.safe-code/`, append one clearly-marked `<!-- safe-code:bridge -->` block; if it already points there, leave it.
+- Bridges are scaffold/pointer files — write them immediately (like `AGENTS.md`), not draft-until-save.
+- Preserve bridges during Legacy Layout Migration; they are not legacy session state.
+- Read fallback shapes from `references/doc-templates.md` (Provider Bridge Files).
 
 ### Legacy Layout Migration
 
@@ -477,6 +532,7 @@ Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
 
 Root:    AGENTS.md - <created|exists|populated>
+Bridges: CLAUDE.md / GEMINI.md / copilot-instructions.md / cursor rule - <created|exists|appended|skipped>
 Folder:  .safe-code/ - <created|exists|migrated>  |  CHANGELOG.md - <created|exists>
 Context: context/ - <created|exists|migrated>     |  feature-specs/ - <created|exists>
          current-issues.md - <created|exists|gitignored>
@@ -508,7 +564,7 @@ All paths inside project root. Proceeding.
 11. LOG.md last 3 typed entries only, if present
 ```
 
-Do not read `.safe-code/context/current-issues.md` unless the user explicitly asks for debugging/issue analysis or references that file.
+Do not read `.safe-code/context/current-issues.md` during normal work. Read and append to it on issue triggers ("fix this", "failed", "got error", pasted stack trace) or when the user references that file (Issue Tracking Rule).
 
 ### 2b. Detect saved session from ACTIVE.md
 
@@ -559,10 +615,12 @@ Default checklist must include:
 ```md
 - [ ] Load AGENTS.md and context files
 - [ ] Detect saved state / migration need
+- [ ] Check context freshness (drift vs last_synced_commit)
 - [ ] Draft or update active feature spec if needed
 - [ ] Check git state and rollback safety
 - [ ] Check graph readiness when useful
 - [ ] Explore repo facts before context backfill
+- [ ] Run context self-test after backfill (verify brain is sufficient)
 - [ ] Audit dead code/stale files only when in scope
 - [ ] Audit agent config trust artifacts when in scope
 - [ ] Select Orientation/Audit/Cleanup profile
@@ -638,6 +696,113 @@ Checkpoint triggers:
 ```
 
 If context pressure is high mid-run: checkpoint first, then suggest the user run `/safe-code --save` and resume with `/safe-code --continue` in a fresh session. Do not push through with degraded context.
+
+---
+
+## Context Freshness Check
+
+A fresh chat must read *current* context, not a stale brain. safe-code stamps the commit it last synced context to, and checks drift on every run.
+
+Stamp: `.safe-code/context/progress-tracker.md` carries `last_synced_commit: <hash>` and `context_synced_at: <date>`, written on `/safe-code --save`.
+
+On `/safe-code` and `/safe-code --continue`, after loading context:
+
+1. `last_synced_commit` missing -> context was never synced; treat empty files as First-Run Population and flag populated-but-unstamped files for a refresh check.
+2. `last_synced_commit` == current `HEAD` -> brain is fresh; no refresh needed.
+3. They differ -> run a quick drift scan on **signal files** in `last_synced_commit..HEAD`:
+   - dependency manifests/locks (`package.json`, `*-lock*`, `requirements*.txt`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Gemfile`, …)
+   - top-level folder add / remove / rename
+   - build/test/run scripts and config (`tsconfig`, linter/formatter, CI, framework config)
+   - `AGENTS.md` / `.safe-code/context/*` themselves
+4. Signal files changed -> mark the affected context sections **possibly stale**, refresh them from current repo evidence (draft in `SESSION.md`, apply on `--save`), and note it in the summary. Only unrelated files changed -> context stays valid.
+
+Use graph delta (`detect_changes_tool`) for the drift scan when graph tools are ready; otherwise fall back to `git diff --stat <last_synced_commit>..HEAD`. Never trust the stamp over executable repo evidence — the stamp tells you *whether* to re-check, not *what* is true.
+
+---
+
+## Context Self-Test
+
+Writing context proves nothing on its own — it may look complete yet miss a fact a fresh agent needs, and the agent won't know until it hallucinates. The self-test is verification-before-completion for the **brain**: a closed-book exam proving the context can answer the questions a Day-1 agent actually asks.
+
+Run it after First-Run Population, and after a large drift refresh (Context Freshness Check). Skip on routine resumes.
+
+### How
+
+1. **Closed-book.** Dispatch a fresh-context subagent given **only** the `.safe-code/context/*.md` files — no repo access. (No subagent support -> run inline, but answer strictly from the loaded context, not from code read this session.) The point is to simulate an agent that has the brain but not the codebase.
+2. **Ask the Day-1 question set** (8–10), each mapped to the file that should answer it:
+
+   | Question | Should be answered by |
+   |---|---|
+   | What does this project do, and for whom? | `project-overview.md` |
+   | What is the stack and high-level architecture? | `architecture.md` |
+   | Where do I add a new route / feature / model? | `architecture.md` (Navigation map) |
+   | How do I run, build, and test it? | `code-standards.md` / `architecture.md` |
+   | What invariants must never be broken? | `architecture.md` |
+   | What code conventions must I follow? | `code-standards.md` |
+   | What is in progress and what is next? | `progress-tracker.md` |
+   | Any user preferences / hard dislikes to respect? | `user-preferences.md` |
+
+   Add repo-specific questions when the stack warrants (e.g. "how is auth enforced?", "how is data persisted?").
+3. **Require evidence.** Each answer must cite the context file + section it came from. No citation possible -> graded **fail** (the model is answering from training memory, not the brain).
+4. **Adversarial grade (when subagents available).** A second subagent tries to refute each answer ("is this actually supported by the context, or invented?"). Majority-refuted -> fail.
+
+### Gaps are work, not just a score
+
+For each failed question:
+
+- **Discoverable from the repo** -> read the specific code, write the fact into the right context file (draft in `SESSION.md`, apply on `--save`).
+- **Not provable from repo evidence** -> add to `.safe-code/context/progress-tracker.md` Open Questions for the user.
+
+Record the result as `context_selftest: <answerable>/<total> (<date>)` in `progress-tracker.md`, and report it in the final summary. Keep the question set small — this is a coverage gate, not an interrogation.
+
+---
+
+## Issue Tracking Rule
+
+When the user reports a problem, the agent records it in `.safe-code/context/current-issues.md` so the fix has a written trail. This file stays **local-only and gitignored** — writing to it never appears in a commit.
+
+Triggers (any language): `fix this`, `failed`, `got error`, `error`, `bug`, `crash`, `broken`, `not working`, `tak jalan`, `tak boleh`, `rosak`, or a pasted stack trace / log.
+
+On trigger:
+
+1. Read `.safe-code/context/current-issues.md` (this is the allowed "user asked to debug" case).
+2. Append a new entry under `## Open` with status `open`: short title, symptom, error excerpt, repro, notes.
+3. Work the fix through the normal safety flow (`$debug-issue` when needed).
+4. When resolved, move the entry to `## Resolved`, set status `fixed (<date>)`, and add root cause + one-line fix.
+
+Safety:
+
+- The agent may write issue entries here, but must **never copy raw content from this file** (secrets, tokens, stack traces, private URLs) into any committed file.
+- A **sanitized** one-line summary of a fixed bug still belongs in `LOG.md` as a `bugfix` entry — that is the committed, shareable history.
+- Do not paste live credentials or tokens into this file even though it is local; record the issue, not the secret.
+
+---
+
+## Feature Suggestion Rule
+
+Every new feature or enhancement that comes up — whether the user commits to it or not — gets captured as a spec file so it becomes referrable history instead of a forgotten chat message.
+
+When a new feature/idea is proposed (by the user or surfaced by the agent):
+
+1. Write `.safe-code/context/feature-specs/<NN>-<name>.md` from `00-template.md`, with `status: suggested` and `created: <date>`.
+2. Keep numbering incremental (`00-template.md` is reserved). One build unit per file.
+3. Do not start building a suggested feature until the user approves it.
+
+Status lifecycle (the `status:` field is how a later agent avoids re-suggesting or re-litigating decisions):
+
+```
+suggested    -> proposed, awaiting user decision
+approved     -> user wants it; ready to build
+in-progress  -> actively being built (this is the active spec)
+done         -> shipped and verified
+rejected     -> user declined; keep the file as history, do not delete or re-suggest
+```
+
+Rules:
+
+- A `rejected` spec is long-term memory: never re-suggest the same idea.
+- Flip status as decisions change; draft the flip in `SESSION.md` and apply on `/safe-code --save` (the spec file itself may be created immediately).
+- Do not fabricate specs for already-completed features unless the user asks; the proactive part is for new/upcoming ideas only.
 
 ---
 
@@ -821,7 +986,8 @@ When the host supports fresh-context subagents (Claude Code Agent tool, Codex su
 
 ```
 Subagent-eligible (read-only): $explore-codebase, $codebase-pruner Audit mode,
-                               Step 4b config scan, $review-changes analysis
+                               Step 4b config scan, Context Self-Test (context-only quiz),
+                               $review-changes analysis
 Inline-only (writes or session state): $safe-refactor-code, $codebase-pruner Execute
                                mode, $debug-issue fixes, all doc/session updates
 ```
@@ -990,8 +1156,8 @@ During work, draft updates in `SESSION.md`. Apply them to persistent docs only o
 | `.safe-code/context/ai-workflow-rules.md` | Workflow rules discovered from repo/team docs | Yes |
 | `.safe-code/context/ui-context.md` | UI tokens/components only when UI work occurs | Yes |
 | `.safe-code/context/progress-tracker.md` | Current phase, completed work, decisions, safe notes | Yes |
-| `.safe-code/context/current-issues.md` | Never draft or write user issue content | No |
-| `.safe-code/context/feature-specs/*.md` | Active spec before implementation | Write immediately when needed |
+| `.safe-code/context/current-issues.md` | Append/update issue entries on error triggers (local-only, gitignored) | No — written live, never via save |
+| `.safe-code/context/feature-specs/*.md` | Active spec before implementation; `status: suggested` spec for new ideas | Write immediately when needed |
 | `.safe-code/CHANGELOG.md` | Releasable changes | Yes |
 | `ACTIVE.md` | Last Session, pending checklist, next_action | Yes |
 | `SESSION.md` | Live task list, temp decisions, draft doc updates | Live during work; wipe on save |
@@ -1007,7 +1173,7 @@ Do not copy raw `current-issues.md` content, secrets, stack traces, private URLs
 ## Step 8: Final Summary
 
 ```
-=== safe-code v4.0 session complete ===
+=== safe-code v4.1 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
@@ -1038,6 +1204,7 @@ Decisions: <list>
 Removed:   <list>
 Flagged:   <list>
 Config audit: <clean | High: n, Medium: n | skipped: not in scope>
+Context self-test: <answerable n/n | gaps filled: n | open: n | skipped: not first-run>
 Refactors: <summary>
 Review:    <review-changes run | skipped: docs-only | unavailable fallback>
 Debug:     <debug-issue run | not needed | unresolved blocker>

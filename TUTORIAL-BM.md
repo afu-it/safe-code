@@ -46,7 +46,7 @@ AGENTS.md
     feature-specs/00-template.md
 ```
 
-`AGENTS.md` kekal di root sebagai pintu masuk universal yang setiap AI host auto-baca. `.safe-code/` ialah satu-satunya folder yang safe-code create. Ia agent-agnostic dan dikongsi merentas Codex, Claude, Cursor, dan Windsurf, jadi kesinambungan session kekal dengan projek.
+`AGENTS.md` ialah pintu masuk kanonik dan `.safe-code/` simpan semua kesinambungan (agent-agnostic, dikongsi merentas Codex, Claude, Cursor, dan Windsurf). Sebab bukan semua host auto-baca `AGENTS.md`, safe-code juga tulis fail pointer nipis — `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc` — yang redirect setiap host ke brain yang sama.
 
 ## 3. Urutan Baca
 
@@ -61,12 +61,16 @@ Agent baca `AGENTS.md` dahulu. `AGENTS.md` arahkan agent baca:
 7. `.safe-code/context/progress-tracker.md`
 8. spec aktif dalam `.safe-code/context/feature-specs/`
 
-Agent tidak baca `.safe-code/context/current-issues.md` kecuali anda minta debug/issue analysis secara jelas.
+Agent tidak baca `.safe-code/context/current-issues.md` masa kerja biasa — cuma bila ada isu (anda kata "fix this", "failed", "got error", atau paste stack trace) atau bila anda rujuk fail tu.
 
 Preference capture:
 
 - Jika anda kata `aku taknak`, `aku nak`, `aku prefer`, `jangan`, `please remove`, `always`, atau `never`, safe-code anggap ia preference candidate.
 - Durable preferences akan draft dalam `SESSION.md` dan disimpan ke `.safe-code/context/user-preferences.md` masa `/safe-code --save`.
+
+### Jalan dalam mana-mana host
+
+safe-code tulis `AGENTS.md` plus fail pointer nipis untuk host lain — `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, dan `.cursor/rules/safe-code.mdc`. Buka chat baru dalam Claude, Gemini, Copilot, atau Cursor dan ia auto-load brain `.safe-code/context/` yang sama, tanpa anda run apa-apa. Setiap run safe-code pun semak sama ada context dah basi (deps, folder, atau scripts berubah sejak sync terakhir) dan refresh, jadi chat baru tak pernah baca brain lapuk. Lepas tulis context, ia pun self-test — semakan context-only yang ia boleh jawab asas projek — dan isi mana-mana lubang yang dijumpai.
 
 ## 4. Feature Work
 
@@ -84,13 +88,15 @@ safe-code patut tulis active spec dahulu:
 
 Lepas itu baru implement ikut spec sahaja, verify, dan draft progress update dalam `SESSION.md`.
 
+Setiap spec ada field `status:` (`suggested` / `approved` / `in-progress` / `done` / `rejected`). Idea feature baru disimpan sebagai `status: suggested` walaupun anda belum build — jadi ia kekal sebagai history boleh rujuk balik. Approve untuk build; reject dan spec tu disimpan supaya idea sama tak dicadang semula.
+
 ## 5. Current Issues
 
-`.safe-code/context/current-issues.md` ialah fail manual untuk anda tulis sendiri. Fail ini gitignored (`/.safe-code/context/current-issues.md`) dan local sahaja.
+`.safe-code/context/current-issues.md` ialah issue tracker dikongsi. Fail ini gitignored (`/.safe-code/context/current-issues.md`) dan local sahaja — tak pernah di-commit.
 
-Guna untuk error, steps reproduce, logs, atau nota screenshot.
+Anda boleh paste error, steps reproduce, logs, atau nota screenshot. Agent pun tulis di sini: bila anda report masalah ("fix this", "failed", "got error", atau paste stack trace) ia append satu entry, kemudian tukar ke resolved (dengan root cause + fix) bila dah selesai. Sebab fail ni mungkin ada secret, agent tak pernah salin isi mentahnya ke fail yang di-commit — ringkasan selamat setiap fix masuk `LOG.md` sebagai gantinya.
 
-Bila bersedia, minta:
+Untuk pass yang berhati-hati (plan dulu), minta:
 
 ```text
 Explore the current-issues.md file and deeply analyze the problem. Only when you have the analysis, give it back to me with the idea of how you're planning to solve it, and then wait for me to give you the green light to execute it.

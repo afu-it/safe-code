@@ -46,7 +46,7 @@ AGENTS.md
     feature-specs/00-template.md
 ```
 
-`AGENTS.md` stays at the root as the universal entry point every AI host auto-reads. `.safe-code/` is the only folder safe-code creates. It is agent-agnostic and shared across Codex, Claude, Cursor, and Windsurf, so session continuity stays with the project.
+`AGENTS.md` is the canonical entry point and `.safe-code/` holds all continuity (it is agent-agnostic and shared across Codex, Claude, Cursor, and Windsurf). Because not every host auto-reads `AGENTS.md`, safe-code also writes thin pointer files — `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc` — that redirect each host to the same brain.
 
 ## 3. Read Order
 
@@ -61,12 +61,16 @@ Agents read `AGENTS.md` first. `AGENTS.md` points them to:
 7. `.safe-code/context/progress-tracker.md`
 8. active spec in `.safe-code/context/feature-specs/`
 
-Agents do not read `.safe-code/context/current-issues.md` unless you explicitly ask for issue/debug analysis.
+Agents do not read `.safe-code/context/current-issues.md` during normal work — only on an issue trigger (you say "fix this", "failed", "got error", or paste a stack trace) or when you reference it.
 
 Preference capture:
 
 - If you say `I don't want`, `I prefer`, `please remove`, `always`, or `never`, safe-code treats it as a preference candidate.
 - Durable preferences are drafted in `SESSION.md` and saved into `.safe-code/context/user-preferences.md` on `/safe-code --save`.
+
+### Works in any host
+
+safe-code writes `AGENTS.md` plus thin pointer files for other hosts — `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, and `.cursor/rules/safe-code.mdc`. Open a fresh chat in Claude, Gemini, Copilot, or Cursor and it loads the same `.safe-code/context/` brain automatically, without you running anything. On each run safe-code also checks whether the context is stale (deps, folders, or scripts changed since it was last synced) and refreshes it, so a new chat never reads an outdated brain. After writing context it also self-tests it — a context-only check that it can answer the project basics — and fills any gaps it finds.
 
 ## 4. Feature Work
 
@@ -84,13 +88,15 @@ safe-code should draft an active spec first:
 
 Then it implements only that spec, verifies, and drafts progress updates in `SESSION.md`.
 
+Every spec carries a `status:` field (`suggested` / `approved` / `in-progress` / `done` / `rejected`). New feature ideas are saved as `status: suggested` even if you do not build them yet — so they become referrable history. Approve one to build it; reject one and the spec is kept so the idea is not suggested again.
+
 ## 5. Current Issues
 
-`.safe-code/context/current-issues.md` is for you to write manually. It is gitignored (`/.safe-code/context/current-issues.md`) and local only.
+`.safe-code/context/current-issues.md` is a shared issue tracker. It is gitignored (`/.safe-code/context/current-issues.md`) and local only — never committed.
 
-Use it for errors, reproduction steps, logs, or screenshots notes.
+You can paste errors, reproduction steps, logs, or screenshot notes. The agent also writes here: whenever you report a problem ("fix this", "failed", "got error", or a pasted stack trace) it appends an entry, then flips it to resolved (with root cause + fix) once solved. Because the file may hold secrets, the agent never copies its raw content into committed files — a sanitized summary of each fix goes to `LOG.md` instead.
 
-When ready, ask:
+For a careful, plan-first pass, ask:
 
 ```text
 Explore the current-issues.md file and deeply analyze the problem. Only when you have the analysis, give it back to me with the idea of how you're planning to solve it, and then wait for me to give you the green light to execute it.

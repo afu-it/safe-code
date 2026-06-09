@@ -197,8 +197,9 @@ it > Saved safe-code session found; resuming automatically.
 - Deleting code with no rollback path (no git, or dirty tree) without approval.
 - Writing real content into `.safe-code/context/*.md` mid-session instead of
   drafting in `SESSION.md` and applying on `--save`.
-- Creating `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` session
-  folders — `.safe-code/` is the only folder safe-code creates.
+- Creating `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` session-state
+  folders — continuity lives in `.safe-code/` only (provider-bridge pointers like
+  `.cursor/rules/safe-code.mdc` are redirects, not state).
 - Saving without touching all six session files — an untouched file means an
   incomplete save.
 - Pushing to a remote. safe-code never pushes.

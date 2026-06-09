@@ -67,6 +67,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 | UI | | |
 | Database | | |
 
+## Navigation (Where Things Live)
+<!-- The map a fresh agent uses to jump straight to the right file instead of
+     re-scanning the whole repo. Fill from real paths; keep it current. -->
+- **Entry points**: <!-- main / app / server / CLI entry files. -->
+- **Routes / endpoints**: <!-- where they are defined. -->
+- **Data / models / schema**: <!-- where defined. -->
+- **Config / env**: <!-- where config and env live. -->
+- **Tests**: <!-- where tests live + how to run them. -->
+- **To add a feature/route/model, edit**: <!-- folder/file. -->
+
 ## System Boundaries
 - `folder/` — <!-- Ownership and responsibility. -->
 
@@ -212,6 +222,11 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 
 Update with safe summaries on `/safe-code --save`.
 
+<!-- Context freshness + coverage stamps — updated on /safe-code --save. -->
+last_synced_commit: none
+context_synced_at: -
+context_selftest: -
+
 ## Current Phase
 - Not started
 
@@ -239,43 +254,45 @@ Update with safe summaries on `/safe-code --save`.
 
 ---
 
-### `.safe-code/context/current-issues.md` — local-only manual scratchpad
+### `.safe-code/context/current-issues.md` — local-only issue tracker (user + AI)
 
-Add `/.safe-code/context/current-issues.md` to `.gitignore`.
+Add `/.safe-code/context/current-issues.md` to `.gitignore`. Stays local-only; never committed. The user pastes raw context; the agent appends/updates entries on issue triggers (Issue Tracking Rule) and flips them to Resolved once fixed.
 
 ```md
-# Current Issues
+# Current Issues  (local-only, gitignored)
 
-This file is a local-only manual scratchpad for the user.
-Do not commit this file.
-Do not paste secrets unless you understand the risk.
-AI agents should read this file only when the user explicitly asks for issue/debug analysis.
+User + AI shared issue tracker. Not committed.
+The user pastes raw context here; the agent appends an entry on error triggers
+("fix this", "failed", "got error", pasted stack trace) and flips it to
+Resolved once fixed. May contain secrets/logs — never copied into committed docs.
 
 ## How To Ask The Agent
 
-Copy/paste this prompt when ready:
+> Explore current-issues.md, deeply analyze the problem, give me the analysis
+> plus your fix plan, then wait for my green light before executing.
 
-> Explore the current-issues.md file and deeply analyze the problem. Only when you have the analysis, give it back to me with the idea of how you're planning to solve it, and then wait for me to give you the green light to execute it.
+---
 
-## Issue
-<!-- Manually describe the problem here. -->
+## Open
 
-## Error / Logs
-<!-- Manually paste error messages, stack traces, or relevant logs here. -->
+<!-- Newest first. One block per issue. Status: open. -->
 
-## Steps To Reproduce
-1. <!-- Step one -->
-2. <!-- Step two -->
-3. <!-- Step three -->
+### [<DATE>] <short title> — status: open
+- symptom: <what the user sees>
+- error: <key error line(s) — trim long dumps>
+- repro: <steps, or "unknown">
+- notes: <env, recent changes, URLs>
 
-## Expected Result
-<!-- What should happen instead. -->
+---
 
-## Actual Result
-<!-- What happens now. -->
+## Resolved
 
-## Notes
-<!-- URLs, screenshot notes, environment details, recent changes. -->
+<!-- Moved here once fixed. A sanitized one-liner also goes to LOG.md. -->
+
+### [<DATE>] <short title> — status: fixed (<DATE>)
+- symptom: <what was wrong>
+- root cause: <one line>
+- fix: <what changed — file/approach, no secrets>
 ```
 
 ---
@@ -284,6 +301,10 @@ Copy/paste this prompt when ready:
 
 ```md
 # Unit NN: Feature Name
+
+status: suggested   <!-- suggested | approved | in-progress | done | rejected -->
+created: <DATE>
+updated: <DATE>
 
 ## Goal
 <!-- 1-2 sentences. Concrete output when complete. -->
@@ -361,10 +382,12 @@ _<DATE> <TIME>_
 - [ ] Initialize or reconcile AGENTS.md, context, and session docs
 - [ ] Detect saved state or legacy layout migration need
 - [ ] Load required context for this command
+- [ ] Check context freshness (drift vs last_synced_commit)
 - [ ] Draft or update active feature spec if needed
 - [ ] Check git state and rollback safety
 - [ ] Check or bootstrap graph support when useful
 - [ ] Explore repo facts before context backfill
+- [ ] Run context self-test after backfill (verify brain is sufficient)
 - [ ] Audit dead code and stale files only when in scope
 - [ ] Decide run profile and execution mode
 - [ ] Execute scoped code changes if requested
@@ -501,5 +524,70 @@ confidence: High | Medium | Low
 reason: <why it is suspected dead>
 risk: Zero | Local | Cross-module | External
 action: auto-delete | manual review | skip
+```
+
+---
+
+## Provider Bridge Files (pointers — never duplicate facts)
+
+> Thin redirects so hosts that do not auto-read `AGENTS.md` still load the same brain.
+> Never overwrite a user's existing file; if it exists without a `<!-- safe-code:bridge -->`
+> block, append the block instead of replacing the file.
+
+### `<project-root>/CLAUDE.md`
+
+```md
+# CLAUDE.md
+
+<!-- safe-code:bridge -->
+> Project context is maintained by safe-code. Read these before any task.
+
+@AGENTS.md
+
+After AGENTS.md, read the files it lists under `.safe-code/context/` (project overview,
+architecture incl. the Navigation map, code standards, workflow rules, progress). Treat them
+as the source of truth; do not re-scan the whole codebase for facts already documented there.
+<!-- /safe-code:bridge -->
+```
+
+### `<project-root>/GEMINI.md`
+
+```md
+# GEMINI.md
+
+<!-- safe-code:bridge -->
+Project context is maintained by safe-code. Before doing any work, read `AGENTS.md` at the
+repo root, then the files it lists under `.safe-code/context/` (project overview, architecture
+incl. the Navigation map, code standards, workflow rules, progress). They are the source of
+truth for what this project is and how to work in it. Do not re-derive project facts by
+scanning the whole codebase when they are already documented there.
+<!-- /safe-code:bridge -->
+```
+
+### `<project-root>/.github/copilot-instructions.md`
+
+```md
+<!-- safe-code:bridge -->
+# Project Instructions
+
+Project context is maintained by safe-code. Before generating code or answering, read
+`AGENTS.md` at the repo root and the files it references under `.safe-code/context/` (project
+overview, architecture incl. the Navigation map, code standards, workflow rules, progress).
+Treat those as the source of truth; follow them instead of re-scanning the entire codebase.
+<!-- /safe-code:bridge -->
+```
+
+### `<project-root>/.cursor/rules/safe-code.mdc`
+
+```md
+---
+description: safe-code project context entry point
+alwaysApply: true
+---
+
+Project context is maintained by safe-code. Before any task, read `AGENTS.md` at the repo
+root and the files it references under `.safe-code/context/` (project overview, architecture
+incl. the Navigation map, code standards, workflow rules, progress). Treat those as the source
+of truth; do not re-scan the whole codebase for facts already documented there.
 ```
 
