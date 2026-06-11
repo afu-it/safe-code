@@ -533,6 +533,8 @@ action: auto-delete | manual review | skip
 ## Provider Bridge Files (pointers — never duplicate facts)
 
 > Thin redirects so hosts that do not auto-read `AGENTS.md` still load the same brain.
+> Write only the bridge for the host currently running (see SKILL.md Provider Bridge); the
+> templates below are the shapes for each host, used when that host's bridge is the one written.
 > Never overwrite a user's existing file; if it exists without a `<!-- safe-code:bridge -->`
 > block, append the block instead of replacing the file.
 

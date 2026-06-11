@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.3-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.4-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -82,7 +82,7 @@ Nothing is pushed. Nothing risky is deleted without rollback evidence.
 
 ## Context + Session Docs
 
-Every project's source of truth is `AGENTS.md` + one `.safe-code/` folder. safe-code also writes thin **provider-bridge pointers** (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`) so hosts that don't auto-read `AGENTS.md` still load the same brain — no `.codex/`/`.claude/`/`.agents/` state clutter.
+Every project's source of truth is `AGENTS.md` + one `.safe-code/` folder. safe-code also writes a thin **provider-bridge pointer** for the host you're running in (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, or `.cursor/rules/safe-code.mdc`) so that host loads the same brain without auto-reading `AGENTS.md`. Other hosts' bridges accrue lazily — each is written the first time you run safe-code under it — so the repo only carries bridges for tools you actually use, with no `.codex/`/`.claude/`/`.agents/` state clutter.
 
 ```text
 your-project/
@@ -112,7 +112,7 @@ your-project/
             └── 00-template.md
 ```
 
-- `AGENTS.md` is the canonical entry point — its Read First section points into `.safe-code/`. Because not every host auto-reads `AGENTS.md` (Claude reads `CLAUDE.md`, Gemini `GEMINI.md`, Copilot `.github/copilot-instructions.md`, Cursor `.cursor/rules/`), safe-code writes a thin pointer in each so every provider lands on the same brain.
+- `AGENTS.md` is the canonical entry point — its Read First section points into `.safe-code/`. Because not every host auto-reads `AGENTS.md` (Claude reads `CLAUDE.md`, Gemini `GEMINI.md`, Copilot `.github/copilot-instructions.md`, Cursor `.cursor/rules/`), safe-code writes a thin pointer for the host it is currently running in, so that provider lands on the same brain. The other hosts' pointers are written lazily the first time you run safe-code under each.
 - `.safe-code/context/` is canonical long-term project brain.
 - `.safe-code/context/user-preferences.md` stores explicit durable user preferences, like “SVG icons only, no emoji icons”.
 - Agents watch for strong preference language like `I don't want`, `aku taknak`, `I prefer`, `please remove`, `jangan`, `always`, and `never`.
@@ -236,6 +236,8 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.4** — per-host provider bridges. safe-code now writes only the bridge for the host you're running in; other hosts' bridges accrue lazily when you run it under them. `AGENTS.md` is still always written, and an undetectable host falls back to writing all four (v4.3 parity). Keeps repos free of unused `GEMINI.md`/Copilot/Cursor files for single-tool users.
 
 **v4.3** — vibe-coder companion.
 
