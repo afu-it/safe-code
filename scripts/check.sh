@@ -167,7 +167,7 @@ if [ -f AGENTS.md ]; then
 				warn "$b exists but does not reference AGENTS.md/.safe-code"
 			fi
 		else
-			warn "$b missing (run /safe-code to write provider bridge)"
+			info "$b not present (lazy — written when safe-code runs under that host)"
 		fi
 	done
 else

@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.3"
+version: "4.4"
 ---
 
 # Safe Code
@@ -57,7 +57,7 @@ WRONG:   ~/.safe-code/ACTIVE.md
             └── 00-template.md
 ```
 
-`/safe-code` keeps all continuity in **one** place — `AGENTS.md` + the `.safe-code/` folder are the single source of truth. It also writes thin **provider-bridge pointers** (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`) so hosts that do not auto-read `AGENTS.md` still load the same brain. Bridges hold no state — they only redirect to `AGENTS.md` and `.safe-code/`. Never store session/context docs in `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` — those are legacy layouts that get migrated into `.safe-code/` and removed (the bridge pointers above are not session state and are preserved).
+`/safe-code` keeps all continuity in **one** place — `AGENTS.md` + the `.safe-code/` folder are the single source of truth. It also writes a thin **provider-bridge pointer** for the host it is currently running in (`CLAUDE.md` for Claude Code, `GEMINI.md` for Gemini, `.github/copilot-instructions.md` for Copilot, `.cursor/rules/safe-code.mdc` for Cursor) so that host loads the same brain without auto-reading `AGENTS.md`; other hosts' bridges accrue lazily when safe-code later runs under them. Bridges hold no state — they only redirect to `AGENTS.md` and `.safe-code/`. Never store session/context docs in `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` — those are legacy layouts that get migrated into `.safe-code/` and removed (the bridge pointers above are not session state and are preserved).
 
 Everything lives in one shared `.safe-code/` folder at the project root, regardless of which agent (Codex, Claude, Cursor, Windsurf, Copilot, Gemini) is running — continuity belongs to the project, not the tool. (Per-host bridge mechanics are defined once in the Provider Bridge section, Step 1.)
 
@@ -450,10 +450,11 @@ Create missing folders/files:
 
 ```
 AGENTS.md
-CLAUDE.md                        (provider bridge — pointer only)
-GEMINI.md                        (provider bridge — pointer only)
-.github/copilot-instructions.md  (provider bridge — pointer only)
-.cursor/rules/safe-code.mdc      (provider bridge — pointer only)
+<current host's bridge only — see Provider Bridge below; pointer, not state>
+CLAUDE.md                        (bridge — only if running in Claude Code)
+GEMINI.md                        (bridge — only if running in Gemini CLI)
+.github/copilot-instructions.md  (bridge — only if running in GitHub Copilot)
+.cursor/rules/safe-code.mdc      (bridge — only if running in Cursor)
 .safe-code/CHANGELOG.md
 .safe-code/context/
 .safe-code/context/project-overview.md
@@ -518,7 +519,7 @@ Rules:
 
 ### Provider Bridge
 
-`AGENTS.md` + `.safe-code/` are the source of truth, but not every host auto-reads `AGENTS.md`. So safe-code writes thin **pointer** files in each major host's native config location, so a fresh chat in any provider loads the same brain without the user invoking safe-code:
+`AGENTS.md` + `.safe-code/` are the source of truth, but not every host auto-reads `AGENTS.md`. So safe-code writes a thin **pointer** file in the host's native config location so a fresh chat in that provider loads the same brain without the user invoking safe-code. **Write only the bridge for the host you are currently running in** — identify your host from your own environment/system context and use the table below as a lookup. Other hosts' bridges are not written now; they accrue lazily the next time safe-code runs under them.
 
 | Host | Bridge file | Mechanism |
 |---|---|---|
@@ -530,6 +531,10 @@ Rules:
 Rules:
 
 - Bridges are **pointers, not state** — each is a few lines that redirect to `AGENTS.md` + `.safe-code/context/`. Never duplicate project facts into them.
+- **Write only the current host's bridge** (the one matching the table row for the host you are running in). `AGENTS.md` is always written; the other hosts' bridges are deferred, not written this run.
+- **Host not in the table** (e.g. Codex, Windsurf): write `AGENTS.md` only — those hosts read it directly, no bridge file needed.
+- **Host undetectable** (you genuinely cannot tell which host you are): fall back to writing all four bridges — identical to pre-v4.4 behavior, so a run is never worse than before.
+- **Never delete** an existing bridge. Lazy accrual means each host self-registers its bridge the first time safe-code runs under it; bridges for other hosts already in the repo are preserved.
 - **Never overwrite** an existing host file. If it exists and does not already point at `AGENTS.md`/`.safe-code/`, append one clearly-marked `<!-- safe-code:bridge -->` block; if it already points there, leave it.
 - Bridges are scaffold/pointer files — write them immediately (like `AGENTS.md`), not draft-until-save.
 - Preserve bridges during Legacy Layout Migration; they are not legacy session state.
@@ -598,7 +603,7 @@ Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
 
 Root:    AGENTS.md - <created|exists|populated>
-Bridges: CLAUDE.md / GEMINI.md / copilot-instructions.md / cursor rule - <created|exists|appended|skipped>
+Bridges: <current host's bridge> - <created|exists|appended>; others deferred (written when safe-code runs under that host). Undetectable host -> all four reported.
 Folder:  .safe-code/ - <created|exists|migrated>  |  CHANGELOG.md - <created|exists>
 Context: context/ - <created|exists|migrated>     |  feature-specs/ - <created|exists>
          current-issues.md - <created|exists|gitignored>
@@ -1220,7 +1225,7 @@ Do not copy raw `current-issues.md` content, secrets, stack traces, private URLs
 ## Step 8: Final Summary
 
 ```
-=== safe-code v4.3 session complete ===
+=== safe-code v4.4 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
