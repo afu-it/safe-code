@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.4-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.5-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -65,15 +65,15 @@ It moves everything into `.safe-code/`, patches old config (`.gitignore` entry, 
 
 ```
  Step 0  →  Locate project root (single agent-agnostic `.safe-code/` folder)
- Step 1  →  Create/reconcile AGENTS.md + .safe-code/ docs; migrate legacy layouts
- Step 2  →  Load AGENTS.md first, then context files, then saved state if present
- Step 3  →  Check git rollback safety + graph readiness
- Step 4  →  Explore/audit repo facts before writing context
- Step 5  →  Draft or read active feature spec when building a feature
- Step 6  →  Execute scoped code changes, cleanup, or refactor only when in scope
- Step 7  →  Verify, review, debug failures if needed
- Step 8  →  Draft context/doc updates in SESSION.md
---save   →  Apply final context/docs + local commit only
+ Step 1  →  Create/reconcile AGENTS.md + host bridge + .safe-code/ docs; migrate legacy layouts
+ Step 2  →  Load context layers + detect saved session (auto-resume)
+ Step 3  →  Git rollback safety, run profile, graph readiness, helper routing
+ Step 4  →  Audit dead code (4b: agent-config trust audit)
+ Step 5  →  Pre-plan safety check → execution mode A/B/C
+ Step 6  →  Execute high-confidence removals slice by slice, verify each
+ Step 7  →  Refactor when in scope; review + smoke-verify; draft doc updates
+ Step 8  →  Final summary
+--save   →  Apply final context/docs + atomic local commits only
 ```
 
 Nothing is pushed. Nothing risky is deleted without rollback evidence.
@@ -236,6 +236,14 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.5** — slim & consistent.
+
+- **Slimmer skill, same rules** — `SKILL.md` drops ~25% of its weight (1269 → ~945 lines): rare-path procedure detail (atomic-split mechanics, legacy migration steps, graph bootstrap, first-run population + context self-test) moved into four new Layer-3 references (`save-procedure.md`, `legacy-migration.md`, `graph-integration.md`, `first-run.md`) loaded only when those steps actually run. Every decision point and hard invariant stays inline; the Six-File Save Rule is untouched. A new Safety Invariants section replaces six scattered repeats of the same rules.
+- **Grounding Rules in AGENTS.md** — the generated `AGENTS.md` now carries an anti-hallucination section every host loads on every session: cite context or code for project claims, verify files/functions exist before referencing them, record gaps as Open Questions instead of guessing, and trust repo evidence over docs.
+- **Contradictions fixed** — worked examples caught up to v4.2+ behavior (atomic commits, agent-written issue entries), the README step map matches SKILL.md again, and the "deprecated command forms" section (which conflicted with Command Recognition) is gone.
+- **Helper timing harmonized** — `codebase-pruner` and `safe-refactor-code` now explicitly follow safe-code's Draft-Until-Save when orchestrated; direct doc writes are standalone-only behavior.
+- **check-version.sh** now also asserts the `examples.md` close-out banner, so worked examples can't silently go stale again.
 
 **v4.4** — per-host provider bridges. safe-code now writes only the bridge for the host you're running in; other hosts' bridges accrue lazily when you run it under them. `AGENTS.md` is still always written, and an undetectable host falls back to writing all four (v4.3 parity). Keeps repos free of unused `GEMINI.md`/Copilot/Cursor files for single-tool users.
 

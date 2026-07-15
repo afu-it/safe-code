@@ -492,6 +492,7 @@ Do not inline template bodies here. When creating or reconciling scaffold files 
 - `references/agent-config-audit.md` — scope, scan patterns, and High/Medium/Info classification for the Step 4b Agent Config Trust Audit. Read it only when that step runs.
 
 When applying templates: create missing files with the template shape only (never overwrite — Safety Invariants); follow `references/agents-md-authoring.md` when creating, populating, or reconciling `AGENTS.md` instead of filling the template blindly; draft real content in `SESSION.md` and finalize on `--save`, except scaffold files and active feature specs.
+
 ---
 
 ### 1c. Confirm Initialization
