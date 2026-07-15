@@ -82,6 +82,19 @@ fi
 BANNER="$(grep -oE 'safe-code v[0-9]+\.[0-9]+(\.[0-9]+)? session complete' "$SKILL" | head -1 | sed -E 's/^safe-code v//; s/ session complete$//')"
 check "SKILL.md Step 8 banner" "$BANNER"
 
+# ---- examples.md close-out banner(s): same pattern as Step 8 -----------------
+EXAMPLES="$ROOT/skills/safe-code/references/examples.md"
+if [ -f "$EXAMPLES" ]; then
+	FOUND_ANY=0
+	while IFS= read -r EBAN; do
+		FOUND_ANY=1
+		check "examples.md banner" "$EBAN"
+	done < <(grep -oE 'safe-code v[0-9]+\.[0-9]+(\.[0-9]+)? session complete' "$EXAMPLES" | sed -E 's/^safe-code v//; s/ session complete$//')
+	[ "$FOUND_ANY" -eq 0 ] && info "examples.md banner: not present (skipped)"
+else
+	info "examples.md: not found (skipped)"
+fi
+
 echo
 if [ "$FAILS" -eq 0 ]; then
 	printf "%sResult: OK%s — all version mentions agree on %s\n" "$C_OK" "$C_RST" "$SRC"
