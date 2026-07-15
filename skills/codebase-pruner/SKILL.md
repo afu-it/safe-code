@@ -46,6 +46,8 @@ When flagging candidates that are not auto-deleted, write a note into `.safe-cod
 
 `AGENTS.md` at repo root is always updated when significant dead code is found or removed.
 
+When running under safe-code, follow safe-code's Draft-Until-Save timing: draft these notes (and any `AGENTS.md` updates) in `.safe-code/SESSION.md` and let `/safe-code --save` apply them. Direct writes to `safe-refactor-code.md` and `AGENTS.md` are standalone behavior only.
+
 ## Modes
 
 ### Audit

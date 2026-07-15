@@ -63,6 +63,8 @@ This step is **mandatory**. Run it before reading or touching any code.
 
 > **Canonical authoring rules:** When running under `safe-code`, the single source of truth for how to write `AGENTS.md` is the safe-code skill's `references/agents-md-authoring.md` (decision test, investigation order, what to extract/exclude, minimum quality bar). Follow it instead of improvising. The compact rules below are the standalone fallback when that reference is not available.
 
+> **Timing under safe-code:** when this skill runs under `/safe-code`, AGENTS.md *content* updates follow safe-code's Draft-Until-Save (draft in `.safe-code/SESSION.md`, apply on `/safe-code --save`; First-Run Population excepted). The mandatory-immediate write below applies when running standalone.
+
 ### Detect if AGENTS.md is effectively empty
 
 Treat `AGENTS.md` as effectively empty if it contains **only**:
@@ -152,7 +154,7 @@ Before syncing docs:
 
 ### 5. Sync Docs Before Finishing
 
-After real code changes, update the continuity files in `.safe-code/` (and `AGENTS.md` at repo root):
+After real code changes, update the continuity files in `.safe-code/` (and `AGENTS.md` at repo root). When running under safe-code, draft these updates in `.safe-code/SESSION.md` instead and apply them on `/safe-code --save`:
 
 - `AGENTS.md` (repo root) — current state, key decisions, blockers, handoff notes
 - `safe-refactor-code.md` — repo-specific refactor constraints and recurring cleanup rules
