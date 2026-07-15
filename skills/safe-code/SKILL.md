@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.5"
+version: "4.6"
 ---
 
 # Safe Code
@@ -91,6 +91,8 @@ LOG.md                            — last 3 typed entries only, if present
 ```
 
 Do not read `.safe-code/context/current-issues.md` during normal work. Read **and append to** it when the user reports an issue — trigger phrases like "fix this", "failed", "got error", "bug", "crash", "tak jalan", "rosak", or a pasted stack trace — or when the user references that file. See the Issue Tracking Rule.
+
+After loading, start the session's **first** reply with a one-line brain-status banner: `[safe-code: brain loaded @ <last_synced_commit | unsynced>]`, or `[safe-code: no project brain — run /safe-code]` when context is missing. Once per session only.
 
 ### Layer 2 — Resume (`/safe-code --continue` or auto-continue)
 
@@ -462,14 +464,17 @@ Rules:
 | Host | Bridge file | Mechanism |
 |---|---|---|
 | Claude Code | `CLAUDE.md` | `@AGENTS.md` import + read-context instruction |
-| Gemini CLI | `GEMINI.md` | read-`AGENTS.md`-and-context instruction |
+| Cline | `.clinerules/safe-code.md` | read-`AGENTS.md`-and-context instruction |
+| Gemini CLI | `GEMINI.md` | read-`AGENTS.md`-and-context instruction (+ print the `.gemini/settings.json` opt-out snippet — never auto-edit config) |
 | GitHub Copilot | `.github/copilot-instructions.md` | read-`AGENTS.md`-and-context instruction |
 | Cursor | `.cursor/rules/safe-code.mdc` | `alwaysApply` rule pointing at `AGENTS.md` |
+
+Most modern hosts (Codex, Windsurf, Warp, Zed, RooCode, Kilo, opencode, Amp, Jules, Devin, and more) read `AGENTS.md` natively — no bridge needed; the full host-coverage table lives in `references/doc-templates.md` (Provider Bridge Files).
 
 Rules:
 
 - Bridges are **pointers, not state** — a few lines redirecting to `AGENTS.md` + `.safe-code/context/`. Never duplicate project facts into them.
-- **Write only the current host's bridge**; `AGENTS.md` is always written. Host not in the table (e.g. Codex, Windsurf) -> `AGENTS.md` only, those hosts read it directly. Host undetectable -> fall back to writing all four (pre-v4.4 behavior, so a run is never worse than before).
+- **Write only the current host's bridge**; `AGENTS.md` is always written. Host not in the table -> `AGENTS.md` only (it reads the file natively — see the host-coverage table). Host undetectable -> fall back to writing the CLAUDE.md/GEMINI.md/Copilot/Cursor four (pre-v4.4 behavior, so a run is never worse than before).
 - **Never delete or overwrite** an existing bridge (Safety Invariants): if a host file exists without pointing at the brain, append one clearly-marked `<!-- safe-code:bridge -->` block; if it already points there, leave it. Lazy accrual: each host self-registers the first time safe-code runs under it.
 - Bridges are scaffold files — write immediately, not draft-until-save; preserve them during Legacy Layout Migration (they are not legacy state).
 - Read fallback shapes from `references/doc-templates.md` (Provider Bridge Files).
@@ -602,6 +607,7 @@ On `/safe-code` and `/safe-code --continue`, after loading context:
    - `AGENTS.md` / `.safe-code/context/*` themselves
 4. Signal files changed -> mark the affected context sections **possibly stale**, refresh them from current repo evidence (draft in `SESSION.md`, apply on `--save`), and note it in the summary. Only unrelated files changed -> context stays valid.
 5. Ignore safe-code's own save commits in the drift window (the `--save` bookkeeping commits, e.g. `docs: sync .safe-code session files`) — the stamp is written before those commits exist, so they always trail it and are not real drift.
+6. When refreshing stale sections, re-verify **technical claims** (paths, commands, APIs, patterns) against the repo and correct them with evidence; **preserve** decision rationales, MEMORY lessons, BACKLOG items, and Open Questions — append current status rather than delete history. Report "corrected" and "preserved" separately.
 
 Use graph delta (`detect_changes_tool`) for the drift scan when graph tools are ready; otherwise fall back to `git diff --stat <last_synced_commit>..HEAD`. Never trust the stamp over executable repo evidence — the stamp tells you *whether* to re-check, not *what* is true.
 
@@ -651,6 +657,7 @@ Status lifecycle: `suggested -> approved -> in-progress -> done | rejected` — 
 Rules:
 
 - Flip status as decisions change; draft the flip in `SESSION.md` and apply on `/safe-code --save` (the spec file itself may be created immediately).
+- A spec cannot flip `suggested -> approved` while any `[NEEDS CLARIFICATION]` marker remains in its Open Questions — resolve each with the user first (offer a recommended answer), write the answer into the relevant section, delete the marker.
 - Do not fabricate specs for already-completed features unless the user asks; the proactive part is for new/upcoming ideas only.
 
 ---
@@ -913,7 +920,7 @@ During work, draft updates in `SESSION.md`; apply them to persistent docs only o
 ## Step 8: Final Summary
 
 ```
-=== safe-code v4.5 session complete ===
+=== safe-code v4.6 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/

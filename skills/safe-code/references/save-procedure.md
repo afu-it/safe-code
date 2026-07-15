@@ -81,6 +81,13 @@ if LOG.md > 200 lines:
 
 This keeps LOG.md scannable without losing history.
 
+## Session Scope Rule
+
+A save records only what changed or was learned *this session*. Update the project brain
+only where session evidence contradicts or extends it — never re-summarize the whole
+project into session files or regenerate context wholesale. (What earns an entry, and the
+do-not-log noise filter, live in `doc-templates.md` Session-File Discipline.)
+
 ## Draft-Until-Save Sync Table
 
 During work, draft updates in `SESSION.md`. Apply them to persistent docs only on `/safe-code --save`, except scaffold files and active feature specs.

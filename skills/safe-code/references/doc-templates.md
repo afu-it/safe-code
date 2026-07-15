@@ -309,6 +309,12 @@ updated: <DATE>
 ## Goal
 <!-- 1-2 sentences. Concrete output when complete. -->
 
+## Open Questions
+<!-- Max 3. Only for decisions that materially change the design. A spec cannot flip
+     suggested -> approved while any marker remains: ask the user each question (offer a
+     recommended answer), write the answer into the relevant section, delete the marker. -->
+- [NEEDS CLARIFICATION: <specific question>]
+
 ## Scope
 ### In Scope
 - <!-- What will be built. -->
@@ -323,13 +329,45 @@ updated: <DATE>
 - <!-- Files/areas likely touched. -->
 
 ## Dependencies
+<!-- Verify each package exists on its official registry (npm/PyPI/crates/...) before the
+     spec is approved. If an install later fails, STOP — never substitute a
+     similar-sounding package; re-verify the name with the user. -->
 - <!-- package-name (reason), or None. -->
 
 ## Verify When Done
-- [ ] <!-- Specific acceptance condition. -->
+<!-- File existence is not verification; SESSION/LOG claims are not evidence — re-check
+     against the repo. -->
+### Behavior (observable when running or using it)
+- [ ] <!-- What a user/caller can see working. -->
+### Artifacts (files exist)
+- [ ] <!-- Exact paths created or changed. -->
+### Wiring (new code is reachable)
+- [ ] <!-- The route/import/caller that connects it — name it. -->
 - [ ] Build/typecheck/test command passes if available.
 - [ ] No unrelated changes.
 ```
+
+---
+
+## Session-File Discipline (what earns an entry)
+
+| Event | Goes to |
+|---|---|
+| Architectural/design decision made | `progress-tracker.md` Architecture Decisions (draft in SESSION) |
+| Current focus changes | `ACTIVE.md` Current |
+| Task completed + verified | `SESSION.md` task list `[x]`; typed `LOG.md` entry on save |
+| Unrelated/deferred work discovered | `BACKLOG.md` (draft in SESSION) |
+| Durable lesson, workaround, audit note | `MEMORY.md` (draft in SESSION) |
+| New feature idea | `feature-specs/` as `status: suggested` |
+| User states a durable preference | `user-preferences.md` (draft in SESSION) |
+
+Do NOT log: typos, renames, formatting, intermediate saves, transient retries. Batch
+related small changes into one entry. The test: "would this be useful in a retrospective
+or handoff?"
+
+Truncation convention: when quoting long output anywhere in these files, keep head+tail
+and insert `…[elided ~N lines — do not infer content]…` so a later session never invents
+the missing middle.
 
 ---
 
@@ -350,6 +388,10 @@ mode: -
 
 ## Blocked
 none
+<!-- Blocked/Next entries carry a runnable pointer, not just prose:
+     - <one-line state> | evidence: <file:line or exact `grep -n` command>
+     On resume, re-run the pointer instead of trusting the prose; a pointer that no
+     longer matches is a detected stale fact. -->
 
 ## Next
 - <what comes after current task>
@@ -524,13 +566,27 @@ action: auto-delete | manual review | skip
 > templates below are the shapes for each host, used when that host's bridge is the one written.
 > Never overwrite a user's existing file; if it exists without a `<!-- safe-code:bridge -->`
 > block, append the block instead of replacing the file.
+> In every template, substitute `v<VERSION>` with the running skill version and `<DATE>`
+> with today — the stamp lets a later run (and `check.sh`) see which version wrote the bridge.
+
+### Host coverage — who needs a bridge at all
+
+| Host | Reads `AGENTS.md` natively? | Action when it is the running host |
+|---|---|---|
+| OpenAI Codex, Amp, Google Jules, Cursor, Factory, RooCode, Kilo Code, goose, opencode, Zed, Warp, Windsurf, Devin, GitHub Copilot coding agent, VS Code, Augment Code, Junie | Yes | `AGENTS.md` only — no bridge |
+| Claude Code | No | write `CLAUDE.md` bridge |
+| Cline | No | write `.clinerules/safe-code.md` bridge |
+| GitHub Copilot (IDE custom instructions) | Partially | write `.github/copilot-instructions.md` bridge |
+| Cursor (older versions without native support) | — | `.cursor/rules/safe-code.mdc` bridge still valid; harmless alongside native support |
+| Gemini CLI | Via config | write `GEMINI.md` bridge, and PRINT (never auto-edit) the opt-out snippet: `.gemini/settings.json` -> `{"context": {"fileName": "AGENTS.md"}}` |
+| Aider | Via config | no bridge; PRINT the suggestion: add `read: AGENTS.md` to `.aider.conf.yml` |
 
 ### `<project-root>/CLAUDE.md`
 
 ```md
 # CLAUDE.md
 
-<!-- safe-code:bridge -->
+<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
 > Project context is maintained by safe-code. Read these before any task.
 
 @AGENTS.md
@@ -546,7 +602,7 @@ as the source of truth; do not re-scan the whole codebase for facts already docu
 ```md
 # GEMINI.md
 
-<!-- safe-code:bridge -->
+<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
 Project context is maintained by safe-code. Before doing any work, read `AGENTS.md` at the
 repo root, then the files it lists under `.safe-code/context/` (project overview, architecture
 incl. the Navigation map, code standards, workflow rules, progress). They are the source of
@@ -558,7 +614,7 @@ scanning the whole codebase when they are already documented there.
 ### `<project-root>/.github/copilot-instructions.md`
 
 ```md
-<!-- safe-code:bridge -->
+<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
 # Project Instructions
 
 Project context is maintained by safe-code. Before generating code or answering, read
@@ -576,9 +632,21 @@ description: safe-code project context entry point
 alwaysApply: true
 ---
 
+<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
 Project context is maintained by safe-code. Before any task, read `AGENTS.md` at the repo
 root and the files it references under `.safe-code/context/` (project overview, architecture
 incl. the Navigation map, code standards, workflow rules, progress). Treat those as the source
 of truth; do not re-scan the whole codebase for facts already documented there.
+```
+
+### `<project-root>/.clinerules/safe-code.md`
+
+```md
+<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
+Project context is maintained by safe-code. Before any task, read `AGENTS.md` at the repo
+root and the files it references under `.safe-code/context/` (project overview, architecture
+incl. the Navigation map, code standards, workflow rules, progress). Treat those as the source
+of truth; do not re-scan the whole codebase for facts already documented there.
+<!-- /safe-code:bridge -->
 ```
 

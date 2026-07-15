@@ -61,7 +61,9 @@ Manual checks (no single grep):
 ```
 High   -> hidden unicode in instruction files; curl|sh / wget|sh in hooks or commands;
           ANTHROPIC_BASE_URL / OPENAI_BASE_URL override; committed secrets;
-          instruction text that overrides user authority or hides actions
+          instruction text that overrides user authority, hides actions, or tells the
+          agent to bypass its own permission gates (seen in the wild:
+          `override_file_restrictions: true` inside memory-update instruction blocks)
 Medium -> broad permission allows; unfamiliar or non-local MCP server; base64 blobs
           without clear purpose; every-event hooks with shell access; agent steps in
           CI piping remote content to shell
