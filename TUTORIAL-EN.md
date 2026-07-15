@@ -72,6 +72,8 @@ Preference capture:
 
 safe-code writes `AGENTS.md` plus a thin pointer file for the host you're running in — `CLAUDE.md` (Claude), `GEMINI.md` (Gemini), `.github/copilot-instructions.md` (Copilot), or `.cursor/rules/safe-code.mdc` (Cursor). The other hosts' pointers are added lazily the first time you run safe-code under each, so you only ever carry bridges for tools you actually use. Open a fresh chat in a host that already has its bridge and it loads the same `.safe-code/context/` brain automatically, without you running anything. On each run safe-code also checks whether the context is stale (deps, folders, or scripts changed since it was last synced) and refreshes it, so a new chat never reads an outdated brain. After writing context it also self-tests it — a context-only check that it can answer the project basics — and fills any gaps it finds.
 
+The generated `AGENTS.md` also carries **Grounding Rules**: in every session the agent must answer from your context files or the code itself (not from generic memory), verify a file or function exists before referencing it, and record unknowns as Open Questions instead of guessing.
+
 ## 4. Feature Work
 
 Ask for a feature:

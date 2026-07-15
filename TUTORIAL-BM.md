@@ -72,6 +72,8 @@ Preference capture:
 
 safe-code tulis `AGENTS.md` plus satu fail pointer nipis untuk host yang anda tengah guna — `CLAUDE.md` (Claude), `GEMINI.md` (Gemini), `.github/copilot-instructions.md` (Copilot), atau `.cursor/rules/safe-code.mdc` (Cursor). Pointer host lain ditambah secara lazy kali pertama anda run safe-code dalam host itu, jadi anda cuma simpan bridge untuk tool yang betul-betul diguna. Buka chat baru dalam host yang dah ada bridge-nya dan ia auto-load brain `.safe-code/context/` yang sama, tanpa anda run apa-apa. Setiap run safe-code pun semak sama ada context dah basi (deps, folder, atau scripts berubah sejak sync terakhir) dan refresh, jadi chat baru tak pernah baca brain lapuk. Lepas tulis context, ia pun self-test — semakan context-only yang ia boleh jawab asas projek — dan isi mana-mana lubang yang dijumpai.
 
+`AGENTS.md` yang dihasilkan juga bawa **Grounding Rules**: dalam setiap session, agent mesti jawab berdasarkan fail context atau kod anda (bukan ingatan am), verify sesuatu fail atau function wujud sebelum merujuknya, dan rekod perkara tak pasti sebagai Open Questions, bukan meneka.
+
 ## 4. Feature Work
 
 Minta feature:
