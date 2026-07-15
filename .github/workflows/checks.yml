@@ -1,0 +1,15 @@
+name: checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  version-consistency:
+    name: check-version (maintainer guard)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert version agrees across SKILL.md + README + examples
+        run: bash scripts/check-version.sh
