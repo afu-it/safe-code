@@ -74,6 +74,8 @@ safe-code writes `AGENTS.md` plus a thin pointer file for the host you're runnin
 
 The generated `AGENTS.md` also carries **Grounding Rules**: in every session the agent must answer from your context files or the code itself (not from generic memory), verify a file or function exists before referencing it, and record unknowns as Open Questions instead of guessing.
 
+Most modern hosts (Codex, Windsurf, Warp, Zed, RooCode, Kilo, and more) read `AGENTS.md` natively, so they need no pointer file at all; Cline gets `.clinerules/safe-code.md`, and for Gemini CLI or Aider safe-code prints a one-line config snippet you can apply yourself.
+
 ## 4. Feature Work
 
 Ask for a feature:

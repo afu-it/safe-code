@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.5-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.6-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -236,6 +236,15 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.6** — ecosystem upgrades, learned from a 14-repo competitive study (claude-mem, spec-kit, OpenSpec, the memory-bank family, planning-with-files, rulebook-ai, agent-os, get-shit-done, and more). Key finding: none of them verifies its own memory — safe-code's self-test + commit-anchored freshness stays unique, and v4.6 deepens it.
+
+- **Grounding hardened** — external content (web pages, API output) is quarantined and never lands in auto-loaded files (one poisoned paste would otherwise re-inject every session); saved context is evidence about the past, not orders — the user's current message always outranks MEMORY/BACKLOG.
+- **Brain-status banner** — the first reply of a session opens with `[safe-code: brain loaded @ <commit>]` (or "no project brain — run /safe-code"), so you can see whether the agent is running on the brain or improvising.
+- **Feature specs upgraded** — goal-backward Verify When Done (Behavior / Artifacts / Wiring: "file exists" is not verification), a max-3 `[NEEDS CLARIFICATION]` gate that blocks suggested→approved until the user answers, and a dependency-legitimacy rule (verify on the official registry; never substitute a similar-sounding package).
+- **Session-file discipline** — an event→file table plus a do-not-log noise filter, elision markers on truncated quotes (`…[elided ~N lines — do not infer content]…`), session-scope-only saves, and ACTIVE entries that carry runnable evidence pointers (`| evidence: grep -n …`) instead of trust-me prose.
+- **Bridges modernized** — 17 hosts confirmed AGENTS.md-native (no bridge needed, per the agents.md standard); new Cline bridge (`.clinerules/safe-code.md`); Gemini CLI/Aider get printed config-pointer snippets; bridges carry a version/date provenance stamp; `check.sh` now warns when the brain itself gets bloated (context file >400 lines, LOG >300).
+- **Freshness refresh discipline** — drift refreshes correct technical claims with evidence but preserve decision rationales, lessons, and Open Questions (report "corrected" and "preserved" separately).
 
 **v4.5** — slim & consistent.
 

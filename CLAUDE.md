@@ -25,7 +25,7 @@ bash scripts/save-reminder.sh              # session-end hook helper (opt-in; se
 
 ## Architecture (the big picture)
 
-**One orchestrator + seven analyze-first helpers.** `skills/safe-code/SKILL.md` (~945 lines) is the entry skill exposing three commands — `/safe-code` (setup / auto-resume / fresh pass), `/safe-code --continue` (explicit resume), `/safe-code --save` (finalize docs + **local commit only, never push**). It orchestrates helper skills in `skills/{senior-dev,build-graph,explore-codebase,codebase-pruner,safe-refactor-code,review-changes,debug-issue}/`. Helpers are dispatched by a **`$helper-name` convention written inline in SKILL.md** (e.g. `$debug-issue`, `$codebase-pruner`). Helpers analyze first and never make broad changes just because `/safe-code` ran.
+**One orchestrator + seven analyze-first helpers.** `skills/safe-code/SKILL.md` (~955 lines) is the entry skill exposing three commands — `/safe-code` (setup / auto-resume / fresh pass), `/safe-code --continue` (explicit resume), `/safe-code --save` (finalize docs + **local commit only, never push**). It orchestrates helper skills in `skills/{senior-dev,build-graph,explore-codebase,codebase-pruner,safe-refactor-code,review-changes,debug-issue}/`. Helpers are dispatched by a **`$helper-name` convention written inline in SKILL.md** (e.g. `$debug-issue`, `$codebase-pruner`). Helpers analyze first and never make broad changes just because `/safe-code` ran.
 
 **Three-layer context-economy loading** (`## Loading Layers` in SKILL.md) is the load-bearing design constraint:
 - **Layer 1 (Entry)** — read every session.

@@ -74,6 +74,8 @@ safe-code tulis `AGENTS.md` plus satu fail pointer nipis untuk host yang anda te
 
 `AGENTS.md` yang dihasilkan juga bawa **Grounding Rules**: dalam setiap session, agent mesti jawab berdasarkan fail context atau kod anda (bukan ingatan am), verify sesuatu fail atau function wujud sebelum merujuknya, dan rekod perkara tak pasti sebagai Open Questions, bukan meneka.
 
+Kebanyakan host moden (Codex, Windsurf, Warp, Zed, RooCode, Kilo, dan lain-lain) baca `AGENTS.md` secara native, jadi tak perlukan fail pointer langsung; Cline dapat `.clinerules/safe-code.md`, dan untuk Gemini CLI atau Aider safe-code cetak satu baris config yang anda boleh apply sendiri.
+
 ## 4. Feature Work
 
 Minta feature:
