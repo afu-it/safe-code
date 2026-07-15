@@ -140,7 +140,7 @@ When in doubt, omit.
 - If `AGENTS.md` already contains real project context:
   - Improve it in place rather than rewriting blindly.
   - Preserve guidance that is still correct and high-signal.
-  - Preserve the Grounding Rules section; re-add it if a previous edit dropped it.
+  - Preserve the Grounding Rules section; re-add it if a previous edit dropped it, and add it during reconciliation when the file pre-dates it (older safe-code installs).
   - Delete or rewrite content that is clearly stale, generic, or contradicted by the current codebase.
   - Reconcile differences in favour of executable sources (config, scripts, CI) while keeping any still-valid nuance from older instructions.
   - Add missing high-signal facts discovered during investigation, even when the existing file is not empty.
