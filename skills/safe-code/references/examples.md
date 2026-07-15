@@ -157,18 +157,22 @@ What `--save` does, in order:
    — files with no new content get a fresh date stamp
 5. Update .safe-code/CHANGELOG.md ONLY for releasable changes
 6. Ensure a local git repo exists
-7. Stage + create a LOCAL commit only
-8. Verify all six session files appear in the commit diff
-9. Report commit hash + local-only status + next action
+7. Split the session into atomic LOCAL commits (Atomic Commit Split Rule):
+   code/behavior tasks first, then ONE final `docs:` commit for the
+   .safe-code/ session files — degrade to a single commit if the
+   changes cannot be cleanly separated
+8. Verify all six session files appear in the final docs commit diff
+9. Report commit hashes + types + local-only status + next action
 ```
 
 Sample close-out:
 
 ```
-=== safe-code v4.0 session complete ===
-Save: local commit only; no push
-Commit: a1b2c3d
+=== safe-code v4.5 session complete ===
+Save: local commits only; no push
+Commits: 2 atomic — refactor: remove dead legacyDate + old-uploader · docs: sync .safe-code session files
 Six-file save: ACTIVE ✓ SESSION ✓ LOG ✓ BACKLOG ✓ MEMORY ✓ safe-refactor-code ✓
+LOG entry plain: "Removed 2 unused files/functions; all tests pass."
 Removed: src/utils/format.ts:legacyDate, src/legacy/old-uploader.ts
 Task list: 12/12 complete; unfinished: none
 Next /safe-code --continue: resume from "wire new uploader into routes"
@@ -177,8 +181,9 @@ Next /safe-code --continue: resume from "wire new uploader into routes"
 The two rules that always hold:
 
 - **Nothing is pushed.** `--save` commits locally only, even when a remote exists.
-- **`current-issues.md` is never written by the agent** and never committed —
-  it is the user's local-only scratchpad.
+- **`current-issues.md` is never committed.** The agent writes it only to append or
+  update issue entries on an error trigger (Issue Tracking Rule) — and never copies
+  its raw content into any committed file.
 
 What the resume looks like next session:
 
