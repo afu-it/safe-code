@@ -114,31 +114,6 @@ Prefer:
 - direct verification
 - documented follow-up for separate concerns
 
-## Deployment Domain Pattern
-
-When the user already has a domain and asks for backend/frontend deployment setup, use this standard topology unless the project explicitly requires different names:
-
-```text
-domain.com               -> production frontend
-backend.domain.com       -> production backend API/server
-dev.domain.com           -> development/staging frontend
-dev-backend.domain.com   -> development/staging backend API/server
-```
-
-Before changing deployment config, inspect the current hosting provider, DNS setup, environment variables, CORS/auth callback URLs, API base URLs, cookies, TLS/HTTPS requirements, and CI/CD workflow.
-
-Required checks:
-
-- production frontend points to production backend
-- development frontend points to development backend
-- backend CORS allows only intended frontend origins
-- auth redirects, webhook URLs, OAuth callback URLs, and cookie domains match the environment
-- secrets are separated between production and development
-- DNS records and hosting aliases are documented
-- rollback path exists before changing deployment or DNS
-
-Do not hard-code these domains into source unless the project already uses that pattern. Prefer environment variables such as `PUBLIC_API_URL`, `NEXT_PUBLIC_API_URL`, `VITE_API_URL`, `BACKEND_URL`, or the repo's existing naming convention.
-
 ## Final Review Gate
 
 - Before final answer, critique the result adversarially.
