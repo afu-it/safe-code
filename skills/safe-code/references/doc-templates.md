@@ -639,6 +639,30 @@ incl. the Navigation map, code standards, workflow rules, progress). Treat those
 of truth; do not re-scan the whole codebase for facts already documented there.
 ```
 
+### Save-Reminder Hook (opt-in, Claude Code) — `<project-root>/.claude/settings.json`
+
+> Offered once on a first run under Claude Code (SKILL.md, Save-Reminder Hook Offer).
+> Merge into existing `hooks` — never replace the user's settings. Non-git projects:
+> skip the offer and point at `integrations/claude-code/` in the skill source instead.
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git -C \"$CLAUDE_PROJECT_DIR\" status --porcelain -- .safe-code/ 2>/dev/null | grep -q . && echo '⚠️  safe-code: unsaved session work — run /safe-code --save before ending.' || true"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ### `<project-root>/.clinerules/safe-code.md`
 
 ```md

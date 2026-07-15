@@ -479,6 +479,10 @@ Rules:
 - Bridges are scaffold files — write immediately, not draft-until-save; preserve them during Legacy Layout Migration (they are not legacy state).
 - Read fallback shapes from `references/doc-templates.md` (Provider Bridge Files).
 
+### Save-Reminder Hook Offer (opt-in, Claude Code only)
+
+On a first run under Claude Code, when project-local `.claude/settings.json` has no safe-code Stop hook, offer ONCE: install a reminder hook that prints a nudge whenever a session ends with unsaved `.safe-code/` work. It only reminds — never commits, saves, or blocks. If accepted, merge the Stop block (shape in `references/doc-templates.md`, Save-Reminder Hook) into project-local `.claude/settings.json`, preserving existing hooks; if a clean merge is not possible, print the block for the user to paste. If declined, draft the decline into `user-preferences.md` and never re-offer. Never touch `~/.claude/` (Scope Rule).
+
 ### Legacy Layout Migration
 
 Older safe-code versions used other locations: pre-v3 per-tool `agents/`+`memory/` folders (`.codex/`, `.claude/`, `.cursor/`, `.windsurf/`), and the v3 `.agents/` folder + root `context/` + root `CHANGELOG.md`. Detect them on **every** safe-code command — `/safe-code`, `/safe-code --continue`, and `/safe-code --save` — and migrate immediately (a scaffold operation — it does not wait for `--save`): move every safe-code `*.md` into `.safe-code/` (`git mv` when tracked), patch old config paths (`.gitignore` entry, `AGENTS.md` Read First paths, any other safe-code-written doc), remove each legacy folder once empty, and log the whole migration as ONE typed `decision` entry in `LOG.md`.

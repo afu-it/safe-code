@@ -4,6 +4,11 @@
 coder's biggest context-loss risk is forgetting it. This optional hook prints a nudge
 when a session ends with unsaved safe-code work.
 
+> Since v4.6, `/safe-code` offers to install a self-contained version of this hook for
+> you on the first run under Claude Code (project-local `.claude/settings.json`, git
+> repos only). The manual setup below still works everywhere, including non-git projects
+> and other hosts.
+
 **It only reminds — it never commits, saves, or blocks anything.**
 
 ## Install

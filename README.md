@@ -25,6 +25,21 @@ Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
 
 ---
 
+## Why not just a memory bank?
+
+Memory banks (the Cline/Roo/Cursor family), auto-capture layers (claude-mem), and spec-driven kits (spec-kit, OpenSpec) all solve the same pain: *the AI forgets your project*. What none of them does is **verify what they remember** — if the agent hallucinates while writing its memory files, the hallucination becomes permanent "truth" that every future session trusts.
+
+safe-code is the memory bank that doesn't preserve lies:
+
+- **Evidence-only writes** — anything not provable from the repo becomes an Open Question, never a fact.
+- **Closed-book Context Self-Test** — a fresh agent must answer Day-1 questions *citing* the context files; no citation = fail = fix the brain.
+- **Commit-anchored freshness** — the brain is stamped to a git commit and drift-scanned every run, so a new chat never trusts a stale brain.
+- **External-content quarantine** — fetched web/API text never enters auto-loaded files, so one poisoned paste can't recycle into every future session.
+
+One brain, committed to the repo, readable in a `git diff`, shared by every agent you use.
+
+---
+
 ## Commands
 
 | Command | What it does |
@@ -245,6 +260,7 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 - **Session-file discipline** — an event→file table plus a do-not-log noise filter, elision markers on truncated quotes (`…[elided ~N lines — do not infer content]…`), session-scope-only saves, and ACTIVE entries that carry runnable evidence pointers (`| evidence: grep -n …`) instead of trust-me prose.
 - **Bridges modernized** — 17 hosts confirmed AGENTS.md-native (no bridge needed, per the agents.md standard); new Cline bridge (`.clinerules/safe-code.md`); Gemini CLI/Aider get printed config-pointer snippets; bridges carry a version/date provenance stamp; `check.sh` now warns when the brain itself gets bloated (context file >400 lines, LOG >300).
 - **Freshness refresh discipline** — drift refreshes correct technical claims with evidence but preserve decision rationales, lessons, and Open Questions (report "corrected" and "preserved" separately).
+- **Save-reminder offer** — on the first run under Claude Code, safe-code offers (once, opt-in) to install a project-local Stop hook that nudges you to run `/safe-code --save` when a session ends with unsaved work. It only reminds — never commits or blocks.
 
 **v4.5** — slim & consistent.
 
