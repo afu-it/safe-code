@@ -159,7 +159,7 @@ echo
 # ---- 4b. provider bridges (advisory) ----------------------------------------
 echo "Provider bridges (auto-load context in other hosts)"
 if [ -f AGENTS.md ]; then
-	for b in "CLAUDE.md" "GEMINI.md" ".github/copilot-instructions.md" ".cursor/rules/safe-code.mdc"; do
+	for b in "CLAUDE.md" "GEMINI.md" ".github/copilot-instructions.md" ".cursor/rules/safe-code.mdc" ".clinerules/safe-code.md"; do
 		if [ -f "$b" ]; then
 			if grep -qE 'safe-code:bridge|AGENTS\.md|\.safe-code' "$b" 2>/dev/null; then
 				pass "$b points at AGENTS.md/.safe-code"
@@ -173,6 +173,31 @@ if [ -f AGENTS.md ]; then
 else
 	info "AGENTS.md missing — skipping bridge checks"
 fi
+echo
+
+# ---- 4c. brain size budget (advisory) ----------------------------------------
+# The project brain can itself become the bloat: warn when context docs or the LOG
+# outgrow a reasonable read-every-session size, so the next --save consolidates.
+echo "Brain size budget (advisory)"
+BLOAT=0
+if [ -d .safe-code/context ]; then
+	for f in .safe-code/context/*.md; do
+		[ -f "$f" ] || continue
+		lines=$(wc -l <"$f")
+		if [ "$lines" -gt 400 ]; then
+			warn "$f is $lines lines (>400) — consolidate or archive resolved material at next --save"
+			BLOAT=1
+		fi
+	done
+fi
+if [ -f .safe-code/LOG.md ]; then
+	lines=$(wc -l <.safe-code/LOG.md)
+	if [ "$lines" -gt 300 ]; then
+		warn ".safe-code/LOG.md is $lines lines (>300) — LOG Trim Rule should compress on next --save"
+		BLOAT=1
+	fi
+fi
+[ "$BLOAT" -eq 0 ] && pass "context docs and LOG within size budget"
 echo
 
 # ---- 5. light hygiene scan --------------------------------------------------
