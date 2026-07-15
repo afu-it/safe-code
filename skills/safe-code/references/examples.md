@@ -31,8 +31,10 @@ What the run does:
 - Creates `AGENTS.md` and the single `.safe-code/` folder: six session files,
   `CHANGELOG.md`, `context/*.md`, and `context/feature-specs/` inside it.
 - Adds `/.safe-code/context/current-issues.md` to `.gitignore`.
-- Reads README, manifests, configs — writes facts it can prove into `SESSION.md`
-  as drafts (not yet into `.safe-code/context/`).
+- Reads README, manifests, configs — First-Run Population: writes evidence-derivable
+  facts straight into `AGENTS.md` + the empty context scaffolds (`project-overview`,
+  `architecture` + Navigation map, `code-standards`, `progress-tracker`), and drafts
+  everything else in `SESSION.md`.
 - Puts anything unverifiable into `progress-tracker.md` Open Questions.
 - Removes/refactors nothing. Execution mode is **C — Plan only**.
 
@@ -201,7 +203,8 @@ it > Saved safe-code session found; resuming automatically.
 - Auto-promoting a MEDIUM candidate that has dynamic-dispatch/reflection risk.
 - Deleting code with no rollback path (no git, or dirty tree) without approval.
 - Writing real content into `.safe-code/context/*.md` mid-session instead of
-  drafting in `SESSION.md` and applying on `--save`.
+  drafting in `SESSION.md` and applying on `--save` (exception: First-Run
+  Population seeding empty scaffolds).
 - Creating `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` session-state
   folders — continuity lives in `.safe-code/` only (provider-bridge pointers like
   `.cursor/rules/safe-code.mdc` are redirects, not state).

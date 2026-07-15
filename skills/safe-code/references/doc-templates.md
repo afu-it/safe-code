@@ -378,23 +378,10 @@ _<DATE> <TIME>_
 <!-- What is being actively processed this moment -->
 
 ## Task List
-- [ ] Locate project root and `.safe-code/` folder
-- [ ] Initialize or reconcile AGENTS.md, context, and session docs
-- [ ] Detect saved state or legacy layout migration need
-- [ ] Load required context for this command
-- [ ] Check context freshness (drift vs last_synced_commit)
-- [ ] Draft or update active feature spec if needed
-- [ ] Check git state and rollback safety
-- [ ] Check or bootstrap graph support when useful
-- [ ] Explore repo facts before context backfill
-- [ ] Run context self-test after backfill (verify brain is sufficient)
-- [ ] Audit dead code and stale files only when in scope
-- [ ] Decide run profile and execution mode
-- [ ] Execute scoped code changes if requested
-- [ ] Review changes and test coverage
-- [ ] Debug verification failures, if any
-- [ ] Draft docs/context updates in SESSION.md
-- [ ] Save final docs/context updates on /safe-code --save
+<!-- Copy the canonical Default checklist from safe-code SKILL.md (Measure Twice,
+     Cut Once Policy) and adapt per mode — do not maintain a divergent copy here.
+     States: [ ] todo · [~] active · [x] done after verification. -->
+- [ ] <task>  · type: <commit type> · files: <paths>
 
 ## Temp Decisions
 <!-- Decisions made mid-session, not yet committed to ACTIVE.md -->

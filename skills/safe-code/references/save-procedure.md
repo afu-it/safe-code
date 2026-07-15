@@ -25,6 +25,8 @@ Commit type mapping:
 | `.safe-code/` session files, `context/`, `CHANGELOG.md`, `AGENTS.md` | `docs` |
 | config/tooling/`.gitignore` | `chore` |
 
+Root scaffold artifacts from a first run (`AGENTS.md`, the provider bridge, `.gitignore`, `.mcp.json`) form their own group(s) by commit type per the table above (`docs` / `chore`), committed before the final session-files commit — never mixed into it.
+
 Fallback (degrade to single commit):
 
 ```

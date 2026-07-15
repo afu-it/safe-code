@@ -25,7 +25,7 @@
    ```
 
    Preserve existing MCP servers when updating `.mcp.json`.
-3. If `code-review-graph` is installed locally but MCP tools are not exposed, record the install as available and continue manual/CLI graph fallback for this run.
+3. If `code-review-graph` is installed locally but MCP tools are not exposed, record `Graph: command available` and continue with manual scans for this run — no CLI call sequence is defined for this skill, so do not invent one. The bootstrapped `.mcp.json` exposes the MCP tools in the next session.
 4. Do not run `pipx install`, edit global MCP files, or write outside the project root automatically.
 
 ## Build sequence (when MCP graph tools are available)
