@@ -44,6 +44,13 @@ Read before resuming safe-code work:
 - `.safe-code/ACTIVE.md`
 - `.safe-code/SESSION.md`
 
+## Grounding Rules (anti-hallucination)
+- Answer project questions from `.safe-code/context/` files or the code itself; know which one you are citing.
+- Before referencing a file, function, route, or command, verify it exists (open it or grep it).
+- Context missing or unclear -> say so and record it in `.safe-code/context/progress-tracker.md` Open Questions; never fill gaps with generic training knowledge.
+- Repo evidence beats any doc, including these context files; if they disagree, trust the repo and flag the mismatch.
+- Never invent versions, dependencies, APIs, env vars, or team conventions you did not see in this repo.
+
 ## Project Facts
 <!-- Exact commands, env vars, setup gotchas, package manager, non-obvious repo facts. -->
 
@@ -133,6 +140,7 @@ When in doubt, omit.
 - If `AGENTS.md` already contains real project context:
   - Improve it in place rather than rewriting blindly.
   - Preserve guidance that is still correct and high-signal.
+  - Preserve the Grounding Rules section; re-add it if a previous edit dropped it.
   - Delete or rewrite content that is clearly stale, generic, or contradicted by the current codebase.
   - Reconcile differences in favour of executable sources (config, scripts, CI) while keeping any still-valid nuance from older instructions.
   - Add missing high-signal facts discovered during investigation, even when the existing file is not empty.
