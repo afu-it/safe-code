@@ -180,6 +180,8 @@ Map your whole project into a queryable knowledge graph (powered by the external
 
 If graphify is not installed, safe-code tells you how (`uv tool install graphifyy`) and continues without it — it is an optional accelerator, never a requirement. Graph output lives in `graphify-out/` and is never committed.
 
+Build it once — after that, every `/safe-code` run refreshes the graph automatically when your code changes. No manual rebuilds.
+
 ## 11. Helper Skills
 
 You normally call only `/safe-code`.

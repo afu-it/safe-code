@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.9"
+version: "4.10"
 ---
 
 # Safe Code
@@ -293,6 +293,8 @@ Build or query a project knowledge graph via the external graphify pipeline (Gra
 Detection order (first hit wins): `$graphify` skill available on host (verify its description matches the knowledge-graph purpose, not just the name) -> dispatch it as a helper · `graphify` CLI on PATH -> drive the CLI · `uv` available -> ask ONCE before installing (a PyPI package is a supply-chain decision; record accept/decline in `user-preferences.md`; cannot ask this session -> treat as declined for this run only, record nothing) · none -> record `Graphify: unavailable`, suggest `uv tool install graphifyy`, continue.
 
 Safety: `graphify-out/` lives inside the project root, gitignored via its own `.gitignore` (same pattern as `.code-review-graph/`), never committed by `--save`. Exclude `.safe-code/context/current-issues.md` from the corpus (may hold secrets). Neither mode pushes or commits.
+
+**Auto-refresh (once a graph exists):** the first build is always the user's explicit call, but after `graphify-out/graph.json` exists, every `/safe-code` and `--continue` run keeps it fresh automatically — when the Context Freshness Check detects drift, run the incremental refresh (`graphify update .` on the CLI path; the `$graphify` skill's update mode otherwise). It is deterministic and LLM-free, so it costs seconds; failure -> record `Graphify: stale (refresh failed)` and continue — auto-refresh never blocks a run and never triggers an install.
 
 > **Layer 3 Trigger:** On any `--graphify` invocation, read `references/graph-integration.md` (Graphify Pipeline) for the CLI call sequence, harvest mapping, and gitignore block.
 
@@ -703,7 +705,7 @@ Emit the canonical Reasoning block with fields: AGENTS.md (created | populated |
 
 Use the code-review graph as an analysis accelerator when available. It never overrides the safety rules above.
 
-Two graphs coexist and do different jobs: **`code-review-graph`** (this step) accelerates refactor impact, callers/importers, and dead-code checks in Steps 4–6; **graphify** (`/safe-code --graphify`) builds a project-understanding graph for navigation and querying, and runs **only** on that explicit flag — never auto-run its pipeline just because a hygiene pass started. When both exist, use each for its job; when only one exists, do not substitute it for the other's role.
+Two graphs coexist and do different jobs: **`code-review-graph`** (this step) accelerates refactor impact, callers/importers, and dead-code checks in Steps 4–6; **graphify** (`/safe-code --graphify`) builds a project-understanding graph for navigation and querying. Its **first build** runs only on that explicit flag — never build from nothing just because a hygiene pass started; but once a graph exists, the incremental auto-refresh rule (see the `--graphify` command section) keeps it current on every run. When both exist, use each for its job; when only one exists, do not substitute it for the other's role.
 
 Detect access in this order: MCP graph tools -> `code-review-graph` command -> `uvx` -> existing `<project-root>/.mcp.json`. If MCP tools are missing but `uvx` exists, bootstrap a project-local `.mcp.json` (preserve existing servers; never run installs, edit global MCP files, or write outside the project root automatically). When MCP graph tools are available, automatically run `$build-graph` and confirm stats. Unavailable, empty, or failed -> record `Graph: unavailable` and continue with manual scans. Partial coverage -> use graph findings only for covered languages and keep manual entrypoint/config checks.
 
@@ -894,7 +896,7 @@ During work, draft updates in `SESSION.md`; apply them to persistent docs only o
 On Orientation and routine-resume runs, compress this banner per the Proportional Ceremony Rule: omit lines whose value is `none` / `skipped: not in scope` / `not needed`; always keep the header, mode/profile, git/save/commits, and task-list lines.
 
 ```
-=== safe-code v4.9 session complete ===
+=== safe-code v4.10 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/

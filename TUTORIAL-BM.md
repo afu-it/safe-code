@@ -180,6 +180,8 @@ Petakan seluruh projek anda jadi knowledge graph yang boleh ditanya (dikuasakan 
 
 Kalau graphify tak dipasang, safe-code beritahu caranya (`uv tool install graphifyy`) dan teruskan tanpanya — ia pemecut pilihan, bukan keperluan. Output graph duduk dalam `graphify-out/` dan tidak pernah di-commit.
 
+Bina sekali sahaja — selepas itu, setiap run `/safe-code` akan refresh graph secara automatik bila kod anda berubah. Tak payah rebuild manual.
+
 ## 11. Helper Skills
 
 Biasanya anda hanya panggil `/safe-code`.

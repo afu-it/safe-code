@@ -62,6 +62,10 @@ The **full** pipeline (semantic extraction of docs/PDFs/images) lives in the `$g
 3. Verify `graphify-out/graph.json` exists (a `GRAPH_REPORT.md` may or may not be produced on this path). Missing or errored -> record `Graphify: failed (<reason>)` and continue; a failed build never blocks the run.
 4. A standalone `--graphify` run has no Step 8 banner: end with one summary line — `Graphify: built — <files> files, <nodes> nodes, <edges> edges, <communities> communities`. The Step 8 `Graph:` line applies only when a full pass runs in the same session.
 
+### Auto-refresh sequence (graph already exists)
+
+Trigger: any `/safe-code` or `--continue` run where `graphify-out/graph.json` exists AND the Context Freshness Check found drift. Then: CLI on PATH -> `graphify update .` (incremental, AST-only, no LLM, no key) · `$graphify` skill (identity-checked) -> its update/incremental mode · neither available anymore -> `Graphify: stale (tool no longer available)` and continue. Never install anything on this path, never run a full semantic rebuild automatically, never block the run on a refresh failure. Report one line: `Graphify: refreshed (<nodes> nodes, <edges> edges)` or the stale note.
+
 ### Query sequence (CLI path)
 
 `graphify query "<question>"` — read-only, no build, no edits. When the question implies it, the agent may internally use `graphify path "<A>" "<B>"` (how two things connect) or `graphify explain "<node>"` (one concept); the user-facing surface remains the single question form.

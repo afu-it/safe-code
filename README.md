@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.9-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.10-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -251,6 +251,8 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.10** — graph auto-refresh. The first `--graphify` build stays a deliberate user call; after that, every `/safe-code` run keeps the graph current automatically — when the Context Freshness Check sees code drift, an incremental `graphify update .` runs (AST-only, no LLM, seconds). Refresh failure never blocks a run and never installs anything.
 
 **v4.9** — `/safe-code --graphify`: map the project into a queryable knowledge graph (via the external [graphify](https://github.com/Graphify-Labs/graphify) pipeline) and feed it back into the brain.
 
