@@ -169,6 +169,17 @@ Forgot what your own project does? Ask for a plain-language briefing:
 
 Plain phrases like "explain my project" work too. safe-code reads the project brain and tells you, in plain words, what the app does, the stack, where it's at, what's in progress, and any open questions. It makes no changes and no commits.
 
+## 10b. Knowledge Graph (optional)
+
+Map your whole project into a queryable knowledge graph (powered by the external [graphify](https://github.com/Graphify-Labs/graphify) tool, if installed):
+
+```text
+/safe-code --graphify                      # build the graph + refresh the brain's navigation map
+/safe-code --graphify "how does auth work?"  # ask the graph a question (read-only)
+```
+
+If graphify is not installed, safe-code tells you how (`uv tool install graphifyy`) and continues without it — it is an optional accelerator, never a requirement. Graph output lives in `graphify-out/` and is never committed.
+
 ## 11. Helper Skills
 
 You normally call only `/safe-code`.

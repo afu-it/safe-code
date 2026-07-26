@@ -200,6 +200,19 @@ fi
 [ "$BLOAT" -eq 0 ] && pass "context docs and LOG within size budget"
 echo
 
+# ---- 4d. graphify output (advisory) ------------------------------------------
+# graphify-out/ is a local build artifact (like .code-review-graph/); it must
+# self-gitignore, never be committed.
+if [ -d graphify-out ]; then
+	echo "Graphify output (advisory)"
+	if git ls-files --error-unmatch graphify-out >/dev/null 2>&1 || [ -n "$(git ls-files graphify-out 2>/dev/null)" ]; then
+		warn "graphify-out/ is tracked by git — add 'graphify-out/.gitignore' containing '*' and untrack it"
+	else
+		pass "graphify-out/ present and not tracked"
+	fi
+	echo
+fi
+
 # ---- 5. light hygiene scan --------------------------------------------------
 echo "Hygiene"
 tmp_hits="$(find . -path ./.git -prune -o \

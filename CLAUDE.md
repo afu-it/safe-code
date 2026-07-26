@@ -39,7 +39,7 @@ Because of this, **never inline template bodies or long detail into `SKILL.md`**
 - `references/agent-config-audit.md` — patterns + High/Medium/Info classification for Step 4b (Agent Config Trust Audit), loaded only when that step runs.
 - `references/save-procedure.md` — atomic-split mechanics, Last Session shapes, LOG trim procedure, per-file sync table; loaded on `--save`.
 - `references/legacy-migration.md` — legacy detection list + per-location migration steps; loaded when a legacy layout is detected.
-- `references/graph-integration.md` — `.mcp.json` bootstrap block + graph build sequence; loaded at Step 3f.
+- `references/graph-integration.md` — `.mcp.json` bootstrap block + graph build sequence (Step 3f), plus the graphify pipeline detail (detection order, CLI sequences, harvest mapping) for `/safe-code --graphify`.
 - `references/first-run.md` — First-Run Population table + Context Self-Test question set/grading; loaded on a first run or when the self-test triggers.
 - `references/source-of-truth.md` — full source-of-truth ownership table + context-freshness drift procedure; loaded when fact ownership is unclear or the freshness stamp differs from `HEAD`.
 

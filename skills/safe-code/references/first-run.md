@@ -43,7 +43,7 @@ Rules:
    | What is in progress and what is next? | `progress-tracker.md` |
    | Any user preferences / hard dislikes to respect? | `user-preferences.md` |
 
-   Add repo-specific questions when the stack warrants (e.g. "how is auth enforced?", "how is data persisted?").
+   Add repo-specific questions when the stack warrants (e.g. "how is auth enforced?", "how is data persisted?"). When `graphify-out/graph.json` exists, seed 1–2 extra questions from the top god nodes (most-connected concepts): "What is <god node> and what depends on it?" — the brain should be able to answer about the concepts the graph says matter most.
 3. **Require evidence.** Each answer must cite the context file + section it came from. No citation possible -> graded **fail** (the model is answering from training memory, not the brain). An answer resting only on `[inferred: …]`-tagged claims is **weak**: pass it only if no `[extracted: …]` evidence could exist for that question; otherwise treat it as a gap — verify the claim from the repo and upgrade the tag, or downgrade the claim to an Open Question. A file that is *intentionally* still a template on a first run (`user-preferences.md`, `ui-context.md`) answering "none recorded yet" is a **pass**, not a gap — absence is the correct answer there.
 4. **Adversarial grade (when subagents available).** A second subagent tries to refute each answer ("is this actually supported by the context, or invented?"). Majority-refuted -> fail.
 

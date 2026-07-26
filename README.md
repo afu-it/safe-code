@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.8-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.9-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -251,6 +251,12 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.9** — `/safe-code --graphify`: map the project into a queryable knowledge graph (via the external [graphify](https://github.com/Graphify-Labs/graphify) pipeline) and feed it back into the brain.
+
+- **Build mode** (`--graphify`) runs the pipeline and harvests it: god nodes + communities refresh `architecture.md`'s Navigation map, surprising connections become Open Question candidates, and the self-test seeds questions from the most-connected concepts.
+- **Query mode** (`--graphify "<question>"`) is read-only like `--explain` — ask the graph instead of grepping; the agent may use graphify's `path`/`explain` internally.
+- **Optional by design** — detection order `$graphify` skill → CLI → offer `uv tool install graphifyy` once (supply-chain decision, answer recorded) → continue without. `graphify-out/` self-gitignores; graphify's EXTRACTED/INFERRED edge labels map directly onto v4.8's Evidence Tags. The existing `code-review-graph` keeps its refactor-impact job — two graphs, two roles.
 
 **v4.8** — a self-auditing brain, ideas adapted from a study of [Graphify](https://github.com/Graphify-Labs/graphify)'s confidence-tagged knowledge graphs (design spec + the v4.9 `--graphify` orchestration plan: `docs/superpowers/specs/2026-07-26-v4.8-graphify-mode-design.md`).
 

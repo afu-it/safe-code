@@ -169,6 +169,17 @@ Lupa projek sendiri buat apa? Minta penerangan bahasa mudah:
 
 Ayat biasa macam "explain my project" atau "apa projek aku" pun jadi. safe-code baca otak projek dan beritahu anda, dalam bahasa mudah, app ni buat apa, stack-nya, status sekarang, apa yang tengah dibuat, dan soalan terbuka. Ia tidak ubah apa-apa dan tidak commit.
 
+## 10b. Knowledge Graph (pilihan)
+
+Petakan seluruh projek anda jadi knowledge graph yang boleh ditanya (dikuasakan oleh tool luaran [graphify](https://github.com/Graphify-Labs/graphify), jika dipasang):
+
+```text
+/safe-code --graphify                        # bina graph + segarkan peta navigasi otak projek
+/safe-code --graphify "macam mana auth jalan?"  # tanya graph soalan (read-only)
+```
+
+Kalau graphify tak dipasang, safe-code beritahu caranya (`uv tool install graphifyy`) dan teruskan tanpanya — ia pemecut pilihan, bukan keperluan. Output graph duduk dalam `graphify-out/` dan tidak pernah di-commit.
+
 ## 11. Helper Skills
 
 Biasanya anda hanya panggil `/safe-code`.

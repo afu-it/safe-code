@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.8"
+version: "4.9"
 ---
 
 # Safe Code
@@ -160,10 +160,11 @@ Hosts wrap invocation differently — `/safe-code`, `/skill:safe-code`, `/skills
 - `--continue` | `continue` | `-c` | `resume` -> continue mode
 - `--save` | `save` | `-s` | `finish` | `end` -> save mode
 - `--explain` | `explain` | `explain my project` | `what does my app do` | `apa projek` -> explain mode (read-only briefing)
+- `--graphify` | `graphify` | `graph` -> graphify build mode; `--graphify "<question>"` (any trailing text after the flag, quoted or not) -> graphify query mode (read-only)
 - `fresh pass` | `fresh setup` | `ignore saved state` -> force a fresh pass
 - unrecognized -> default to plain `/safe-code` and note which form you received. Never refuse a run just because the host used a different prefix.
 
-The canonical forms are `/safe-code`, `/safe-code --continue`, `/safe-code --save`, `/safe-code --explain` — use them in your own output, but accept any wrapper the host produced.
+The canonical forms are `/safe-code`, `/safe-code --continue`, `/safe-code --save`, `/safe-code --explain`, `/safe-code --graphify` — use them in your own output, but accept any wrapper the host produced.
 
 ---
 
@@ -279,6 +280,21 @@ Open questions: <unknowns from progress-tracker, if any>
 3. If the brain conflicts with executable repo evidence, trust the repo and say so briefly.
 
 Do not load Layer 3, run helpers, audit, or touch git. `--explain` answers a question; it never changes the repo.
+
+---
+
+## Command: `/safe-code --graphify`
+
+Build or query a project knowledge graph via the external graphify pipeline (Graphify-Labs/graphify). It is an **optional accelerator** — every path must degrade to "unavailable, continue without"; never a hard dependency, never a silent install.
+
+- **Build mode** (`--graphify`, no argument): run the pipeline on the project root, then harvest results into the brain (draft-until-save): god nodes + communities -> `architecture.md` Navigation map refresh; surprising connections + suggested questions -> `progress-tracker.md` Open Questions candidates; graph stats -> the Step 8 `Graph:` line; god-node list -> Context Self-Test seed questions.
+- **Query mode** (`--graphify "<question>"`): read-only like `--explain` — run the query, relay the answer in plain language, change nothing, commit nothing. The agent may use graphify's `path`/`explain` subcommands internally; the user surface stays this one form. No graph built yet -> say so and offer build mode.
+
+Detection order (first hit wins): `$graphify` skill available on host (verify its description matches the knowledge-graph purpose, not just the name) -> dispatch it as a helper · `graphify` CLI on PATH -> drive the CLI · `uv` available -> ask ONCE before installing (a PyPI package is a supply-chain decision; record accept/decline in `user-preferences.md`; cannot ask this session -> treat as declined for this run only, record nothing) · none -> record `Graphify: unavailable`, suggest `uv tool install graphifyy`, continue.
+
+Safety: `graphify-out/` lives inside the project root, gitignored via its own `.gitignore` (same pattern as `.code-review-graph/`), never committed by `--save`. Exclude `.safe-code/context/current-issues.md` from the corpus (may hold secrets). Neither mode pushes or commits.
+
+> **Layer 3 Trigger:** On any `--graphify` invocation, read `references/graph-integration.md` (Graphify Pipeline) for the CLI call sequence, harvest mapping, and gitignore block.
 
 ---
 
@@ -687,6 +703,8 @@ Emit the canonical Reasoning block with fields: AGENTS.md (created | populated |
 
 Use the code-review graph as an analysis accelerator when available. It never overrides the safety rules above.
 
+Two graphs coexist and do different jobs: **`code-review-graph`** (this step) accelerates refactor impact, callers/importers, and dead-code checks in Steps 4–6; **graphify** (`/safe-code --graphify`) builds a project-understanding graph for navigation and querying, and runs **only** on that explicit flag — never auto-run its pipeline just because a hygiene pass started. When both exist, use each for its job; when only one exists, do not substitute it for the other's role.
+
 Detect access in this order: MCP graph tools -> `code-review-graph` command -> `uvx` -> existing `<project-root>/.mcp.json`. If MCP tools are missing but `uvx` exists, bootstrap a project-local `.mcp.json` (preserve existing servers; never run installs, edit global MCP files, or write outside the project root automatically). When MCP graph tools are available, automatically run `$build-graph` and confirm stats. Unavailable, empty, or failed -> record `Graph: unavailable` and continue with manual scans. Partial coverage -> use graph findings only for covered languages and keep manual entrypoint/config checks.
 
 Do not ask the user to run helper skills manually. `/safe-code` owns helper orchestration.
@@ -712,6 +730,7 @@ Emit the canonical Reasoning block with fields: graph status (ready | bootstrapp
 | Rename, restructure, modernization, or verified cleanup follow-up is in scope | Run `$safe-refactor-code` |
 | Edits were made or risk is non-trivial | Run `$review-changes` before final summary |
 | A test fails, verification fails, or user asks about a bug/regression | Run `$debug-issue` |
+| User invoked `--graphify` | Dispatch the `$graphify` skill when the host has it; else drive the CLI per `references/graph-integration.md` |
 
 Helper skills must not make broad changes merely because `/safe-code` ran. Their findings feed `SESSION.md` drafts and the safe-code task list first. If a helper skill cannot run, use its documented fallback behavior inside `/safe-code` and record the fallback in the final summary.
 
@@ -875,7 +894,7 @@ During work, draft updates in `SESSION.md`; apply them to persistent docs only o
 On Orientation and routine-resume runs, compress this banner per the Proportional Ceremony Rule: omit lines whose value is `none` / `skipped: not in scope` / `not needed`; always keep the header, mode/profile, git/save/commits, and task-list lines.
 
 ```
-=== safe-code v4.8 session complete ===
+=== safe-code v4.9 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
