@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.11-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.12-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -251,6 +251,8 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.12** — Graveyard Rule: every removal leaves a way back. Each executed deletion (dead code, dead file, retired feature) gets a permanent entry in `safe-refactor-code.md ## Graveyard` — what, why, evidence, and a `restore: git revert <hash>` pointer filled with the real commit hash at `--save`. Retired shipped features also flip their spec to `status: removed` (file kept). Nothing safe-code deletes is ever more than one pointer away from coming back.
 
 **v4.11** — flag-only shorthand. In a project with `.safe-code/`, a bare `--save` / `--continue` / `--explain` / `--graphify` message is recognized as the matching safe-code mode — no need to type the full command. Bare *words* (`save` alone) are deliberately NOT claimed, so they stay free for other assistants' save/memory systems on the same machine.
 

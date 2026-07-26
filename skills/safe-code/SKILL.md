@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.11"
+version: "4.12"
 ---
 
 # Safe Code
@@ -243,7 +243,7 @@ Every `/safe-code --save` MUST update all six session files in `.safe-code/` —
 | `LOG.md` | One new typed entry added newest-at-top (even a short `verify`/`decision` entry), each carrying a `plain:` one-line recap a non-coder can read |
 | `BACKLOG.md` | Drafted items applied; otherwise refresh the `_<DATE>_` stamp |
 | `MEMORY.md` | Drafted notes applied; otherwise refresh the `_<DATE>_` stamp |
-| `safe-refactor-code.md` | Flagged candidates applied; otherwise refresh the `_<DATE>_` stamp |
+| `safe-refactor-code.md` | Flagged candidates + Graveyard entries (with real commit hashes) applied; otherwise refresh the `_<DATE>_` stamp |
 
 If a file has no new content this session, still refresh its date stamp so all six files provably reflect the last save. A save that leaves any of the six files untouched is an incomplete save — verify all six are in the commit diff before reporting done.
 
@@ -635,7 +635,7 @@ Safety Invariants apply: raw content from this file never reaches a committed fi
 
 Every new feature or enhancement that comes up — whether the user commits to it or not — becomes a spec file, so it is referrable history instead of a forgotten chat message. When one is proposed (by user or agent), write `.safe-code/context/feature-specs/<NN>-<name>.md` from `00-template.md` with `status: suggested` and `created: <date>` (numbering incremental, `00` reserved, one build unit per file). Do not start building until the user approves.
 
-Status lifecycle: `suggested -> approved -> in-progress -> done | rejected` — the `status:` field is how a later agent avoids re-suggesting or re-litigating decisions; a `rejected` spec is long-term memory (keep the file, never re-suggest the idea). Flip status as decisions change: draft the flip in `SESSION.md`, apply on `--save` (the spec file itself may be created immediately). A spec cannot flip `suggested -> approved` while any `[NEEDS CLARIFICATION]` marker remains — resolve each with the user first (offer a recommended answer), write the answer in, delete the marker. Never fabricate specs for already-completed features unless the user asks.
+Status lifecycle: `suggested -> approved -> in-progress -> done | rejected` (+ `removed (<date>)` when a shipped feature is later retired — see the Graveyard Rule) — the `status:` field is how a later agent avoids re-suggesting or re-litigating decisions; a `rejected` or `removed` spec is long-term memory (keep the file, never re-suggest the idea). Flip status as decisions change: draft the flip in `SESSION.md`, apply on `--save` (the spec file itself may be created immediately). A spec cannot flip `suggested -> approved` while any `[NEEDS CLARIFICATION]` marker remains — resolve each with the user first (offer a recommended answer), write the answer in, delete the marker. Never fabricate specs for already-completed features unless the user asks.
 
 ---
 
@@ -857,6 +857,16 @@ One numbered slice per candidate: `Slice N: <path/to/file>:<symbol>` with `actio
 - After each slice, run `detect_changes_tool(detail_level="minimal")` when graph tools are ready
 - Draft new flagged candidates in `SESSION.md`; write them to `safe-refactor-code.md` on `/safe-code --save`
 
+### Graveyard Rule (every removal leaves a way back)
+
+Every executed deletion — dead code, dead file, or a whole retired feature — drafts a **Graveyard** entry in `SESSION.md`, applied to `safe-refactor-code.md ## Graveyard` on `--save`:
+
+```md
+- 2026-07-26 · src/utils/dateUtil.js (whole file) · why: zero refs, superseded by Intl · evidence: rg "dateUtil" -> 0 · restore: git revert <hash>
+```
+
+The `<hash>` is filled during `--save`: code commits are created before the final docs commit (Atomic Commit Split), so the removal's real hash exists by the time `safe-refactor-code.md` is written. Graveyard entries are **never deleted** — they are the project's way back; if the list grows long, compress old entries LOG-trim style, keeping path + hash. When a *shipped feature* is removed, also flip its spec to `status: removed (<date>)` with the same restore pointer — keep the spec file.
+
 ---
 
 ## Step 7: Refactor + Draft Docs
@@ -898,7 +908,7 @@ During work, draft updates in `SESSION.md`; apply them to persistent docs only o
 On Orientation and routine-resume runs, compress this banner per the Proportional Ceremony Rule: omit lines whose value is `none` / `skipped: not in scope` / `not needed`; always keep the header, mode/profile, git/save/commits, and task-list lines.
 
 ```
-=== safe-code v4.11 session complete ===
+=== safe-code v4.12 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
