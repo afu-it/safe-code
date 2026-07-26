@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.10"
+version: "4.11"
 ---
 
 # Safe Code
@@ -163,6 +163,8 @@ Hosts wrap invocation differently — `/safe-code`, `/skill:safe-code`, `/skills
 - `--graphify` | `graphify` | `graph` -> graphify build mode; `--graphify "<question>"` (any trailing text after the flag, quoted or not) -> graphify query mode (read-only)
 - `fresh pass` | `fresh setup` | `ignore saved state` -> force a fresh pass
 - unrecognized -> default to plain `/safe-code` and note which form you received. Never refuse a run just because the host used a different prefix.
+
+**Flag-only shorthand:** when the project contains `.safe-code/` and the user's message is just a bare flag — `--save`, `--continue`, `--explain`, `--graphify` (optionally with a trailing question) — treat it as the matching `/safe-code` mode; the flag syntax is unambiguous even without the name. Bare *words* (`save`, `continue`) without the flag or the safe-code name are NOT claimed — they may belong to another assistant's save/memory system on the user's machine; act on them as safe-code only when the context makes that clearly the intent.
 
 The canonical forms are `/safe-code`, `/safe-code --continue`, `/safe-code --save`, `/safe-code --explain`, `/safe-code --graphify` — use them in your own output, but accept any wrapper the host produced.
 
@@ -896,7 +898,7 @@ During work, draft updates in `SESSION.md`; apply them to persistent docs only o
 On Orientation and routine-resume runs, compress this banner per the Proportional Ceremony Rule: omit lines whose value is `none` / `skipped: not in scope` / `not needed`; always keep the header, mode/profile, git/save/commits, and task-list lines.
 
 ```
-=== safe-code v4.10 session complete ===
+=== safe-code v4.11 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
