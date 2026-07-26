@@ -23,6 +23,7 @@ Rules:
 
 - This immediate-write exception applies only while a file is an empty scaffold. Once it holds real content, later edits revert to Draft-Until-Save.
 - Never invent facts. Anything not provable from repo evidence is an Open Question, not a populated claim.
+- Tag load-bearing technical claims per the Evidence Tags rule in SKILL.md — `[extracted: <path|command>]` when read directly from the repo, `[inferred: <basis>]` for deductions.
 - Still draft *this session's* ongoing changes in `SESSION.md`; First-Run Population is about seeding empty context, not about live edits.
 - After populating, run the **Context Self-Test** to verify the brain is sufficient; fill or flag any gaps it finds.
 
@@ -43,7 +44,7 @@ Rules:
    | Any user preferences / hard dislikes to respect? | `user-preferences.md` |
 
    Add repo-specific questions when the stack warrants (e.g. "how is auth enforced?", "how is data persisted?").
-3. **Require evidence.** Each answer must cite the context file + section it came from. No citation possible -> graded **fail** (the model is answering from training memory, not the brain).
+3. **Require evidence.** Each answer must cite the context file + section it came from. No citation possible -> graded **fail** (the model is answering from training memory, not the brain). An answer resting only on `[inferred: …]`-tagged claims is **weak**: pass it only if no `[extracted: …]` evidence could exist for that question; otherwise treat it as a gap — verify the claim from the repo and upgrade the tag, or downgrade the claim to an Open Question. A file that is *intentionally* still a template on a first run (`user-preferences.md`, `ui-context.md`) answering "none recorded yet" is a **pass**, not a gap — absence is the correct answer there.
 4. **Adversarial grade (when subagents available).** A second subagent tries to refute each answer ("is this actually supported by the context, or invented?"). Majority-refuted -> fail.
 
 ## Gaps are work, not just a score

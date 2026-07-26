@@ -25,7 +25,7 @@ bash scripts/save-reminder.sh              # session-end hook helper (opt-in; se
 
 ## Architecture (the big picture)
 
-**One orchestrator + seven analyze-first helpers.** `skills/safe-code/SKILL.md` (~955 lines) is the entry skill exposing three commands — `/safe-code` (setup / auto-resume / fresh pass), `/safe-code --continue` (explicit resume), `/safe-code --save` (finalize docs + **local commit only, never push**). It orchestrates helper skills in `skills/{senior-dev,build-graph,explore-codebase,codebase-pruner,safe-refactor-code,review-changes,debug-issue}/`. Helpers are dispatched by a **`$helper-name` convention written inline in SKILL.md** (e.g. `$debug-issue`, `$codebase-pruner`). Helpers analyze first and never make broad changes just because `/safe-code` ran.
+**One orchestrator + seven analyze-first helpers.** `skills/safe-code/SKILL.md` (~900 lines) is the entry skill exposing three commands — `/safe-code` (setup / auto-resume / fresh pass), `/safe-code --continue` (explicit resume), `/safe-code --save` (finalize docs + **local commit only, never push**). It orchestrates helper skills in `skills/{senior-dev,build-graph,explore-codebase,codebase-pruner,safe-refactor-code,review-changes,debug-issue}/`. Helpers are dispatched by a **`$helper-name` convention written inline in SKILL.md** (e.g. `$debug-issue`, `$codebase-pruner`). Helpers analyze first and never make broad changes just because `/safe-code` ran.
 
 **Three-layer context-economy loading** (`## Loading Layers` in SKILL.md) is the load-bearing design constraint:
 - **Layer 1 (Entry)** — read every session.
@@ -41,6 +41,7 @@ Because of this, **never inline template bodies or long detail into `SKILL.md`**
 - `references/legacy-migration.md` — legacy detection list + per-location migration steps; loaded when a legacy layout is detected.
 - `references/graph-integration.md` — `.mcp.json` bootstrap block + graph build sequence; loaded at Step 3f.
 - `references/first-run.md` — First-Run Population table + Context Self-Test question set/grading; loaded on a first run or when the self-test triggers.
+- `references/source-of-truth.md` — full source-of-truth ownership table + context-freshness drift procedure; loaded when fact ownership is unclear or the freshness stamp differs from `HEAD`.
 
 **The output contract the skill generates** (read `README.md` "Context + Session Docs" for the full picture): exactly two root artifacts in a consumer project — `AGENTS.md` (canonical entry) + a single `.safe-code/` folder holding `context/` (long-term project brain) and six session files (`ACTIVE`, `SESSION`, `LOG`, `BACKLOG`, `MEMORY`, `safe-refactor-code`). Thin provider-bridge pointers (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`) redirect each host to that same brain and hold no state. Every command auto-migrates legacy layouts (`.codex/agents`, v3 `.agents/` + root `context/`) into `.safe-code/`.
 

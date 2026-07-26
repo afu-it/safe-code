@@ -2,7 +2,7 @@
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.6-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.8-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -251,6 +251,17 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.8** — a self-auditing brain, ideas adapted from a study of [Graphify](https://github.com/Graphify-Labs/graphify)'s confidence-tagged knowledge graphs (design spec + the v4.9 `--graphify` orchestration plan: `docs/superpowers/specs/2026-07-26-v4.8-graphify-mode-design.md`).
+
+- **Evidence Tags** — load-bearing claims in `.safe-code/context/*.md` carry `[extracted: <path|command>]` (read directly from the repo — re-verifiable by running the pointer) or `[inferred: <basis>]` (deduction, with its basis named). A technical claim that can't be tagged `[extracted]` is an Open Question, not a fact; the Context Self-Test grades `[inferred]`-only answers as weak.
+- **Subagent fan-out hardened** — a returned summary is the success signal; missing/empty/off-topic counts as a failed dispatch (never "no findings"), and >50% failures stop the fan-out and fall back to inline.
+- **"Worth asking next"** — the final summary may surface 1–2 questions the run raised, so the session ends with an invitation, not just a task list.
+
+**v4.7** — slim core + proportional ceremony. Same behavior, lighter always-loaded prompt and quieter routine runs.
+
+- **SKILL.md slimmed ~7%** (960 → 897 lines) — the full source-of-truth ownership table and the context-freshness drift procedure moved to a new Layer 3 reference (`references/source-of-truth.md`); Command Recognition, Issue Tracking, Feature Suggestion, Legacy Migration, and helper-mode sections compressed with no rule changes. Less always-loaded text means less compliance drift on long runs.
+- **Proportional Ceremony Rule** — Reasoning blocks now scale to risk: full block only for risky/non-default decisions (Mode B/C calls, blast radius > 3 files, irreversible steps); a one-liner otherwise. The Step 8 banner drops empty `none`/`skipped` lines on Orientation and routine-resume runs. Output compresses; verification never does.
 
 **v4.6** — ecosystem upgrades, learned from a 14-repo competitive study (claude-mem, spec-kit, OpenSpec, the memory-bank family, planning-with-files, rulebook-ai, agent-os, get-shit-done, and more). Key finding: none of them verifies its own memory — safe-code's self-test + commit-anchored freshness stays unique, and v4.6 deepens it.
 
