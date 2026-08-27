@@ -170,7 +170,7 @@ What `--save` does, in order:
 Sample close-out:
 
 ```
-=== safe-code v4.12 session complete ===
+=== safe-code v4.13 session complete ===
 Save: local commits only; no push
 Commits: 2 atomic — refactor: remove dead legacyDate + old-uploader · docs: sync .safe-code session files
 Six-file save: ACTIVE ✓ SESSION ✓ LOG ✓ BACKLOG ✓ MEMORY ✓ safe-refactor-code ✓

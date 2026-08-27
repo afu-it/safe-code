@@ -49,7 +49,7 @@ Automatically run `$build-graph`:
 ### Detection order (first hit wins)
 
 1. `$graphify` skill available on the host -> dispatch it as a helper with the project root (build) or the question (query); it manages its own pipeline and outputs. **Identity check first**: only dispatch if the skill's own description matches the knowledge-graph purpose (maps input into a queryable knowledge graph); a same-named skill that describes something else is a name collision — skip to branch 2.
-2. `graphify` CLI on PATH (`command -v graphify`) -> drive the CLI directly.
+2. `graphify` CLI on PATH (`command -v graphify`) -> run the **Health check** below once per session (OS-aware; report + suggest only), then drive the CLI directly.
 3. `uv` available but no graphify -> offer ONCE: `uv tool install graphifyy` (yes, two y's — that is the real PyPI name; do not "correct" it to a different package). The `--graphify` flag is user intent, but installing a PyPI package is a supply-chain decision — ask before the first install and record accept/decline in `user-preferences.md` (a recorded decline is durable: suggest manual install instead of re-offering). **Cannot ask this session (autonomous/non-interactive)** -> treat as declined *for this run only*: do NOT install, do NOT record anything in `user-preferences.md`, fall through to branch 4.
 4. None of the above -> record `Graphify: unavailable`, print the install hint, and continue the run without it.
 
@@ -61,6 +61,27 @@ The **full** pipeline (semantic extraction of docs/PDFs/images) lives in the `$g
 2. Run `graphify update .` from the project root — the no-LLM AST extractor; needs no API key, never prompt for one. Note in output that docs/PDFs were not semantically extracted (that needs the `$graphify` skill).
 3. Verify `graphify-out/graph.json` exists (a `GRAPH_REPORT.md` may or may not be produced on this path). Missing or errored -> record `Graphify: failed (<reason>)` and continue; a failed build never blocks the run.
 4. A standalone `--graphify` run has no Step 8 banner: end with one summary line — `Graphify: built — <files> files, <nodes> nodes, <edges> edges, <communities> communities`. The Step 8 `Graph:` line applies only when a full pass runs in the same session.
+
+### Health check (CLI path, before build / refresh)
+
+A `graphify` on PATH is not proof it is the right one: a stale copy from an old installer can shadow a newer one (seen in practice: pip 0.9.37 in `/opt/homebrew/bin` shadowing uv 0.9.50 in `~/.local/bin`). Before branch 2 drives the CLI, run this check once per session. It **reports and suggests only** — safe-code never installs, upgrades, or uninstalls a tool on the user's behalf.
+
+1. **Detect the OS** — `uname -s`: `Darwin` -> macOS · `Linux` -> Linux · `MINGW*`/`MSYS*`/`CYGWIN*`, or `uname` missing with `$OS = Windows_NT` -> Windows. Every command below is chosen by this result; never print a macOS/Linux command to a Windows user or vice versa.
+2. **Count copies** — macOS/Linux: `which -a graphify` (de-duplicate paths; the same path listed twice means `$PATH` repeats a directory, not two installs). Windows: `where graphify` (cmd) or `Get-Command graphify -All` (PowerShell). More than one distinct path -> the first one wins on PATH; report all with their versions.
+3. **Read the installed version** — `graphify --version`. Per extra copy: `<path> --version`.
+4. **Identify the installer** per copy — `uv tool list` names `graphifyy` -> uv · `pipx list` names it -> pipx · path is a Homebrew python `bin/` (`/opt/homebrew/…`, `/usr/local/…`), `/usr/bin`, or a Windows `Scripts\` folder -> pip · a venv path -> venv. Unknown -> say so.
+5. **Compare with the latest release** (skip silently when offline): `curl -fsSL https://pypi.org/pypi/graphifyy/json` (macOS/Linux) or `Invoke-RestMethod https://pypi.org/pypi/graphifyy/json` (Windows) -> `info.version`.
+6. **Report one line, then continue**: `Graphify: <installed> (<installer>, <path>)` plus, when relevant, ` — latest <version>` or ` — <n> copies on PATH`. Then continue the run with whatever is first on PATH; a stale or duplicated tool never blocks the run.
+7. **Suggest, never run** — when the copy is stale or duplicated, print the fix as a command for the user, matched to OS and installer:
+
+   | Installer | macOS / Linux | Windows |
+   |---|---|---|
+   | uv | `uv tool upgrade graphifyy` | `uv tool upgrade graphifyy` |
+   | pipx | `pipx upgrade graphifyy` | `pipx upgrade graphifyy` |
+   | pip (system python) | `python3 -m pip install -U graphifyy` — Homebrew/Debian pythons refuse without `--break-system-packages`; tell the user to add it themselves, do not add it for them | `py -m pip install -U graphifyy` |
+   | stale duplicate that shadows the good copy | `python3 -m pip uninstall graphifyy` (pip) / `uv tool uninstall graphifyy` (uv) / `pipx uninstall graphifyy` (pipx), aimed at the **stale** copy only | same, with `py -m pip` |
+
+   Recommend uv (`uv tool install graphifyy`) as the single home when the user asks which to keep — one copy, one upgrade path. Uninstalling anything is the user's call: name the exact copy and path, then stop.
 
 ### Auto-refresh sequence (graph already exists)
 

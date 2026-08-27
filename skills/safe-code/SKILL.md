@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.12"
+version: "4.13"
 ---
 
 # Safe Code
@@ -292,7 +292,7 @@ Build or query a project knowledge graph via the external graphify pipeline (Gra
 - **Build mode** (`--graphify`, no argument): run the pipeline on the project root, then harvest results into the brain (draft-until-save): god nodes + communities -> `architecture.md` Navigation map refresh; surprising connections + suggested questions -> `progress-tracker.md` Open Questions candidates; graph stats -> the Step 8 `Graph:` line; god-node list -> Context Self-Test seed questions.
 - **Query mode** (`--graphify "<question>"`): read-only like `--explain` — run the query, relay the answer in plain language, change nothing, commit nothing. The agent may use graphify's `path`/`explain` subcommands internally; the user surface stays this one form. No graph built yet -> say so and offer build mode.
 
-Detection order (first hit wins): `$graphify` skill available on host (verify its description matches the knowledge-graph purpose, not just the name) -> dispatch it as a helper · `graphify` CLI on PATH -> drive the CLI · `uv` available -> ask ONCE before installing (a PyPI package is a supply-chain decision; record accept/decline in `user-preferences.md`; cannot ask this session -> treat as declined for this run only, record nothing) · none -> record `Graphify: unavailable`, suggest `uv tool install graphifyy`, continue.
+Detection order (first hit wins): `$graphify` skill available on host (verify its description matches the knowledge-graph purpose, not just the name) -> dispatch it as a helper · `graphify` CLI on PATH -> health-check it once per session (detect the OS, count copies on PATH, read the version, compare with PyPI when online; report one `Graphify:` line and print an OS- and installer-matched upgrade/cleanup command for the user — never install, upgrade, or uninstall anything yourself), then drive the CLI · `uv` available -> ask ONCE before installing (a PyPI package is a supply-chain decision; record accept/decline in `user-preferences.md`; cannot ask this session -> treat as declined for this run only, record nothing) · none -> record `Graphify: unavailable`, suggest `uv tool install graphifyy`, continue.
 
 Safety: `graphify-out/` lives inside the project root, gitignored via its own `.gitignore` (same pattern as `.code-review-graph/`), never committed by `--save`. Exclude `.safe-code/context/current-issues.md` from the corpus (may hold secrets). Neither mode pushes or commits.
 
@@ -908,7 +908,7 @@ During work, draft updates in `SESSION.md`; apply them to persistent docs only o
 On Orientation and routine-resume runs, compress this banner per the Proportional Ceremony Rule: omit lines whose value is `none` / `skipped: not in scope` / `not needed`; always keep the header, mode/profile, git/save/commits, and task-list lines.
 
 ```
-=== safe-code v4.12 session complete ===
+=== safe-code v4.13 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
