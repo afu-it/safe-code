@@ -16,6 +16,7 @@ Use the graph to trace suspected code paths and recent changes before editing.
 
 ## Workflow
 
+0. Contention check first: another process/agent/worktree/tool on the same branch, DB, port, or session? (`git worktree list`, `lsof -i :<port>`, ask the user "is another tool on this?") — rule it out before any code hypothesis.
 1. Search related symbols with `semantic_search_nodes_tool()`.
 2. Trace callers and callees with `query_graph_tool(pattern="callers_of"|"callees_of")`.
 3. Check entry paths with `get_affected_flows_tool()` or `get_flow_tool()`.

@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.14"
+version: "4.15"
 ---
 
 # Safe Code
@@ -33,7 +33,9 @@ WRONG:   ~/.safe-code/ACTIVE.md
 - **Never push.** Every save is a local commit only; remote detection never triggers a push.
 - **Never copy secrets, raw logs, stack traces, private URLs, or `current-issues.md` content into any committed file.** A sanitized one-line summary in `LOG.md` is the committed history.
 - **Never overwrite an existing file** when scaffolding, migrating, or writing bridges: create missing files, append clearly-marked blocks, or report the conflict.
-- **Never read or write outside the project root** (Scope Rule above).
+- **Never read or write outside the project root** (Scope Rule above; the user-declared Save Bridge is the one append-only exception).
+- **Gitignore work artifacts at creation, not at audit.** Any directory a run generates for itself (captures, mirrors, scratch, logs, unpacked bundles) gets a `.gitignore` entry the moment it is created — such folders routinely hold live session tokens and cookies, and "audit before commit" has already failed once too often.
+- **Inspect secret-bearing files by shape, never by value.** For `.env*`, auth/session stores, token caches, keychains: report key names, byte length, and mtime only (`cut -d= -f1`, `wc -c`, `stat`); never `cat` them, never print a value or an expiry payload into the transcript. A transcript leak is a leak.
 
 ---
 
@@ -262,7 +264,7 @@ Every `/safe-code --save` MUST update all six session files in `.safe-code/` —
 | `MEMORY.md` | Drafted notes applied; otherwise refresh the `_<DATE>_` stamp |
 | `safe-refactor-code.md` | Flagged candidates + Graveyard entries (with real commit hashes) applied; otherwise refresh the `_<DATE>_` stamp |
 
-If a file has no new content this session, still refresh its date stamp so all six files provably reflect the last save. A save that leaves any of the six files untouched is an incomplete save — verify all six are in the commit diff before reporting done.
+If a file has no new content this session, still refresh its date stamp so all six files provably reflect the last save — but a stamp never covers an unfilled template placeholder (fill, delete, or convert to an Open Question first; see First-Run Population). A save that leaves any of the six files untouched is an incomplete save — verify all six are in the commit diff before reporting done.
 
 ### Draft-Until-Save Rule
 
@@ -271,7 +273,7 @@ During normal work, draft updates to `.safe-code/context/*.md`, `AGENTS.md`, `.s
 Exceptions:
 
 - Create missing scaffold files/folders needed for safe operation.
-- Add `/.safe-code/context/current-issues.md` to `.gitignore` during setup.
+- Add `/.safe-code/context/current-issues.md` and `/.safe-code/backups/` to `.gitignore` during setup.
 - **First-Run Population** (see Step 1): on the first `/safe-code` run, populate empty scaffold `AGENTS.md` + evidence-derivable context files immediately, so agents have real context without waiting for `--save`.
 - Append/update issue entries in `.safe-code/context/current-issues.md` on error triggers (see the Issue Tracking Rule). This file is local-only/gitignored, so it is never part of a commit.
 - Write a feature spec (including a `status: suggested` idea) before implementation, or whenever a new feature is proposed (see the Feature Suggestion Rule).
@@ -477,7 +479,7 @@ If the repo already has code, docs, manifests, routes, schemas, tests, or config
 
 ### First-Run Population
 
-The whole point of the first run is that any agent can read real context afterward and not hallucinate. So on the **first** `/safe-code` run — while the target file is still an empty scaffold — write evidence-derivable context immediately instead of waiting for `--save`: `AGENTS.md`, `project-overview.md`, `architecture.md` (incl. the Navigation map), `code-standards.md`, and `progress-tracker.md` (Current Phase + Open Questions). Conversation-derived files (`user-preferences.md`), `ui-context.md`, and `current-issues.md` stay template. The exception applies only while a file is an empty scaffold — once it holds real content, edits revert to Draft-Until-Save. Never invent facts: anything not provable from repo evidence is an Open Question, not a populated claim. After populating, run the **Context Self-Test**; fill or flag any gaps it finds.
+The whole point of the first run is that any agent can read real context afterward and not hallucinate. So on the **first** `/safe-code` run — while the target file is still an empty scaffold — write evidence-derivable context immediately instead of waiting for `--save`: `AGENTS.md`, `project-overview.md`, `architecture.md` (incl. the Navigation map), `code-standards.md`, and `progress-tracker.md` (Current Phase + Open Questions). Conversation-derived files (`user-preferences.md`), `ui-context.md`, and `current-issues.md` stay template. The exception applies only while a file is an empty scaffold — once it holds real content, edits revert to Draft-Until-Save. Never invent facts: anything not provable from repo evidence is an Open Question, not a populated claim. **No placeholder survives a `--save`**: an unfilled scaffold section (`<!-- Example -->`, `[Will learn…]`, `<TBD>`) is either populated from evidence, deleted, or converted into an Open Question in `progress-tracker.md` — a date-stamp refresh over an unfilled placeholder is not a save, it is placeholder rot with a fresh coat of paint. After populating, run the **Context Self-Test**; fill or flag any gaps it finds.
 
 > **Layer 3 Trigger:** On a first run (or whenever the Context Self-Test triggers), read `references/first-run.md` for the per-file population table and the self-test procedure.
 
@@ -668,6 +670,13 @@ if no git repo                     -> require explicit user approval before exec
 if worktree dirty -> note it, do not overwrite user changes
 if worktree clean -> safe to proceed
 
+Fresh-clone completeness: cross-check `.gitignore` (and `git status --ignored`)
+against real source directories — migrations/, schema/, seeds/, fixtures/,
+scripts/ the docs reference. Source that is untracked or ignored means a fresh
+clone silently lacks it (seen: three DB migrations lived only on one machine and
+every clone had an empty inbox). Flag as High in the audit; never `git add` it
+yourself — the user decides what was meant to be private.
+
 (Ignore files safe-code itself created this run — scaffold, bridges, .safe-code/ —
 when judging worktree state; otherwise every first run reads as "dirty".)
 ```
@@ -809,6 +818,7 @@ Invoke `$codebase-pruner` in `Audit` mode only when audit/cleanup is in scope. O
 - Cross-reference `safe-refactor-code.md` for previously flagged items
 - Use `refactor_tool(mode="dead_code")`, callers/importers queries, and impact radius when graph tools are ready
 - Treat graph findings as candidate evidence; still check configs, exports, dynamic loaders, and runtime wiring
+- **A zero-hit reference scan is evidence only if the scan provably ran.** Quote every glob argument (`--include='*.ts'`, `'**/*.py'`) — in zsh an unmatched glob aborts the whole command, and `2>/dev/null` hides that, so "0 refs" and "never searched" look identical. Check the exit status, and re-run any search whose output is empty once more in isolation before it justifies a deletion. A false negative here deletes live code; a loud failure does not.
 - Do not delete or modify anything in this step
 
 ### Medium Auto-Promotion Rule
@@ -910,7 +920,7 @@ Every executed deletion — dead code, dead file, or a whole retired feature —
 - 2026-07-26 · src/utils/dateUtil.js (whole file) · why: zero refs, superseded by Intl · evidence: rg "dateUtil" -> 0 · restore: git revert <hash>
 ```
 
-The `<hash>` is filled during `--save`: code commits are created before the final docs commit (Atomic Commit Split), so the removal's real hash exists by the time `safe-refactor-code.md` is written. Graveyard entries are **never deleted** — they are the project's way back; if the list grows long, compress old entries LOG-trim style, keeping path + hash. When a *shipped feature* is removed, also flip its spec to `status: removed (<date>)` with the same restore pointer — keep the spec file.
+Untracked or gitignored files (hooks, local config, `current-issues.md`, agent/skill files) have no commit to revert to: before rewriting one in place, copy it to `.safe-code/backups/<file>.<YYYYMMDD-HHMM>` (`cp -p`, gitignored) and point the Graveyard entry's `restore:` at that copy. The `<hash>` is filled during `--save`: code commits are created before the final docs commit (Atomic Commit Split), so the removal's real hash exists by the time `safe-refactor-code.md` is written. Graveyard entries are **never deleted** — they are the project's way back; if the list grows long, compress old entries LOG-trim style, keeping path + hash. When a *shipped feature* is removed, also flip its spec to `status: removed (<date>)` with the same restore pointer — keep the spec file.
 
 ---
 
@@ -934,13 +944,15 @@ Then automatically run `$review-changes` when code changed or graph/manual impac
 When code changed, confirm nothing obviously broke before the final summary:
 
 - Run the project's **documented** build/test/run command (from `.safe-code/context/code-standards.md` or `architecture.md`) as a smoke check. Never invent a command.
-- Pass -> record `smoke-verify: passed (<command>)` in the final summary.
+- Pass -> record `smoke-verify: passed (<command>) · covers: <what it actually exercised>` in the final summary. The `covers:` part is mandatory — a strict gate over 40% of the surface reports "0 errors" exactly like a gate over 100%, and a clean result with unstated scope grades WEAK in the Context Self-Test.
 - Fail -> route to `$debug-issue` on the failure before asking the user for help.
 - No documented command exists -> record `smoke-verify: no command available` and move on.
+- Long-running command (build, e2e, anything past the tool timeout) -> run it detached to a log file inside the project and poll a bounded loop for a terminal marker; never a fixed sleep, never foreground. `smoke-verify: timed out (<command>, <log>)` is its own outcome and is **never reported as passed**.
+- A task flips `[~]` -> `[x]` on an **observed effect** (file exists, endpoint answers, test named in the output), not on exit code 0 or a tool's own "success" line — tools have returned 0 with the job undone. Record which kind of evidence closed the task.
 
 Running a build/test does not mutate source, so this stays inside the existing safety mode.
 
-If verification fails or a regression appears, automatically run `$debug-issue` on the failing symptom before asking the user for help.
+If verification fails or a regression appears, automatically run `$debug-issue` on the failing symptom before asking the user for help. Its first triage question is environmental, not code: is another process, agent, worktree, or the user's other tool touching the same branch, database, port, or session? Rule that out before forming a code hypothesis.
 
 ### Draft-Until-Save Sync Table
 
@@ -950,10 +962,12 @@ During work, draft updates in `SESSION.md`; apply them to persistent docs only o
 
 ## Step 8: Final Summary
 
+Before the banner, self-diff the run: `git status --porcelain` plus untracked edits vs the task list; any changed file no task claims goes on the `Out-of-scope touches:` line — an agent's own config, hook, skill, or memory files first (an agent that patches its own tooling mid-run must say so). Unexplained entries block `--save` until explained or reverted.
+
 On Orientation and routine-resume runs, compress this banner per the Proportional Ceremony Rule: omit lines whose value is `none` / `skipped: not in scope` / `not needed`; always keep the header, mode/profile, git/save/commits, and task-list lines.
 
 ```
-=== safe-code v4.14 session complete ===
+=== safe-code v4.15 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/
@@ -983,6 +997,7 @@ Review:    <review-changes run | skipped: docs-only | unavailable fallback>
 Smoke:     <passed (<command>) | failed -> debug | no command available | skipped: docs-only>
 Debug:     <debug-issue run | not needed | unresolved blocker>
 Task list: <completed>/<total> complete; unfinished moved to <ACTIVE.md|BACKLOG.md|none>
+Out-of-scope touches: <none | list of files changed this run that no task claims — config, hooks, skill or agent files first>
 Follow-up saved for next `/safe-code --continue`: <list>
 Worth asking next: <1–2 questions this run surfaced, from Open Questions or audit findings — omit if none>
 

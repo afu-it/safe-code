@@ -265,7 +265,7 @@ context_selftest: -
 
 ### `.safe-code/context/current-issues.md` — local-only issue tracker (user + AI)
 
-Add `/.safe-code/context/current-issues.md` to `.gitignore`. Stays local-only; never committed. The user pastes raw context; the agent appends/updates entries on issue triggers (Issue Tracking Rule) and flips them to Resolved once fixed.
+Add `/.safe-code/context/current-issues.md` and `/.safe-code/backups/` (dated pre-rewrite copies, Graveyard Rule) to `.gitignore`. Both stay local-only; never committed. The user pastes raw context; the agent appends/updates entries on issue triggers (Issue Tracking Rule) and flips them to Resolved once fixed.
 
 ```md
 # Current Issues  (local-only, gitignored)
