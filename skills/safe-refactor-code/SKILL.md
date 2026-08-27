@@ -238,3 +238,10 @@ Typical requests that activate this skill:
 - "remove dead code after changing this flow"
 - "keep repo memory in sync while refactoring"
 - "make this refactor safer for future agents"
+
+## Design Vocabulary (use these terms exactly)
+
+- **module** · **interface** (everything a caller must know — invariants, ordering, error modes — not just the signature) · **depth** (behaviour per unit of interface) · **seam** · **adapter** · **leverage** · **locality**.
+- **Deletion test** for a suspected shallow module: imagine deleting it. If complexity vanishes, it was a pass-through — remove it. If complexity reappears across N callers, it earns its keep.
+- One adapter is a hypothetical seam; two adapters is a real one. The interface is the test surface — needing to test past it means the module is the wrong shape.
+

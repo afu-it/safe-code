@@ -17,7 +17,7 @@ bash scripts/check.sh [project-root]      # verify safe-code conventions in a TA
 bash scripts/migrate.sh                    # preview legacy-layout migration (dry-run)
 bash scripts/migrate.sh --apply [root]     # perform the migration (uses git mv when tracked)
 bash scripts/check-version.sh              # MAINTAINER guard: assert version agrees across SKILL.md + README + examples
-bash scripts/save-reminder.sh              # session-end hook helper (opt-in; see integrations/claude-code/)
+bash scripts/save-reminder.sh              # shim -> skills/safe-code/scripts/save-reminder.sh (ships with the skill; opt-in Stop hook)
 ```
 
 - `check.sh` is the only thing that "fails" (exit 1) — and only on one hard check: a committed `.safe-code/context/current-issues.md` (it may hold secrets/logs). Everything else is an advisory warning. Both scripts locate the project root by walking up to the git toplevel / a safe-code marker, so they run against a *consumer* project, not this repo.
@@ -25,7 +25,7 @@ bash scripts/save-reminder.sh              # session-end hook helper (opt-in; se
 
 ## Architecture (the big picture)
 
-**One orchestrator + seven analyze-first helpers.** `skills/safe-code/SKILL.md` (~900 lines) is the entry skill exposing three commands — `/safe-code` (setup / auto-resume / fresh pass), `/safe-code --continue` (explicit resume), `/safe-code --save` (finalize docs + **local commit only, never push**). It orchestrates helper skills in `skills/{senior-dev,build-graph,explore-codebase,codebase-pruner,safe-refactor-code,review-changes,debug-issue}/`. Helpers are dispatched by a **`$helper-name` convention written inline in SKILL.md** (e.g. `$debug-issue`, `$codebase-pruner`). Helpers analyze first and never make broad changes just because `/safe-code` ran.
+**One orchestrator + seven analyze-first helpers.** `skills/safe-code/SKILL.md` (~980 lines) is the entry skill exposing five commands — `/safe-code` (setup / auto-resume / fresh pass), `--continue` (explicit resume), `--save` (finalize docs + retro + **local commit only, never push** + optional Save Bridge append), `--explain` (read-only briefing), `--graphify [question]` (optional knowledge graph via the external graphify CLI/skill, with an OS-aware health check). It orchestrates helper skills in `skills/{senior-dev,build-graph,explore-codebase,codebase-pruner,safe-refactor-code,review-changes,debug-issue}/`. Helpers are dispatched by a **`$helper-name` convention written inline in SKILL.md** (e.g. `$debug-issue`, `$codebase-pruner`). Helpers analyze first and never make broad changes just because `/safe-code` ran.
 
 **Three-layer context-economy loading** (`## Loading Layers` in SKILL.md) is the load-bearing design constraint:
 - **Layer 1 (Entry)** — read every session.
@@ -42,6 +42,8 @@ Because of this, **never inline template bodies or long detail into `SKILL.md`**
 - `references/graph-integration.md` — `.mcp.json` bootstrap block + graph build sequence (Step 3f), plus the graphify pipeline detail (detection order, CLI sequences, harvest mapping) for `/safe-code --graphify`.
 - `references/first-run.md` — First-Run Population table + Context Self-Test question set/grading; loaded on a first run or when the self-test triggers.
 - `references/source-of-truth.md` — full source-of-truth ownership table + context-freshness drift procedure; loaded when fact ownership is unclear or the freshness stamp differs from `HEAD`.
+- `references/git-identity.md` — Step 3e Identity + Account Guard procedure (leak shapes, `gh` account mismatch, the switch-or-push-once commands to print); loaded before the first commit of a run.
+- `references/agent-config-audit.md` also carries the Step 4b operating rules (moved out of SKILL.md in v4.16); `references/doc-templates.md` carries the Provider Bridge host table + rules (same move).
 
 **The output contract the skill generates** (read `README.md` "Context + Session Docs" for the full picture): exactly two root artifacts in a consumer project — `AGENTS.md` (canonical entry) + a single `.safe-code/` folder holding `context/` (long-term project brain) and six session files (`ACTIVE`, `SESSION`, `LOG`, `BACKLOG`, `MEMORY`, `safe-refactor-code`). Thin provider-bridge pointers (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`) redirect each host to that same brain and hold no state. Every command auto-migrates legacy layouts (`.codex/agents`, v3 `.agents/` + root `context/`) into `.safe-code/`.
 
@@ -49,8 +51,9 @@ Because of this, **never inline template bodies or long detail into `SKILL.md`**
 
 ## Conventions that span multiple files (get these right)
 
-- **Version bumps are not single-edit.** A version string lives in five places that must move together: `SKILL.md` frontmatter `version:`, the Step 8 summary banner (`=== safe-code vX.Y session complete ===`), the `README.md` badge, the `README.md` "What's New" section, and the close-out banner in `skills/safe-code/references/examples.md`. A version change that only touches the frontmatter is incomplete — run `bash scripts/check-version.sh` (source of truth = `SKILL.md` frontmatter; it fails on any mismatch, including the examples banner) and grep the repo for the old number before considering it done. (`safe-refactor-code/SKILL.md` carries its own `metadata.version` and can lag intentionally.)
+- **Version bumps are not single-edit.** A version string lives in six places that must move together: `SKILL.md` frontmatter `version:`, the Step 8 summary banner (`=== safe-code vX.Y session complete ===`), the `README.md` H1 (`# safe-code vX.Y`), the `README.md` badge, the `README.md` "What's New" section, and the close-out banner in `skills/safe-code/references/examples.md`. A version change that only touches the frontmatter is incomplete — run `bash scripts/check-version.sh` (source of truth = `SKILL.md` frontmatter; it fails on any mismatch, including the examples banner) and grep the repo for the old number before considering it done. (`safe-refactor-code/SKILL.md` carries its own `metadata.version` and can lag intentionally.)
 - **`scripts/check.sh` and `scripts/migrate.sh` encode SKILL.md's conventions.** If you add, rename, or move a session file or `context/` file in SKILL.md, update the hardcoded file lists in both scripts so the deterministic contract stays in sync with the prose.
 - **`--save` never pushes.** Any edit that touches the save flow must preserve "local commit only." (Since v4.2 the save splits into atomic conventional commits — still local-only.)
+- **Ideas come in through a grill, not a drip.** Candidate rules from other skills or from incident logs are batched, discussed (scope, conflicts with existing principles: Proportional Ceremony, six-file limit, never-blocking hooks, Scope Rule), and shipped as ONE release, dogfooded on a real project before push. Conflicting ideas are dropped, not bent in.
 - **Tutorials are bilingual.** `TUTORIAL-EN.md` and `TUTORIAL-BM.md` are parallel; user-facing behavior changes should update both.
 - **`docs/superpowers/{specs,plans}/`** hold dated design specs and implementation plans (spec-first workflow). A plan's steps are exact-string `Edit` + `grep`-verify pairs — follow them literally rather than paraphrasing.

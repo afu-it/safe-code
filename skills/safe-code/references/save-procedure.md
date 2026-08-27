@@ -118,7 +118,7 @@ During work, draft updates in `SESSION.md`. Apply them to persistent docs only o
 
 Runs after the last commit of the Atomic Commit Split (so the hashes are real).
 
-1. Read `diary_path` from `user-preferences.md ## Save Bridge`. `-`, empty, or missing -> skip silently.
+1. Read `diary_path` from `user-preferences.md ## Save Bridge`. `-`, empty, or missing -> skip silently (print nothing; only a declared-but-absent file earns the `skipped` line).
 2. Existence check only (`[ -f "$diary_path" ]`). Missing -> report `Save bridge: skipped (file not found)`; never create it.
 3. Append the block (see the Save Bridge Rule in SKILL.md) with a trailing blank line. Use the same `plain:` line already written to `LOG.md`; do not compose a second summary.
 4. Report `Save bridge: appended -> <diary_path>` in the save output. A bridge failure never fails the save: the commits are already done.

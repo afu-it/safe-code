@@ -45,6 +45,8 @@ Rules:
 
    Add repo-specific questions when the stack warrants (e.g. "how is auth enforced?", "how is data persisted?"). When `graphify-out/graph.json` exists, seed 1–2 extra questions from the top god nodes (most-connected concepts): "What is <god node> and what depends on it?" — the brain should be able to answer about the concepts the graph says matter most.
 3. **Require evidence.** Each answer must cite the context file + section it came from. No citation possible -> graded **fail** (the model is answering from training memory, not the brain). An answer resting only on `[inferred: …]`-tagged claims is **weak**: pass it only if no `[extracted: …]` evidence could exist for that question; otherwise treat it as a gap — verify the claim from the repo and upgrade the tag, or downgrade the claim to an Open Question. A file that is *intentionally* still a template on a first run (`user-preferences.md`, `ui-context.md`) answering "none recorded yet" is a **pass**, not a gap — absence is the correct answer there.
+3b. **Re-verify before scoring.** The closed-book grader checks citability, not truth: a stale fact that is faithfully cited still passes. So before scoring, re-execute every command string that appears in `context/*.md` (`ps`, `rg`, build/test/run commands, paths) against the repo; a command that cannot succeed as written is a **fail** for the question that cites it and a drafted correction in `SESSION.md`. Report the count: `context_selftest: n/n (citable) · m commands re-verified, k stale`.
+3c. **Open Questions are a third state.** A question the brain answers only with an unresolved Open Question is **open**, not pass — unless the repo cannot answer it either (then it stays open honestly). The template-file pass rule applies only to the two files the population table marks as conversation-derived (`user-preferences.md`, `ui-context.md`). Report `n pass / n open / n fail`.
 4. **Adversarial grade (when subagents available).** A second subagent tries to refute each answer ("is this actually supported by the context, or invented?"). Majority-refuted -> fail.
 
 ## Gaps are work, not just a score
@@ -54,4 +56,4 @@ For each failed question:
 - **Discoverable from the repo** -> read the specific code, write the fact into the right context file (draft in `SESSION.md`, apply on `--save`).
 - **Not provable from repo evidence** -> add to `.safe-code/context/progress-tracker.md` Open Questions for the user.
 
-Record the result as `context_selftest: <answerable>/<total> (<date>)` in `progress-tracker.md`, and report it in the final summary. Keep the question set small — this is a coverage gate, not an interrogation.
+Record the result as `context_selftest: <pass>/<total> pass · <open> open · <fail> fail · <m> commands re-verified (<date>)` in `progress-tracker.md`, and report it in the final summary. Keep the question set small — this is a coverage gate, not an interrogation.

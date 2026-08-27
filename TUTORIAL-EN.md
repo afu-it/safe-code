@@ -162,6 +162,26 @@ Save applies drafted context/doc updates, writes resume state, appends safe logs
 
 Six-File Save Rule: every `/safe-code --save` updates all six session files in `.safe-code/`; files with no new content get a fresh date stamp.
 
+Save also runs a short **retro** — anything that made the agent slower or wronger this run (a file that was hard to find, a check that would have caught a mistake, a steering line that did nothing) lands in `BACKLOG.md` as a `retro:` item. Nothing found, nothing written.
+
+Keep a personal journal outside the repo? Put its absolute path in `.safe-code/context/user-preferences.md` under `## Save Bridge` → `diary_path:` and every save appends one dated block there (plain recap, commits, next action). Append-only; safe-code never creates or commits that file.
+
+### Never lose a session
+
+Forgetting `--save` is the one real failure mode. Wire the bundled reminder once (Claude Code, global install):
+
+```jsonc
+// ~/.claude/settings.json
+{ "hooks": { "Stop": [ { "hooks": [ { "type": "command",
+  "command": "bash \"$HOME/.agents/skills/safe-code/scripts/save-reminder.sh\"" } ] } ] } }
+```
+
+It prints a one-line nudge when a session ends with unsaved `.safe-code/` work. It never commits and never blocks. Project install: use `bash "$CLAUDE_PROJECT_DIR/.claude/skills/safe-code/scripts/save-reminder.sh"` in `.claude/settings.json` instead.
+
+### Commit identity
+
+Before the first commit of a run, safe-code checks `git config user.name` / `user.email`. Record the identity you want in `.safe-code/context/user-preferences.md` under `## Git Identity` and a mismatch stops the commit with the fix printed; leave it empty and safe-code still warns about `you@YourMachine.local` style emails (git derived them from your OS account) and, on GitHub, about a `gh` account that is not the repo owner. It never edits global git config and never pushes.
+
 ## 10. Explain Your Project (read-only)
 
 Forgot what your own project does? Ask for a plain-language briefing:
@@ -196,7 +216,11 @@ safe-code internally uses helper skills when needed:
 - `explore-codebase`
 - `codebase-pruner`
 - `safe-refactor-code`
-- `review-changes`
-- `debug-issue`
+- `review-changes` — reviews on two axes, Standards (your `code-standards.md` + a code-smell baseline) and Spec (did it do what the active spec asked: missing, scope creep, wrong), reported separately
+- `debug-issue` — builds a command that reproduces the bug *before* forming any theory, shrinks the repro, ranks 3–5 falsifiable hypotheses, probes one variable at a time, writes the regression test at the right seam, and cleans up its tagged logs
 
 Helper skills analyze first. Cleanup/refactor runs only when scoped and evidence-backed.
+
+## 12. How safe-code knows it is done
+
+Every task in a run carries its closing check before the work starts (`check: <command> · expect: <token>`) and closes only on an observed effect — never on "exit code 0" or a tool saying "success". If you asked for several things, safe-code lists each one in `SESSION.md ## Requested` and walks the list at the end; an unobserved item blocks the "complete" claim. A task that turns out impossible is marked `[!] abandoned` with a reason and shows up in the final banner — it is never quietly dropped. Every number in that banner is re-measured at report time, not copied from mid-run notes.

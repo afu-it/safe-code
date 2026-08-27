@@ -1,8 +1,8 @@
-# safe-code v4.15
+# safe-code v4.16
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.15-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.16-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -53,8 +53,22 @@ One brain, committed to the repo, readable in a `git diff`, shared by every agen
 | `/safe-code --continue` | Explicitly resume saved work |
 | `/safe-code --save` | Finalize context/docs, commit locally, and close session |
 | `/safe-code --explain` | Read-only: explain the project back in plain language (no changes) |
+| `/safe-code --graphify [question]` | Build the project knowledge graph (via graphify, optional) or ask it a question (read-only) |
 
-If users forget `--continue`, `/safe-code` auto-detects saved unfinished state and resumes.
+If users forget `--continue`, `/safe-code` auto-detects saved unfinished state and resumes. In a project that already has `.safe-code/`, a bare flag (`--save`, `--continue`, `--explain`, `--graphify`) is enough.
+
+### Never lose a session (optional reminder hook)
+
+Forgetting `--save` is the one real failure mode. The skill ships a Stop-hook script that prints a nudge whenever a session ends with unsaved `.safe-code/` work — it never commits, never blocks. Wire it once in Claude Code:
+
+```jsonc
+// ~/.claude/settings.json (global install)  — or .claude/settings.json (project install, path below)
+{ "hooks": { "Stop": [ { "hooks": [ { "type": "command",
+  "command": "bash \"$HOME/.agents/skills/safe-code/scripts/save-reminder.sh\"" } ] } ] } }
+// project install: bash "$CLAUDE_PROJECT_DIR/.claude/skills/safe-code/scripts/save-reminder.sh"
+```
+
+Full example in `integrations/claude-code/hooks.example.json`.
 
 ### Verify (optional)
 
@@ -64,7 +78,7 @@ The conventions above are normally maintained by the agent. To check them determ
 bash scripts/check.sh
 ```
 
-It verifies `AGENTS.md` and the `.safe-code/` folder (context files + six session docs) exist, checks the provider-bridge pointers (`CLAUDE.md`, `GEMINI.md`, Copilot, Cursor) point at the brain, flags a stale `SESSION.md`, detects legacy layouts to migrate (`.codex/agents`, v3 `.agents/` + root `context/`), and **fails** (exit 1) if `.safe-code/context/current-issues.md` was accidentally committed. Warnings are advisory; only that hard check fails the run.
+It verifies `AGENTS.md` and the `.safe-code/` folder (context files + six session docs) exist, checks the provider-bridge pointers (`CLAUDE.md`, `GEMINI.md`, Copilot, Cursor) point at the brain, flags a stale `SESSION.md`, detects legacy layouts to migrate (`.codex/agents`, v3 `.agents/` + root `context/`), warns when `.safe-code/backups/` or `graphify-out/` are tracked, and **fails** (exit 1) if `.safe-code/context/current-issues.md` was accidentally committed. Warnings are advisory; only that hard check fails the run.
 
 Upgrading from an older install? `/safe-code` migrates automatically on its next run, or do it deterministically:
 
@@ -87,14 +101,16 @@ It moves everything into `.safe-code/`, patches old config (`.gitignore` entry, 
  Step 0  →  Locate project root (single agent-agnostic `.safe-code/` folder)
  Step 1  →  Create/reconcile AGENTS.md + host bridge + .safe-code/ docs; migrate legacy layouts
  Step 2  →  Load context layers + detect saved session (auto-resume)
- Step 3  →  Git rollback safety, run profile, graph readiness, helper routing
- Step 4  →  Audit dead code (4b: agent-config trust audit)
+ Step 3  →  Git rollback safety, commit-identity + push-account guard, run profile, graph readiness, helper routing
+ Step 4  →  Audit dead code — zero-hit scans need a positive control (4b: agent-config trust audit)
  Step 5  →  Pre-plan safety check → execution mode A/B/C
- Step 6  →  Execute high-confidence removals slice by slice, verify each
- Step 7  →  Refactor when in scope; review + smoke-verify; draft doc updates
- Step 8  →  Final summary
---save   →  Apply final context/docs + atomic local commits only
+ Step 6  →  Execute high-confidence removals slice by slice, verify each; every removal gets a Graveyard entry
+ Step 7  →  Refactor when in scope; two-axis review (Standards / Spec) + smoke-verify with coverage; draft doc updates
+ Step 8  →  Final summary — every count re-measured, out-of-scope touches and abandoned tasks listed
+--save   →  Apply final context/docs, retro into BACKLOG, atomic local commits only, optional Save Bridge append
 ```
+
+Every task in the run carries its closing check before work starts (`check: <command> · expect: <token>`) and closes on an observed effect, never on exit code 0. A task that turns out impossible is marked `[!] abandoned` with a reason — never silently dropped.
 
 Nothing is pushed. Nothing risky is deleted without rollback evidence.
 
@@ -119,6 +135,7 @@ your-project/
     ├── MEMORY.md                # │
     ├── safe-refactor-code.md    # ┘
     ├── CHANGELOG.md
+    ├── backups/                 # dated copies of untracked files before an in-place rewrite; gitignored
     └── context/
         ├── project-overview.md
         ├── architecture.md
@@ -134,7 +151,7 @@ your-project/
 
 - `AGENTS.md` is the canonical entry point — its Read First section points into `.safe-code/`. Because not every host auto-reads `AGENTS.md` (Claude reads `CLAUDE.md`, Gemini `GEMINI.md`, Copilot `.github/copilot-instructions.md`, Cursor `.cursor/rules/`), safe-code writes a thin pointer for the host it is currently running in, so that provider lands on the same brain. The other hosts' pointers are written lazily the first time you run safe-code under each.
 - `.safe-code/context/` is canonical long-term project brain.
-- `.safe-code/context/user-preferences.md` stores explicit durable user preferences, like “SVG icons only, no emoji icons”.
+- `.safe-code/context/user-preferences.md` stores explicit durable user preferences, like “SVG icons only, no emoji icons”. Two optional blocks: `## Git Identity` (name + email the Step 3e guard checks before the first commit) and `## Save Bridge` (`diary_path:` — an absolute path outside the repo that every `--save` appends one dated recap block to; append-only, never created, never committed).
 - Agents watch for strong preference language like `I don't want`, `aku taknak`, `I prefer`, `please remove`, `jangan`, `always`, and `never`.
 - `.safe-code/context/feature-specs/` holds AI-written specs (one unit per file), each with a `status:` field — new ideas land as `status: suggested` so they stay referrable history.
 - `.safe-code/context/current-issues.md` is a shared issue tracker (user + AI), local-only and never committed; the agent appends an entry when you report an error and flips it to resolved once fixed.
@@ -152,11 +169,13 @@ During work, safe-code drafts persistent documentation changes in `SESSION.md`.
 - `AGENTS.md`
 - **all six session files, every save** (Six-File Save Rule): `ACTIVE.md`, `SESSION.md` (wiped), `LOG.md` (entry appended), `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md` — files with no new content get a fresh date stamp
 - `.safe-code/CHANGELOG.md` only for releasable changes
+- `BACKLOG.md` also receives `retro:` items — environment improvements the run surfaced (navigation, automated checks, coding standards, AGENTS.md bloat, tool economy, no-ops, information access); a clean run writes none
+- the Save Bridge file, when `diary_path` is declared (one appended block: plain recap, commits, next action)
 
 Exceptions written before save:
 
 - missing scaffold files/folders
-- `/.safe-code/context/current-issues.md` gitignore rule
+- `/.safe-code/context/current-issues.md` and `/.safe-code/backups/` gitignore rules
 - active feature specs in `.safe-code/context/feature-specs/`
 - code changes required by user task
 
@@ -199,15 +218,16 @@ Example:
 
 Each spec includes:
 
-- `status:` (suggested / approved / in-progress / done / rejected) + created date
+- `status:` (suggested / approved / in-progress / done / rejected / removed) + created date
 - goal
+- open questions (`[NEEDS CLARIFICATION]` markers block approval until answered)
 - scope and out-of-scope
 - design/behavior
-- likely touched files or areas
-- dependencies
+- implementation notes as durable contracts — interfaces, type names, signatures, config shapes; never file paths or line numbers, because the code moves while the spec waits
+- dependencies (verified on their registry before approval)
 - verification checklist
 
-Every new feature idea is captured as a `status: suggested` spec — referrable history you can later approve, build, or reject (rejected specs are kept so the idea is not re-suggested). safe-code should not implement feature work without an active spec unless the user asks for a tiny direct edit.
+Every new feature idea is captured as a `status: suggested` spec — referrable history you can later approve, build, or reject. Before writing one, safe-code checks the codebase for an existing implementation and scans rejected/removed specs **by concept, not keyword** ("night theme" matches a dark-mode rejection) so a decision is surfaced instead of re-litigated. safe-code should not implement feature work without an active spec unless the user asks for a tiny direct edit.
 
 ---
 
@@ -238,8 +258,8 @@ Users normally call only `/safe-code`.
 | `explore-codebase` | Repo orientation and facts | Yes |
 | `codebase-pruner` | Dead-code analysis and scoped cleanup | When in scope |
 | `safe-refactor-code` | Refactor with impact checks | When in scope |
-| `review-changes` | Delta review before final summary | After edits/risk |
-| `debug-issue` | Failure/regression tracing | On failures/bugs |
+| `review-changes` | Two-axis review: Standards (repo rules + Fowler smell baseline) and Spec (missing / creep / wrong), never merged | After edits/risk |
+| `debug-issue` | Red-capable repro → minimise → ranked falsifiable hypotheses → tagged probes → regression test at the correct seam → cleanup gate | On failures/bugs |
 
 Helper skills analyze first and never make broad changes merely because `/safe-code` ran.
 
@@ -256,6 +276,8 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.16** — verification gates, a real debugger, a two-axis reviewer, and a slimmer core. Ideas adapted from [mattpocock/skills](https://github.com/mattpocock/skills) and [Leonxlnx/unlazy](https://github.com/Leonxlnx/unlazy), folded in as *verification obligations* (never extra files, never blocking hooks, never more ceremony). Tasks now carry `check:` / `expect:` before work starts and close on observed effects; impossible tasks are `[!] abandoned`, never dropped; a `## Requested` inventory maps every part of the user's ask to the task that observes it; zero-hit scans need a positive control before they justify a deletion; three cycles without state change is a stall, not effort; and every count in the banner is re-measured at report time. `$debug-issue` is rewritten around a red-capable feedback loop -> minimised repro -> 3–5 ranked falsifiable hypotheses -> tagged probes -> regression test at the correct seam -> cleanup gate. `$review-changes` reviews on two axes, Standards (with a Fowler smell baseline) and Spec (missing / creep / wrong), never merged. Specs are durable (no paths, no line numbers) and deduped against rejections by concept; `--save` runs a seven-category retro into `BACKLOG.md`; `progress-tracker.md` gains a *Not Yet Specified* fog-of-war section; test anti-patterns land in the `code-standards.md` template. Slimming: Step 3e, Step 4b rules, and the Provider Bridge table moved behind Layer 3 triggers into `references/`.
 
 **v4.15** — eleven field lessons folded into the rules (mined from one maintainer's incident log across other projects; each one cost real time once). Highlights: a zero-hit reference scan counts as deletion evidence only if the search provably ran (quoted globs, checked exit status, empty results re-run — zsh aborts a whole command on an unmatched glob and `2>/dev/null` hides it); `smoke-verify` must state what it *covered*, long runs go detached-and-polled with `timed out` as its own outcome, and tasks close on observed effects, not exit codes; a fresh-clone completeness check flags source that only exists on one machine (migrations, seeds); no template placeholder survives a `--save`; work-artifact dirs are gitignored at creation and secret-bearing files are inspected by shape, never by value; untracked/ignored files get a dated backup before an in-place rewrite (Graveyard for things `git revert` can't reach); `$debug-issue` asks "is another tool on this?" before any code hypothesis; and the Step 8 banner lists every file the run touched that no task claims — the agent's own tooling first.
 

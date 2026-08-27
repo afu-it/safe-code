@@ -154,6 +154,12 @@ else
 		warn "add '/.safe-code/context/current-issues.md' to .gitignore"
 	fi
 fi
+# local-only work dirs (advisory): dated pre-rewrite backups and the graphify output
+for d in .safe-code/backups graphify-out; do
+	if [ -d "$d" ] && command -v git >/dev/null 2>&1 && [ -n "$(git ls-files "$d" 2>/dev/null)" ]; then
+		warn "$d/ is tracked by git — it is local-only; add '/$d/' to .gitignore and git rm --cached it"
+	fi
+done
 echo
 
 # ---- 4b. provider bridges (advisory) ----------------------------------------

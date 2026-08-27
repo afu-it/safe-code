@@ -157,6 +157,13 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 
 ## File Organization
 - `folder/` — <!-- What belongs here. -->
+
+## Testing
+- <!-- Command(s), and what they cover. -->
+- Reject: implementation-coupled tests (mock internal collaborators, break on refactor),
+  tautological tests (expected value recomputed the way the code does it — use an
+  independent literal, worked example, or the spec), horizontal slicing (all tests first,
+  then all code). Work one test -> one implementation -> repeat.
 ```
 
 ---
@@ -252,7 +259,12 @@ context_selftest: -
 - <!-- First unit to build. -->
 
 ## Open Questions
-- <!-- Unknown product/technical facts. -->
+- <!-- Unknown product/technical facts — sharp enough to phrase as a question. -->
+
+## Not Yet Specified
+- <!-- Fog of war: in-scope work you can see coming but cannot yet phrase as a sharp
+     question. Do not pre-slice it into specs. Move each patch out the moment it
+     graduates to an Open Question or a spec, so it lives in exactly one place. -->
 
 ## Architecture Decisions
 - <!-- Safe summaries only; include why. -->
@@ -335,7 +347,10 @@ updated: <DATE>
 <!-- UI, API, data, and behavior decisions. Reference context files. -->
 
 ## Implementation Notes
-- <!-- Files/areas likely touched. -->
+<!-- Durable: interfaces, type names, signatures, config shapes, behavioural contracts.
+     No file paths, no line numbers — the code moves while this spec waits. A snippet
+     that encodes a decision (schema, state machine, type shape) may be inlined. -->
+- <!-- Contract or interface this unit introduces or changes. -->
 
 ## Dependencies
 <!-- Verify each package exists on its official registry (npm/PyPI/crates/...) before the
@@ -569,6 +584,27 @@ action: auto-delete | manual review | skip
 ---
 
 ## Provider Bridge Files (pointers — never duplicate facts)
+
+### Host table + rules (moved from SKILL.md Step 1)
+
+| Host | Bridge file | Mechanism |
+|---|---|---|
+| Claude Code | `CLAUDE.md` | `@AGENTS.md` import + read-context instruction |
+| Cline | `.clinerules/safe-code.md` | read-`AGENTS.md`-and-context instruction |
+| Gemini CLI | `GEMINI.md` | read-`AGENTS.md`-and-context instruction (+ print the `.gemini/settings.json` opt-out snippet — never auto-edit config) |
+| GitHub Copilot | `.github/copilot-instructions.md` | read-`AGENTS.md`-and-context instruction |
+| Cursor | `.cursor/rules/safe-code.mdc` | `alwaysApply` rule pointing at `AGENTS.md` |
+
+Most modern hosts (Codex, Windsurf, Warp, Zed, RooCode, Kilo, opencode, Amp, Jules, Devin, and more) read `AGENTS.md` natively — no bridge needed; the full host-coverage table lives in `references/doc-templates.md` (Provider Bridge Files).
+
+Rules:
+
+- Bridges are **pointers, not state** — a few lines redirecting to `AGENTS.md` + `.safe-code/context/`. Never duplicate project facts into them.
+- **Write only the current host's bridge**; `AGENTS.md` is always written. Host not in the table -> `AGENTS.md` only (it reads the file natively — see the host-coverage table). Host undetectable -> fall back to writing the CLAUDE.md/GEMINI.md/Copilot/Cursor four (pre-v4.4 behavior, so a run is never worse than before).
+- **Never delete or overwrite** an existing bridge (Safety Invariants): if a host file exists without pointing at the brain, append one clearly-marked `<!-- safe-code:bridge -->` block; if it already points there, leave it. Lazy accrual: each host self-registers the first time safe-code runs under it.
+- Bridges are scaffold files — write immediately, not draft-until-save; preserve them during Legacy Layout Migration (they are not legacy state).
+- Read fallback shapes from `references/doc-templates.md` (Provider Bridge Files).
+
 
 > Thin redirects so hosts that do not auto-read `AGENTS.md` still load the same brain.
 > Write only the bridge for the host currently running (see SKILL.md Provider Bridge); the

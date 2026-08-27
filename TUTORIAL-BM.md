@@ -162,6 +162,26 @@ Save akan apply draft context/docs, tulis resume state, append safe logs, wipe t
 
 Six-File Save Rule: setiap `/safe-code --save` update semua enam fail session dalam `.safe-code/`; fail yang tiada content baru tetap dapat date stamp terkini.
 
+Save juga buat **retro** ringkas — apa-apa yang buat agent lambat atau tersilap dalam run ni (fail yang susah dijumpai, check yang boleh tangkap kesilapan, baris arahan yang tak beri kesan) masuk `BACKLOG.md` sebagai item `retro:`. Tiada dapatan, tiada tulisan.
+
+Ada jurnal peribadi di luar repo? Letak path penuhnya dalam `.safe-code/context/user-preferences.md` di bawah `## Save Bridge` → `diary_path:` dan setiap save akan append satu blok bertarikh ke situ (ringkasan mudah, commit, langkah seterusnya). Append sahaja; safe-code tak pernah cipta atau commit fail itu.
+
+### Jangan hilang session
+
+Lupa `--save` ialah satu-satunya kegagalan sebenar. Pasang peringatan sekali (Claude Code, pemasangan global):
+
+```jsonc
+// ~/.claude/settings.json
+{ "hooks": { "Stop": [ { "hooks": [ { "type": "command",
+  "command": "bash \"$HOME/.agents/skills/safe-code/scripts/save-reminder.sh\"" } ] } ] } }
+```
+
+Ia cetak satu baris peringatan bila session tamat dengan kerja `.safe-code/` belum disave. Tak pernah commit, tak pernah sekat. Pemasangan projek: guna `bash "$CLAUDE_PROJECT_DIR/.claude/skills/safe-code/scripts/save-reminder.sh"` dalam `.claude/settings.json`.
+
+### Identiti commit
+
+Sebelum commit pertama dalam satu run, safe-code semak `git config user.name` / `user.email`. Rekod identiti yang anda mahu dalam `.safe-code/context/user-preferences.md` di bawah `## Git Identity`; kalau tak sepadan, commit dihentikan dan cara betulkan dicetak. Kalau kosong, safe-code tetap beri amaran untuk email bentuk `anda@MesinAnda.local` (git ambil dari akaun OS) dan, di GitHub, bila akaun `gh` aktif bukan pemilik repo. Ia tak pernah edit config git global dan tak pernah push.
+
 ## 10. Explain Projek Anda (read-only)
 
 Lupa projek sendiri buat apa? Minta penerangan bahasa mudah:
@@ -196,7 +216,11 @@ safe-code guna helper skills secara internal bila perlu:
 - `explore-codebase`
 - `codebase-pruner`
 - `safe-refactor-code`
-- `review-changes`
-- `debug-issue`
+- `review-changes` — review atas dua paksi, Standards (`code-standards.md` anda + senarai code smell asas) dan Spec (adakah ia buat apa yang spec aktif minta: tertinggal, scope creep, salah), dilapor berasingan
+- `debug-issue` — bina command yang boleh reproduce bug *sebelum* buat teori, kecilkan repro, susun 3–5 hipotesis yang boleh diuji, probe satu pembolehubah pada satu masa, tulis regression test di seam yang betul, dan bersihkan log bertag
 
 Helper skills analyze dahulu. Cleanup/refactor hanya jalan bila scope jelas dan ada bukti.
+
+## 12. Macam mana safe-code tahu ia dah siap
+
+Setiap task dalam satu run bawa check penutupnya sebelum kerja bermula (`check: <command> · expect: <token>`) dan hanya ditutup atas kesan yang diperhati — bukan "exit code 0" atau tool kata "success". Kalau anda minta beberapa perkara, safe-code senaraikan setiap satu dalam `SESSION.md ## Requested` dan semak senarai itu di hujung; item yang tak diperhati menghalang dakwaan "siap". Task yang rupanya mustahil ditanda `[!] abandoned` dengan sebab dan muncul dalam banner akhir — tak pernah digugurkan senyap. Setiap nombor dalam banner itu diukur semula masa lapor, bukan disalin dari nota tengah run.
