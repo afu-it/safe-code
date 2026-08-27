@@ -74,6 +74,8 @@ check() { # check <label> <found-version> ; empty found = "not present" (skipped
 if [ -f "$README" ]; then
 	BADGE="$(grep -oE 'badge/version-[0-9]+\.[0-9]+(\.[0-9]+)?' "$README" | head -1 | sed -E 's#badge/version-##')"
 	check "README.md badge" "$BADGE"
+	H1="$(grep -m1 -E '^# safe-code v[0-9]+\.[0-9]+' "$README" | sed -E 's/^# safe-code v//; s/[[:space:]].*$//')"
+	check "README.md H1 title" "$H1"
 else
 	info "README.md: not found (skipped)"
 fi

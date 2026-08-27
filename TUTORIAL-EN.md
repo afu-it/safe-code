@@ -12,6 +12,9 @@ Optional global install:
 
 ```bash
 npx skills add afu-it/safe-code -g
+
+# update later (keep the -g for a global install)
+npx skills update -g
 ```
 
 ## 2. First Run

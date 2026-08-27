@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "4.13"
+version: "4.14"
 ---
 
 # Safe Code
@@ -19,6 +19,7 @@ Apply `$senior-dev` discipline throughout the run: task list first, measure twic
 - All paths are relative to the project root
 - The project root is the directory where the agent was invoked
 - Graph MCP bootstrap may create or update `<project-root>/.mcp.json` only. Do not auto-edit global agent MCP config.
+- **One exception, user-declared:** the Save Bridge (`--save`) may *append* to the single absolute file the user recorded as `diary_path` in `user-preferences.md`. Append-only, existence check only, never read, never committed, never created. No `diary_path` -> no exception.
 
 ```
 CORRECT: <project-root>/.safe-code/ACTIVE.md
@@ -219,7 +220,10 @@ Save does these things:
 5. Update .safe-code/CHANGELOG.md only for releasable changes
 6. Ensure local git repo exists when allowed by current repo state
 7. Split the session into atomic commits (Atomic Commit Split Rule below)
-8. Report commit hashes + types + local-only status + next action
+8. Save Bridge: if user-preferences.md has `diary_path:` and that file exists,
+   append one dated block (project, `plain:` recap, commit hashes) to it —
+   append-only, outside the repo, never committed, never created (Save Bridge Rule below)
+9. Report commit hashes + types + local-only status + next action
 ```
 
 Do not push.
@@ -231,6 +235,19 @@ Do not push.
 Fallback: overlapping hunks, thin/unannotated task list, or unseparable changes -> ONE local commit + `LOG.md` note (`atomic split skipped: <reason>`). The save **never fails or blocks** because of splitting.
 
 > **Layer 3 Trigger:** On `--save`, read `references/save-procedure.md` for the split procedure, the commit-type mapping, Last Session block shapes, the LOG.md Trim Rule procedure, and the per-file sync table.
+
+### Save Bridge Rule
+
+Users who keep a personal journal or a second memory system outside the repo (a topic diary, a notes vault) otherwise copy every save by hand. If `user-preferences.md` carries a `## Save Bridge` block with `diary_path: <absolute path>`, `--save` appends **one** block to that file after the commits land:
+
+```
+## <YYYY-MM-DD HH:MM> — <project name> — safe-code save
+- plain: <the LOG.md plain: recap, verbatim>
+- commits: <hash type: subject>, …
+- next: <ACTIVE.md next_action>
+```
+
+Constraints: append only; the file must already exist (missing -> `Save bridge: skipped (file not found)`, never create it); never read its content; never include secrets, `current-issues.md` content, or raw output; the bridge file is never committed and never part of the Six-File rule. This is the only write outside the project root safe-code ever makes, and only because the user declared the path (Scope Rule exception).
 
 ### Six-File Save Rule
 
@@ -663,7 +680,35 @@ Do NOT ask the user which platform they use — detect from URL only. Remote det
 
 ### 3c. Reasoning output
 
-Emit the canonical Reasoning block (Decision Framework) with fields: git state (found | not found | found but no commits), remote (URL | none), bucket (A | B | C), rollback available, decision (proceed | require approval), why.
+Emit the canonical Reasoning block (Decision Framework) with fields: git state (found | not found | found but no commits), remote (URL | none), bucket (A | B | C), rollback available, identity (Step 3e), decision (proceed | require approval), why.
+
+---
+
+## Step 3e: Identity + Account Guard
+
+Run once per session, before the first commit this run and before any output that mentions pushing. Inform and suggest only — never edit global git config, never switch accounts, never push.
+
+### Commit identity
+
+1. Read `git config user.name` and `git config user.email` (effective values, from inside the project).
+2. If `user-preferences.md` has a `## Git Identity` block (`name:` / `email:`), compare. **Mismatch -> stop before committing**: print the project-local fix (`git config user.name "<name>"` + `git config user.email "<email>"`) and wait; a commit under the wrong identity is not reversible once pushed by the user later.
+3. If no block exists, still flag the two silent-leak shapes and draft a `## Git Identity` entry in `SESSION.md` for the user to confirm at `--save`:
+   - email is empty or `<user>@<Machine>.local` -> git derived it from the OS account; the machine name and the OS full name would land in every commit.
+   - `user.name` looks like a full legal name while the remote owner is a handle -> the user may want the handle instead.
+4. Never write `user-preferences.md` from this step; the entry goes through the normal draft-until-save path. Never store tokens or passwords here — identity is name + email only.
+
+### Push account (information only)
+
+When the remote is a hosting platform with a CLI on PATH (`gh` for github.com; skip otherwise): read the active account (`gh auth status`, active row) and the remote owner from the URL. Different -> report one line, `Push account: <active> — remote owner <owner>`, and print the fix for the user to run themselves:
+
+```
+# switch the active account (affects every repo on this machine)
+gh auth switch --user <owner>
+# or push once as <owner> without switching (other sessions keep their account)
+T=$(gh auth token --user <owner>); git -c credential.helper= -c "http.https://github.com/.extraheader=Authorization: Basic $(printf '<owner>:%s' "$T" | base64)" push origin <branch>
+```
+
+safe-code never pushes, so the mismatch never blocks a run; it just stops the user from discovering a 403 later. Record the outcome in the Step 3c Reasoning block as `identity: ok | fixed by user | pending`.
 
 ---
 
@@ -908,7 +953,7 @@ During work, draft updates in `SESSION.md`; apply them to persistent docs only o
 On Orientation and routine-resume runs, compress this banner per the Proportional Ceremony Rule: omit lines whose value is `none` / `skipped: not in scope` / `not needed`; always keep the header, mode/profile, git/save/commits, and task-list lines.
 
 ```
-=== safe-code v4.13 session complete ===
+=== safe-code v4.14 session complete ===
 
 Project root: <path>
 Safe-code folder: <project-root>/.safe-code/

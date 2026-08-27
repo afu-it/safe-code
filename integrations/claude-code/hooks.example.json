@@ -2,8 +2,11 @@
   "//": "safe-code — optional 'never lose context' reminder. OPT-IN: copy the Stop block",
   "//2": "into your Claude Code settings.json (~/.claude/settings.json or .claude/settings.json).",
   "//3": "It only prints a nudge when a session has unsaved safe-code work; it never commits.",
-  "//4": "Point the path at save-reminder.sh wherever safe-code is installed, OR copy that",
-  "//5": "script into your project's scripts/ and keep the path below.",
+  "//4": "The script ships inside the skill: <install>/safe-code/scripts/save-reminder.sh.",
+  "//5": "Project install -> keep the path below (.claude/skills/safe-code/...).",
+  "//6": "Global install (npx skills add ... -g)? Use ONE entry in ~/.claude/settings.json instead:",
+  "//7": "  bash \"$HOME/.agents/skills/safe-code/scripts/save-reminder.sh\"",
+  "//8": "The script finds the project from the git toplevel, so it covers every project.",
   "hooks": {
     "Stop": [
       {
@@ -11,7 +14,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/save-reminder.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/skills/safe-code/scripts/save-reminder.sh\""
           }
         ]
       }

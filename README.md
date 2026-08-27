@@ -1,8 +1,8 @@
-# safe-code
+# safe-code v4.14
 
 > **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
 
-[![version](https://img.shields.io/badge/version-4.13-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-4.14-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
 
@@ -19,6 +19,11 @@ npx skills add afu-it/safe-code -g
 
 # Preview before installing
 npx skills add afu-it/safe-code --list
+
+# Update an existing install (the -g is required for the global copy —
+# without it only project-level skills are touched)
+npx skills update            # project install
+npx skills update -g         # global install
 ```
 
 Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
@@ -251,6 +256,8 @@ Helper skills analyze first and never make broad changes merely because `/safe-c
 ---
 
 ## What's New
+
+**v4.14** — identity guard, save bridge, and the save reminder made easy to wire. *Step 3e* checks the commit identity before the first commit (against an optional `## Git Identity` block in `user-preferences.md`; flags `user@Machine.local` leaks) and, on GitHub, reports when the active `gh` account is not the remote owner — with the switch-or-push-once fix printed for the user, never run. *Save Bridge*: declare `diary_path` in `user-preferences.md` and every `--save` appends one dated block (plain recap, commits, next action) to that personal journal — append-only, the one declared write outside the repo. Install docs now show `npx skills update -g`, and the save-reminder script now ships inside the skill (`skills/safe-code/scripts/save-reminder.sh`, so `npx skills add` installs it); `integrations/claude-code/hooks.example.json` shows the one-entry global wiring that covers every project.
 
 **v4.13** — graphify health check. A `graphify` on PATH used to be taken at face value; a stale copy from an old installer could shadow the current one and every `--graphify` build and auto-refresh would silently run the old tool. Now, before driving the CLI, safe-code detects the OS (macOS / Linux / Windows), counts the copies on PATH, reads their versions and installers (uv / pipx / pip / venv), compares with the latest PyPI release when online, and reports one `Graphify:` line. When something is stale or duplicated it prints the exact upgrade or cleanup command for that OS and installer — and stops there. Reporting only: safe-code still never installs, upgrades, or uninstalls a tool for the user.
 

@@ -111,3 +111,15 @@ During work, draft updates in `SESSION.md`. Apply them to persistent docs only o
 | `MEMORY.md` | Audit/refactor notes not canonical context | Always (Six-File Save Rule; stamp refresh if no content) |
 | `safe-refactor-code.md` | Flagged candidates and guardrails | Always (Six-File Save Rule; stamp refresh if no content) |
 | `BACKLOG.md` | Operational follow-ups | Always (Six-File Save Rule; stamp refresh if no content) |
+
+---
+
+## Save Bridge — procedure
+
+Runs after the last commit of the Atomic Commit Split (so the hashes are real).
+
+1. Read `diary_path` from `user-preferences.md ## Save Bridge`. `-`, empty, or missing -> skip silently.
+2. Existence check only (`[ -f "$diary_path" ]`). Missing -> report `Save bridge: skipped (file not found)`; never create it.
+3. Append the block (see the Save Bridge Rule in SKILL.md) with a trailing blank line. Use the same `plain:` line already written to `LOG.md`; do not compose a second summary.
+4. Report `Save bridge: appended -> <diary_path>` in the save output. A bridge failure never fails the save: the commits are already done.
+

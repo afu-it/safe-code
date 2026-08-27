@@ -120,6 +120,15 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 ## Style Preferences
 - <!-- Tone, UI style, naming, formatting preferences. -->
 
+## Git Identity
+<!-- Optional. Checked by Step 3e before the first commit; never auto-filled. -->
+- name: <!-- handle or name to commit as -->
+- email: <!-- e.g. 12345+handle@users.noreply.github.com -->
+
+## Save Bridge
+<!-- Optional. Absolute path of a personal journal that --save appends one block to. -->
+- diary_path: -
+
 ## Workflow Preferences
 - <!-- How user wants agent to plan, save, ask, or execute. -->
 
