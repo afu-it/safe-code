@@ -49,7 +49,7 @@ D=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^orig
 git for-each-ref --sort=-committerdate --format='%(committerdate:unix) %(committerdate:short) %(refname:short)' refs/heads refs/remotes \
   | awk -v since="$(( $(date +%s) - 30*86400 ))" -v d="$D" \
       '$1 >= since && $3 != d && $3 != "origin/" d && $3 != "origin" && $3 != "origin/HEAD" {print $2, $3}' | head -n 20
-git log -n 200 --format='%ae' | sort -u | grep -c .                                          # contributors
+git log -n 200 --use-mailmap --format='%aN' | sort -u | grep -c .                            # contributors (rough; team mode counts people per references/team-mode.md)
 git grep -nIwE 'TODO|FIXME|HACK' -- . ':!*.lock' ':!*.min.*' | head -n 10                         # + | grep -c . for the count
 ```
 

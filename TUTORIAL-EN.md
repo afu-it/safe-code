@@ -260,7 +260,7 @@ Before the first commit of a run, safe-code checks `git config user.name` / `use
 
 ## 9b. Working in a Team
 
-When more than one person has committed to the repo in the last 90 days (bots don't count), safe-code switches to **team mode** on its own. You can also set it in `.safe-code/context/user-preferences.md` under `## Team Mode` with `team: on` or `team: off`. The banner shows `Team: on (N authors, 90d)`.
+When more than one person has committed to the repo in the last 90 days (bots don't count; one person with several email addresses counts once, and one-off identities are ignored), safe-code switches to **team mode** on its own. You can also set it in `.safe-code/context/user-preferences.md` under `## Team Mode` with `team: on` or `team: off`. The banner shows `Team: on (N authors, 90d)`.
 
 In team mode, the shared brain is committed so everyone gets it: `AGENTS.md`, `.safe-code/context/`, feature specs, and `BACKLOG.md`. Each developer's own session files (`ACTIVE.md`, `SESSION.md`, `LOG.md`, `MEMORY.md`, `safe-refactor-code.md`) stay on their machine. Personal values such as your git identity or a journal path go into `.safe-code/context/user-preferences.local.md`, which is never committed and overrides the shared file. The `team:` switch itself is read from the shared `user-preferences.md` only.
 

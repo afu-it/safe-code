@@ -348,8 +348,34 @@ if [ -d .safe-code ] && is_git; then
 	if [ "$LOCAL_ONLY" -eq 1 ]; then
 		info "Team: n/a (brain is local-only — nothing of it is committed)"
 	else
-		AUTHORS="$(git log --since=90.days --format='%ae' 2>/dev/null | tr '[:upper:]' '[:lower:]' |
-			grep -vE '\[bot\]|^(noreply|action|actions)@github\.com$' | sort -u | grep -c .)"
+		# Count PEOPLE, not addresses: .mailmap is honoured, and identities sharing a
+		# normalized name, an email, or a GitHub noreply login are one person. A person
+		# counts only with >= 3 commits and >= 5% of the window (the top author always
+		# counts); the rest are "minor"
+		# (stray machine addresses, one-off fixes) and are reported, never counted.
+		read -r AUTHORS MINOR <<EOF_PEOPLE
+$(git log --since=90.days --use-mailmap --format='%aN%x09%aE' 2>/dev/null | awk '
+function f(x){ while (P[x] != x) x = P[x]; return x }
+function u(a,b){ if (!(a in P)) P[a]=a; if (!(b in P)) P[b]=b; a=f(a); b=f(b); if (a!=b) P[a]=b }
+BEGIN { FS = "\t" }
+{
+  e = tolower($2)
+  if (e ~ /\[bot\]/ || e ~ /^(noreply|action|actions)@github\.com$/) next
+  n = tolower($1); gsub(/[^a-z0-9]/, "", n)
+  k = "e:" e; u(k, k)
+  if (n != "") u(k, "n:" n)
+  if (e ~ /@users\.noreply\.github\.com$/) { l = e; sub(/@.*/, "", l); sub(/^[0-9]+\+/, "", l); gsub(/[^a-z0-9]/, "", l); if (l != "") u(k, "n:" l) }
+  K[NR] = k; total++
+}
+END {
+  for (i = 1; i <= NR; i++) if (i in K) C[f(K[i])]++
+  for (r in C) { if (C[r] >= 3 && C[r] * 20 >= total) p++; else m++ }
+  if (p == 0 && m > 0) { p = 1; m-- }   # a small repo still has its main author
+  printf "%d %d\n", p + 0, m + 0
+}')
+EOF_PEOPLE
+		MINOR_NOTE=""
+		[ "${MINOR:-0}" -gt 0 ] && MINOR_NOTE="; $MINOR minor identit$([ "$MINOR" -eq 1 ] && echo y || echo ies) ignored - set team: on if that is a teammate, or map it in .mailmap"
 		TEAM_PREF="$(sed -nE 's/^[[:space:]]*[-*]?[[:space:]]*team:[[:space:]]*(on|off)([^[:alnum:]].*)?$/\1/p' \
 			.safe-code/context/user-preferences.md 2>/dev/null | head -n 1)"
 		if [ -n "$TEAM_PREF" ]; then
@@ -357,10 +383,10 @@ if [ -d .safe-code ] && is_git; then
 			info "Team: $TEAM ($AUTHORS authors, 90d; set by user-preferences.md)"
 		elif [ "$AUTHORS" -gt 1 ]; then
 			TEAM=on
-			info "Team: on ($AUTHORS authors, 90d)"
+			info "Team: on ($AUTHORS authors, 90d$MINOR_NOTE)"
 		else
 			TEAM=off
-			info "Team: off ($AUTHORS author, 90d)"
+			info "Team: off ($AUTHORS author, 90d$MINOR_NOTE)"
 		fi
 		TEAM_ISSUES=0
 		for f in ACTIVE SESSION LOG MEMORY safe-refactor-code; do

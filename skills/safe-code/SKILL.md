@@ -279,7 +279,7 @@ Create only the scaffold needed for safe operation before reading the codebase; 
 - **First run** (empty scaffold): populate evidence-derivable files immediately (First-Run Population); later runs draft in `SESSION.md`.
 - **Existing Project Backfill.** The repo is the source of truth: backfill context from evidence only, unverifiable facts to Open Questions, specs only for upcoming work, active bugs, refactors, or missing docs (new ideas `status: suggested`); never fake historical specs.
 
-**Team mode.** A git project whose brain is not local-only, with more than one non-bot author in `git log --since=90.days --format='%ae'` or `team: on|off` in `user-preferences.md` -> banner `Team: on (N authors, 90d)`. All six files are still written every save; only what is committed changes. Personal values (`## Git Identity`, `diary_path`) go in the gitignored `.safe-code/context/user-preferences.local.md`, which overrides `user-preferences.md`.
+**Team mode.** A git project whose brain is not local-only, with more than one person in the last 90 days (people, not addresses: `.mailmap`, shared name/email/GitHub login merge identities; minor one-off identities ignored — rule in `references/team-mode.md`, computed by `scripts/check.sh`) or `team: on|off` in `user-preferences.md` -> banner `Team: on (N authors, 90d)`. All six files are still written every save; only what is committed changes. Personal values (`## Git Identity`, `diary_path`) go in the gitignored `.safe-code/context/user-preferences.local.md`, which overrides `user-preferences.md`.
 
 > **Layer 3 Trigger:** When team mode is on, differs from the `.gitignore` state, or `user-preferences.md` sets `team:`, read `references/team-mode.md`.
 

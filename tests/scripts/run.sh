@@ -345,9 +345,21 @@ GIT_AUTHOR_EMAIL='41898282+github-actions[bot]@users.noreply.github.com' g commi
 GIT_AUTHOR_EMAIL='noreply@github.com' g commit -q --allow-empty -m web
 run "$CHECK"
 t "check: 1 human + bots -> Team: off (1 author)" has "$LAST_OUT" 'Team: off \(1 author, 90d\)'
-GIT_AUTHOR_EMAIL='dev2@example.com' g commit -q --allow-empty -m second
+g commit -q --allow-empty -m own2
+g commit -q --allow-empty -m own3
+# same person, second address with the same name -> still one person
+GIT_AUTHOR_EMAIL='test.other@example.com' g commit -q --allow-empty -m alias
+# same person via GitHub noreply login matching the name
+GIT_AUTHOR_NAME='Some Name' GIT_AUTHOR_EMAIL='123+test@users.noreply.github.com' g commit -q --allow-empty -m noreply
 run "$CHECK"
-t "check: 2 humans -> Team: on (2 authors)" has "$LAST_OUT" 'Team: on \(2 authors, 90d\)'
+t "check: one person under several addresses -> Team: off (1 author)" has "$LAST_OUT" 'Team: off \(1 author, 90d'
+GIT_AUTHOR_NAME='Stray' GIT_AUTHOR_EMAIL='stray@machine.local' g commit -q --allow-empty -m stray
+run "$CHECK"
+t "check: one-off identity -> minor, not a teammate" has "$LAST_OUT" '1 minor identity ignored'
+t "check: one-off identity -> still Team: off" has "$LAST_OUT" 'Team: off \(1 author, 90d'
+for i in 1 2 3; do GIT_AUTHOR_NAME='Dev Two' GIT_AUTHOR_EMAIL='dev2@example.com' g commit -q --allow-empty -m "second $i"; done
+run "$CHECK"
+t "check: 2 humans -> Team: on (2 authors)" has "$LAST_OUT" 'Team: on \(2 authors, 90d'
 t "check: team on + committed SESSION.md -> warn with git rm --cached" has "$LAST_OUT" 'SESSION\.md is committed.*git rm --cached'
 printf -- '- team: off\n' >>.safe-code/context/user-preferences.md
 run "$CHECK"

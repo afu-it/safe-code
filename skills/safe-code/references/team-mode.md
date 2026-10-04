@@ -10,18 +10,20 @@
    gitignored) -> team mode is irrelevant: nothing of the brain is committed. Stop here.
 2. **Override** — `team: on` or `team: off` in `user-preferences.md` `## Team Mode` wins.
    `team: auto` (the default) or no line -> detect.
-3. **Auto** — more than one human author in the last 90 days:
+3. **Auto** — more than one **person** in the last 90 days. Count people, not addresses
+   (`scripts/check.sh` implements exactly this; run it rather than re-deriving):
+   - read `git log --since=90.days --use-mailmap --format='%aN%x09%aE'` (`.mailmap` is honoured);
+   - bots never count: any address containing `[bot]`, and GitHub's `noreply` / `action` /
+     `actions` `@github.com` service addresses;
+   - identities sharing a normalized name (lowercase, letters and digits only), an email, or a
+     GitHub noreply login (`123+login@users.noreply.github.com` -> `login`) are one person;
+   - a person counts only with >= 3 commits and >= 5% of the window (the top author always
+     counts); the rest are **minor identities** (a stray `user@Machine.local`, a one-off fix):
+     reported, never counted. One developer with a work, a personal and a noreply address is
+     one author.
+   Still wrong for this repo -> the user sets `team: on|off`, or maps identities in `.mailmap`.
 
-   ```bash
-   git log --since=90.days --format='%ae' | tr '[:upper:]' '[:lower:]' \
-     | grep -vE '\[bot\]|^(noreply|action|actions)@github\.com$' | sort -u | grep -c .
-   ```
-
-   Bots never count: any address containing `[bot]` (CI and dependency bots), and GitHub's
-   web-flow and Actions service addresses (`noreply`, `action`, `actions` at `github.com`).
-   One person under two addresses counts twice — if the user says so, record `team: off`.
-
-Banner: `Team: on (N authors, 90d)` / `Team: off (N author, 90d)`; with an override,
+Banner: `Team: on (N authors, 90d)` / `Team: off (N author, 90d)`, plus `; M minor identities ignored` when any; with an override,
 `Team: on (N authors, 90d; set by user-preferences.md)`. `scripts/check.sh` prints the same line.
 
 ## What is committed

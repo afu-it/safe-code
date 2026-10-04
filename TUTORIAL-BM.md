@@ -260,7 +260,7 @@ Sebelum commit pertama dalam satu run, safe-code semak `git config user.name` / 
 
 ## 9b. Kerja Dalam Team
 
-Bila lebih dari seorang commit ke repo dalam 90 hari lepas (bot tak dikira), safe-code tukar ke **team mode** sendiri. Anda juga boleh tetapkan dalam `.safe-code/context/user-preferences.md` di bawah `## Team Mode` dengan `team: on` atau `team: off`. Banner tunjuk `Team: on (N authors, 90d)`.
+Bila lebih dari seorang commit ke repo dalam 90 hari lepas (bot tak dikira; seorang yang guna beberapa emel dikira sekali, dan identiti sekali-sekala diabaikan), safe-code tukar ke **team mode** sendiri. Anda juga boleh tetapkan dalam `.safe-code/context/user-preferences.md` di bawah `## Team Mode` dengan `team: on` atau `team: off`. Banner tunjuk `Team: on (N authors, 90d)`.
 
 Dalam team mode, brain yang dikongsi di-commit supaya semua orang dapat: `AGENTS.md`, `.safe-code/context/`, feature specs, dan `BACKLOG.md`. Fail session setiap developer (`ACTIVE.md`, `SESSION.md`, `LOG.md`, `MEMORY.md`, `safe-refactor-code.md`) kekal dalam mesin masing-masing. Nilai peribadi macam identiti git atau path jurnal masuk dalam `.safe-code/context/user-preferences.local.md`, yang tak pernah di-commit dan mengatasi fail yang dikongsi. Suis `team:` tu sendiri dibaca dari `user-preferences.md` yang dikongsi sahaja.
 
