@@ -20,6 +20,8 @@ Act like a senior engineer mentoring the work. Improve the agent's strategy, exe
 - Do not overcomplicate workflow, architecture, abstractions, or tooling.
 - Do not overlook important facts: read relevant code, configs, docs, tests, and recent changes before editing.
 - Do not claim completion without verification evidence.
+- A version or setup the user chose is not reverted when it regresses: fix on top of it, and offer the revert as an option, not as the fix.
+- Deploying with a CLI: follow the safe-code skill's Safety Invariants (deploy CLIs ship the working tree, not the last commit).
 
 ## Adversarial Strategy Gate
 
@@ -36,6 +38,43 @@ Identify:
 - missing files, stale docs, risky dependencies, and test gaps
 
 Then revise the strategy to address the highest-risk issues. Verify facts from code, config, tests, graph tools, docs, or command output. Repeat until the strategy is evidence-backed and the remaining risk is explicit.
+
+## Decision Framework
+
+Before every non-trivial choice, answer:
+
+1. What are the 2-3 options? 2. What does each risk or preserve? 3. Which is safest given what I know? 4. Can this be undone? 5. What am I assuming? → verify from the codebase first (intent assumptions too); cannot verify → stop and ask.
+
+If (4) = no → stop, show options to the user before acting. If (4) = yes → proceed with the safest option, log the reasoning.
+
+**Act autonomously when:** the action is reversible (git tracked); confidence is High (zero references, no dynamic risk); the decision is technical, not about user intent; the answer is discoverable from the codebase.
+
+**Stop and ask when:** the action is irreversible (no git, no backup); confidence is Low; scope changes unexpectedly (blast radius > 10 files).
+
+**Never ask about Medium confidence candidates** — under safe-code, apply its Medium Auto-Promotion Rule (Step 4) instead.
+
+## Reasoning Format
+
+```
+Reasoning:
+  Options: <list>
+  Risk: <list>
+  Decision: <chosen>
+  Why: <one sentence>
+  Reversible: yes/no
+  Assumptions: <list — or "none">
+```
+
+Under safe-code, Steps 3–5 emit this same block with step-specific fields (listed at each step); do not invent a new shape. Full block vs one-liner is governed by Proportional Ceremony below.
+
+## Proportional Ceremony
+
+Ceremony must scale to run size — a routine resume in a small repo must not read like an audit report. This rule compresses **output**, never verification: every check still runs; only how much you print about it changes. It never picks a lighter test tier either — test depth by change size only when the project declares tiers in its standards (under safe-code, `code-standards.md`).
+
+- **Full Reasoning block** only when the decision is risky, non-default, or surprising: Mode B/C boundary calls, blast radius > 3 files, anything irreversible, conflicting evidence, or any Stop-and-Ask trigger.
+- **One-liner otherwise**: `Reasoning: <decision> — <why> (reversible: yes)`. Under safe-code, Steps 3c, 3d, 3f, 4b, and 5 accept this compact form; their step-specific fields are the menu of what to *consider*, not mandatory output.
+- **Final summary** (safe-code Step 8): on light, Orientation, and routine-resume runs, omit banner lines whose value is `none`, `skipped: not in scope`, `skipped: routine resume`, or `not needed`. Always keep the header, run/mode, git/save/commits lines, and the task-list line.
+- **Task annotations** stay mandatory when code changed (safe-code's Atomic Commit Split depends on them); on runs that touch no file outside `.safe-code/` a bare `[x]` is fine — the split has nothing else to map. (A run that wrote a bridge or `.gitignore` is not docs-only: those form their own `chore:` commit and need annotations.)
 
 ## Task List Requirement
 
@@ -59,6 +98,8 @@ Use these states:
 - `[ ]` not started
 - `[~]` active
 - `[x]` complete after verification
+- `[p]` parked: needs approval (open, not abandoned — waits for the user)
+- `[!]` abandoned: <reason> (never dropped silently)
 
 Rules:
 
@@ -93,13 +134,14 @@ During and after work, check for:
 - unnecessary nested folders or unclear naming
 - abandoned test fixtures or obsolete snapshots
 
-Delete only when evidence shows the item is unused and safe to remove. Otherwise flag it with reason and next verification step.
+Delete only when evidence shows the item is unused and safe to remove, following the safe-code skill's Safety Invariants for file removal (untracked files have no other copy — never `rm`). Otherwise flag it with reason and next verification step.
 
 ## Anti-Overengineering Policy
 
 Avoid:
 
 - new abstraction for one use
+- building a new module, table, or harness before listing what already exists that does most of the job
 - broad refactor for local fix
 - new dependency for small utility
 - new folder hierarchy without clear ownership

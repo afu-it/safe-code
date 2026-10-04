@@ -1,36 +1,36 @@
 ---
 name: build-graph
-description: Build or update the code review knowledge graph. Use before safe-code audits, refactors, reviews, debugging, or when the graph may be stale.
+description: Build or update the codegraph code index for the current repository. Use before safe-code audits, refactors, reviews, debugging, or when the index may be stale.
 argument-hint: "[full]"
 ---
 
 # Build Graph
 
-Build or incrementally update the persistent code knowledge graph for the current repository.
+Build or incrementally update the persistent code index (codegraph, `.codegraph/` in the project root) for the current repository.
 
 ## Core Rules
 
-- Start with `get_minimal_context_tool(task="build graph")` when available.
-- Use `build_or_update_graph_tool()` for normal updates.
-- Use `build_or_update_graph_tool(full_rebuild=True)` for first setup, branch switches, parser failures, or obviously stale graph state.
-- Verify with `list_graph_stats_tool()` after building.
-- If graph tools are unavailable, do not block the parent workflow. Report the missing graph and continue with manual repo inspection.
+- The tool is the `codegraph` CLI (npm `@colbymchenry/codegraph`). Check `codegraph --help` once; a missing subcommand -> skip it, never invent flags.
+- Missing CLI -> do not install here. Report `Graph: unavailable` and let `/safe-code` handle the one-time install question (see the safe-code skill's `references/graph-integration.md`).
+- Writes only `<project-root>/.codegraph/` (self-gitignored). Never run `codegraph install` unless the user answered yes to safe-code's one-time install question, and then only `--target <this agent> --location global --yes` (never `--target all`); never `uninstall`. Otherwise print the command (safe-code `references/graph-integration.md`).
+- Telemetry: on first use in a session, print once: "codegraph sends anonymous usage stats; turn off with `codegraph telemetry off` or `DO_NOT_TRACK=1`." Never set it for the user.
+- If the index cannot be built, do not block the parent workflow. Report it and continue with manual repo inspection.
 
 ## Workflow
 
-1. Check graph status with `list_graph_stats_tool()`.
-2. If the graph has no files, nodes, edges, or last update, run a full build.
-3. Otherwise run an incremental update.
-4. Verify files, nodes, edges, languages, and update time.
-5. Report build status and any parse or language coverage gaps.
+1. No `.codegraph/` -> `codegraph init -y` from the project root (full build) — only when invoked to build (`/safe-code --codegraph`, or Step 3f with graph evidence in scope); an existing index is synced, never re-initialised.
+2. `.codegraph/` exists -> `codegraph sync` (incremental). `full` argument, branch switch, or obviously wrong results -> `codegraph index` (full rebuild).
+3. "Index is locked" from a crashed run -> `codegraph unlock`, retry once.
+4. Verify with `codegraph status`: files, nodes, edges, languages, "Index is up to date".
+5. Report build status and any language coverage gaps.
 
 ## Output
 
 ```text
-Graph: <built|updated|unavailable>
+Graph: <ready | stale | unavailable | partial>   (safe-code Step 8 vocabulary)
 Files: <count>
 Nodes: <count>
 Edges: <count>
 Languages: <list>
-Notes: <parse gaps or fallback used>
+Notes: <coverage gaps, or fallback used: manual>
 ```

@@ -1,9 +1,21 @@
 # safe-code reference: doc + session templates
 
-> Loaded on demand by `/safe-code` during Step 1 (Initialize Doc Structure).
-> Fallback shapes for .safe-code/CHANGELOG.md, .safe-code/context/*.md, and .safe-code/*.md. Do not overwrite existing files.
+> Fallback shapes for `.safe-code/` files — applied to **missing** files only, never over an
+> existing one. Read only the sections the step needs:
+>
+> | Section | Read when |
+> |---|---|
+> | each `context/` file, `00-template.md` | Step 1, for that missing file |
+> | each session file (`ACTIVE.md` … `safe-refactor-code.md`) | Step 1, for that missing file |
+> | SESSION.md carry-forward | `--save` (the shape `SESSION.md` is wiped to) |
+> | `CHANGELOG.md`, `ui-context.md` | only when that lazy file is first created |
+> | `user-preferences.local.md` | team mode, or a personal value to record |
+> | Provider Bridge Files | writing or reporting a bridge |
+>
+> The hook settings JSON lives in `references/save-reminder-hook.md`; what earns a session-file
+> entry, in `references/save-procedure.md` (Session-File Discipline).
 
-### `<project-root>/.safe-code/CHANGELOG.md`
+### `<project-root>/.safe-code/CHANGELOG.md` — created on the first releasable change
 
 ```md
 # CHANGELOG.md
@@ -14,8 +26,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ---
 
 ## [Unreleased]
-### Added
-- Project initialized
+### <Added | Changed | Fixed | Removed | Security>
+- <the releasable change that created this file — never an invented "Project initialized" line>
 
 ---
 <!-- ## [X.Y.Z] - YYYY-MM-DD -->
@@ -102,14 +114,8 @@ Record only explicit user preferences or decisions confirmed by repeated convers
 Do not infer preferences from one ambiguous message.
 Do not store secrets, private logs, or temporary emotions.
 
-Agents should watch for strong preference phrases in chat, including:
-
-- `I don't want`, `I want`, `I don't like`, `I prefer`
-- `aku taknak`, `tak nak`, `aku nak`, `aku tak suka`, `aku prefer`
-- `please remove`, `remove this`, `make it like this`
-- `jangan`, `must`, `always`, `never`
-
-When detected, draft the preference in `SESSION.md` and apply it here on `/safe-code --save`.
+Preference phrases to watch for: AGENTS.md `## User Preference Detection`. Draft each in
+`SESSION.md`; apply it here on `/safe-code --save`.
 
 ## Hard Preferences
 - <!-- Example: Use SVG icons only; do not use emoji icons. -->
@@ -121,19 +127,45 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 - <!-- Tone, UI style, naming, formatting preferences. -->
 
 ## Git Identity
-<!-- Optional. Checked by Step 3e before the first commit; never auto-filled. -->
+<!-- Optional. Checked by Step 3e before the first commit; never auto-filled. Personal: in team
+     mode leave `-` here and put the values in user-preferences.local.md (it wins). -->
 - name: <!-- handle or name to commit as -->
 - email: <!-- e.g. 12345+handle@users.noreply.github.com -->
 
 ## Save Bridge
-<!-- Optional. Absolute path of a personal journal that --save appends one block to. -->
+<!-- Optional. Absolute path of a personal journal that --save appends one block to. Personal:
+     in team mode set it in user-preferences.local.md instead (it wins). -->
 - diary_path: -
 
 ## Workflow Preferences
 - <!-- How user wants agent to plan, save, ask, or execute. -->
 
+## Team Mode
+<!-- Optional. Overrides auto-detection (references/team-mode.md). `on` or `off`; leave `auto` to detect. -->
+- team: auto
+
 ## Confirmed Decisions
 - <!-- Date — decision — reason. -->
+```
+
+---
+
+### `.safe-code/context/user-preferences.local.md` — per-developer overrides (optional)
+
+Created only when a developer has a personal value to record. Gitignore
+`/.safe-code/context/user-preferences.local.md` at creation; never committed. Its values override
+`user-preferences.md`; read by Step 3e and the Save Bridge only, not Layer 1. `team:` stays in
+the shared file.
+
+```md
+# User Preferences — local (this developer only, gitignored)
+
+## Git Identity
+- name: <!-- handle or name to commit as -->
+- email: <!-- e.g. 12345+handle@users.noreply.github.com -->
+
+## Save Bridge
+- diary_path: -
 ```
 
 ---
@@ -160,6 +192,10 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 
 ## Testing
 - <!-- Command(s), and what they cover. -->
+- <!-- The known test total lives on the `test:` line of AGENTS.md `## Commands`
+  (`verified: <sha> · <date> · known total: N`) — the single source; do not repeat it here. -->
+- tiers: <!-- Optional, project-declared only, e.g. "small change: unit; schema/auth: full
+  suite". safe-code never picks a lighter tier itself; no tiers declared = full suite. -->
 - Reject: implementation-coupled tests (mock internal collaborators, break on refactor),
   tautological tests (expected value recomputed the way the code does it — use an
   independent literal, worked example, or the spec), horizontal slicing (all tests first,
@@ -199,7 +235,7 @@ When detected, draft the preference in `SESSION.md` and apply it here on `/safe-
 
 ---
 
-### `.safe-code/context/ui-context.md`
+### `.safe-code/context/ui-context.md` — created on the first UI work
 
 ```md
 # UI Context
@@ -259,7 +295,8 @@ context_selftest: -
 - <!-- First unit to build. -->
 
 ## Open Questions
-- <!-- Unknown product/technical facts — sharp enough to phrase as a question. -->
+- <!-- Unknown product/technical facts — sharp enough to phrase as a question. One per line,
+     most blocking first: the session hook's brief shows the count and the top two. -->
 
 ## Not Yet Specified
 - <!-- Fog of war: in-scope work you can see coming but cannot yet phrase as a sharp
@@ -277,7 +314,8 @@ context_selftest: -
 
 ### `.safe-code/context/current-issues.md` — local-only issue tracker (user + AI)
 
-Add `/.safe-code/context/current-issues.md` and `/.safe-code/backups/` (dated pre-rewrite copies, Graveyard Rule) to `.gitignore`. Both stay local-only; never committed. The user pastes raw context; the agent appends/updates entries on issue triggers (Issue Tracking Rule) and flips them to Resolved once fixed.
+Gitignore it together with `/.safe-code/backups/` and `/.safe-code/.last-save` (git keeps no
+mtimes, so a committed stamp carries nothing); all three stay local-only.
 
 ```md
 # Current Issues  (local-only, gitignored)
@@ -323,7 +361,7 @@ Resolved once fixed. May contain secrets/logs — never copied into committed do
 ```md
 # Unit NN: Feature Name
 
-status: suggested   <!-- suggested | approved | in-progress | done | rejected -->
+status: suggested   <!-- suggested | approved | in-progress | done | rejected | removed (<date>) -->
 created: <DATE>
 updated: <DATE>
 
@@ -373,28 +411,6 @@ updated: <DATE>
 
 ---
 
-## Session-File Discipline (what earns an entry)
-
-| Event | Goes to |
-|---|---|
-| Architectural/design decision made | `progress-tracker.md` Architecture Decisions (draft in SESSION) |
-| Current focus changes | `ACTIVE.md` Current |
-| Task completed + verified | `SESSION.md` task list `[x]`; typed `LOG.md` entry on save |
-| Unrelated/deferred work discovered | `BACKLOG.md` (draft in SESSION) |
-| Durable lesson, workaround, audit note | `MEMORY.md` (draft in SESSION) |
-| New feature idea | `feature-specs/` as `status: suggested` |
-| User states a durable preference | `user-preferences.md` (draft in SESSION) |
-
-Do NOT log: typos, renames, formatting, intermediate saves, transient retries. Batch
-related small changes into one entry. The test: "would this be useful in a retrospective
-or handoff?"
-
-Truncation convention: when quoting long output anywhere in these files, keep head+tail
-and insert `…[elided ~N lines — do not infer content]…` so a later session never invents
-the missing middle.
-
----
-
 ### `.safe-code/ACTIVE.md` — persistent state only
 
 ```md
@@ -430,13 +446,16 @@ pending: []
 next_action: none
 ```
 
+<!-- `next_action:` is one line the session hook's brief quotes at the next session start —
+     a runnable first step, not a summary. -->
+
 ---
 
 ### `.safe-code/SESSION.md` — working memory RAM (wipe on save)
 
 ```md
 # SESSION.md
-_<DATE> <TIME>_
+_<DATE> <TIME>_ · run_start: <HEAD sha at Step 3a; commits after it that this run did not make are foreign>
 > Temporary working memory. Auto-wiped on /safe-code --save.
 > Do NOT rely on this for persistent state — use ACTIVE.md.
 
@@ -444,10 +463,15 @@ _<DATE> <TIME>_
 <!-- What is being actively processed this moment -->
 
 ## Task List
-<!-- Copy the canonical Default checklist from safe-code SKILL.md (Measure Twice,
-     Cut Once Policy) and adapt per mode — do not maintain a divergent copy here.
-     States: [ ] todo · [~] active · [x] done after verification. -->
+<!-- Copy the canonical checklist from safe-code SKILL.md (Measure Twice, Cut Once
+     Policy): Light for light runs, Default for setup and audit runs.
+     States: [ ] todo · [~] active · [x] done after verification ·
+     [p] parked: needs approval (open, not abandoned) · [!] abandoned: <reason>. -->
 - [ ] <task>  · type: <commit type> · files: <paths>
+
+## Drafts
+<!-- Draft doc/context updates (Draft-Until-Save) — applied on /safe-code --save.
+     Content here is what the save-reminder treats as unsaved work. -->
 
 ## Temp Decisions
 <!-- Decisions made mid-session, not yet committed to ACTIVE.md -->
@@ -457,6 +481,31 @@ _<DATE> <TIME>_
 
 ## Carry Forward
 <!-- Important findings to migrate into ACTIVE.md or context docs on save -->
+```
+
+#### SESSION.md carry-forward — the shape `--save` wipes it to
+
+Everything else was applied (drafts -> their files, unfinished tasks -> `ACTIVE.md pending`,
+deferred work -> `BACKLOG.md`), so the wiped file holds no work by the save-reminder's
+definition: no `[~]` item, no `[x] … files:` task, nothing under `## Drafts`.
+
+```md
+# SESSION.md
+_<DATE> <TIME>_ · saved · run_start: -
+> Temporary working memory. Wiped to this shape on every /safe-code --save.
+> Resume state lives in ACTIVE.md (Last Session).
+
+## Working Now
+- none
+
+## Task List
+<!-- Written at the next run from the canonical checklist. -->
+
+## Drafts
+<!-- Empty after a save. -->
+
+## Carry Forward
+- <0–5 one-line notes the next session needs first (e.g. `user WIP: <paths>`, an unanswered question); else `- none`>
 ```
 
 ---
@@ -492,6 +541,8 @@ _<DATE>_
 > Append-only. Newest at top. Auto-trimmed when > 200 lines.
 > Each entry uses typed format: type, scope, topic, before, change, why, after, plain.
 > `plain:` is one sentence in plain language a non-coder can read.
+> Optional `pruned:` — one line per fact a save moved out of a context file (Brain Budget,
+> references/agents-md-authoring.md): `- <file>: <fact> (superseded by <entry> | stale since <sha> | removed <date>)`.
 
 Valid types: init | decision | refactor | bugfix | risk | blocked | verify
 
@@ -502,7 +553,7 @@ type: init
 scope: project root
 topic: scaffold
 before: no doc structure existed
-change: created AGENTS.md, context files, .safe-code/CHANGELOG.md, and safe-code session docs
+change: created AGENTS.md, context files, and safe-code session docs
 why: first run of /safe-code — initializing context and session docs
 after: scaffold created, proceeding to Step 2
 plain: set up the project's memory so any AI can pick up where we left off.
@@ -585,46 +636,30 @@ action: auto-delete | manual review | skip
 
 ## Provider Bridge Files (pointers — never duplicate facts)
 
-### Host table + rules (moved from SKILL.md Step 1)
+### Host table + rules (the one home; SKILL.md keeps a short summary)
 
-| Host | Bridge file | Mechanism |
+`AGENTS.md` is the default and only required output. A bridge is written only for the host currently running safe-code, and only when that host does not read `AGENTS.md`:
+
+| Host | Reads `AGENTS.md` natively? | Output when it is the running host |
 |---|---|---|
-| Claude Code | `CLAUDE.md` | `@AGENTS.md` import + read-context instruction |
-| Cline | `.clinerules/safe-code.md` | read-`AGENTS.md`-and-context instruction |
-| Gemini CLI | `GEMINI.md` | read-`AGENTS.md`-and-context instruction (+ print the `.gemini/settings.json` opt-out snippet — never auto-edit config) |
-| GitHub Copilot | `.github/copilot-instructions.md` | read-`AGENTS.md`-and-context instruction |
-| Cursor | `.cursor/rules/safe-code.mdc` | `alwaysApply` rule pointing at `AGENTS.md` |
-
-Most modern hosts (Codex, Windsurf, Warp, Zed, RooCode, Kilo, opencode, Amp, Jules, Devin, and more) read `AGENTS.md` natively — no bridge needed; the full host-coverage table lives in `references/doc-templates.md` (Provider Bridge Files).
+| OpenAI Codex, Amp, Google Jules, Cursor, Factory, RooCode, Kilo Code, goose, opencode, Zed, Warp, Windsurf, Devin, GitHub Copilot coding agent, VS Code, Augment Code, Junie, Cline | Yes | none — `AGENTS.md` only |
+| GitHub Copilot in VS Code | Yes, via setting `chat.useAgentsMdFile` | none — `AGENTS.md` only |
+| Claude Code | v2.1.277+ only when no `CLAUDE.md` / `.claude/CLAUDE.md` / `CLAUDE.local.md` exists here or in any parent (often one does) | `CLAUDE.md` bridge (`@AGENTS.md` import) — always: it works in every case and never double-reads. Existing `CLAUDE.md` (or `.claude/CLAUDE.md`) -> append the bridge block; else create a minimal one. Never edit `~/.claude/CLAUDE.md`. |
+| Gemini CLI | Via config (`context.fileName`); default is `GEMINI.md` only | no file — PRINT (never auto-edit) `{"context":{"fileName":["AGENTS.md","GEMINI.md"]}}` for `.gemini/settings.json`; an existing `GEMINI.md` is not touched |
+| Aider | Via config | no file — PRINT the suggestion: add `read: AGENTS.md` to `.aider.conf.yml` |
+| Undetectable | — | none — `AGENTS.md` only, plus one report line naming the two exceptions: Claude Code when any `CLAUDE.md` exists above the project; Gemini CLI until `context.fileName` lists `AGENTS.md` |
 
 Rules:
 
+- When appending to an existing `CLAUDE.md`, copy only the lines between the bridge markers
+  (`<!-- safe-code:bridge … -->` through `<!-- /safe-code:bridge -->`), never the `# CLAUDE.md` heading.
 - Bridges are **pointers, not state** — a few lines redirecting to `AGENTS.md` + `.safe-code/context/`. Never duplicate project facts into them.
-- **Write only the current host's bridge**; `AGENTS.md` is always written. Host not in the table -> `AGENTS.md` only (it reads the file natively — see the host-coverage table). Host undetectable -> fall back to writing the CLAUDE.md/GEMINI.md/Copilot/Cursor four (pre-v4.4 behavior, so a run is never worse than before).
-- **Never delete or overwrite** an existing bridge (Safety Invariants): if a host file exists without pointing at the brain, append one clearly-marked `<!-- safe-code:bridge -->` block; if it already points there, leave it. Lazy accrual: each host self-registers the first time safe-code runs under it.
-- Bridges are scaffold files — write immediately, not draft-until-save; preserve them during Legacy Layout Migration (they are not legacy state).
-- Read fallback shapes from `references/doc-templates.md` (Provider Bridge Files).
+- **Write only the running host's bridge, only when it needs one**; `AGENTS.md` is always written. No automatic `GEMINI.md`, `.github/copilot-instructions.md`, or `.cursor/rules/safe-code.mdc`.
+- **Never delete or overwrite** an existing bridge: `CLAUDE.md` not pointing at the brain -> append the marked block; already pointing there -> leave it. Older bridges (`GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`, `.clinerules/safe-code.md`) stay untouched.
+- Bridges are scaffold files — written immediately; never legacy state.
 
-
-> Thin redirects so hosts that do not auto-read `AGENTS.md` still load the same brain.
-> Write only the bridge for the host currently running (see SKILL.md Provider Bridge); the
-> templates below are the shapes for each host, used when that host's bridge is the one written.
-> Never overwrite a user's existing file; if it exists without a `<!-- safe-code:bridge -->`
-> block, append the block instead of replacing the file.
-> In every template, substitute `v<VERSION>` with the running skill version and `<DATE>`
-> with today — the stamp lets a later run (and `check.sh`) see which version wrote the bridge.
-
-### Host coverage — who needs a bridge at all
-
-| Host | Reads `AGENTS.md` natively? | Action when it is the running host |
-|---|---|---|
-| OpenAI Codex, Amp, Google Jules, Cursor, Factory, RooCode, Kilo Code, goose, opencode, Zed, Warp, Windsurf, Devin, GitHub Copilot coding agent, VS Code, Augment Code, Junie | Yes | `AGENTS.md` only — no bridge |
-| Claude Code | No | write `CLAUDE.md` bridge |
-| Cline | No | write `.clinerules/safe-code.md` bridge |
-| GitHub Copilot (IDE custom instructions) | Partially | write `.github/copilot-instructions.md` bridge |
-| Cursor (older versions without native support) | — | `.cursor/rules/safe-code.mdc` bridge still valid; harmless alongside native support |
-| Gemini CLI | Via config | write `GEMINI.md` bridge, and PRINT (never auto-edit) the opt-out snippet: `.gemini/settings.json` -> `{"context": {"fileName": "AGENTS.md"}}` |
-| Aider | Via config | no bridge; PRINT the suggestion: add `read: AGENTS.md` to `.aider.conf.yml` |
+> Substitute `v<VERSION>` with the running skill version and `<DATE>` with today — the stamp
+> lets a later run (and the shipped `scripts/check.sh`) see which version wrote the bridge.
 
 ### `<project-root>/CLAUDE.md`
 
@@ -641,81 +676,3 @@ architecture incl. the Navigation map, code standards, workflow rules, progress)
 as the source of truth; do not re-scan the whole codebase for facts already documented there.
 <!-- /safe-code:bridge -->
 ```
-
-### `<project-root>/GEMINI.md`
-
-```md
-# GEMINI.md
-
-<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
-Project context is maintained by safe-code. Before doing any work, read `AGENTS.md` at the
-repo root, then the files it lists under `.safe-code/context/` (project overview, architecture
-incl. the Navigation map, code standards, workflow rules, progress). They are the source of
-truth for what this project is and how to work in it. Do not re-derive project facts by
-scanning the whole codebase when they are already documented there.
-<!-- /safe-code:bridge -->
-```
-
-### `<project-root>/.github/copilot-instructions.md`
-
-```md
-<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
-# Project Instructions
-
-Project context is maintained by safe-code. Before generating code or answering, read
-`AGENTS.md` at the repo root and the files it references under `.safe-code/context/` (project
-overview, architecture incl. the Navigation map, code standards, workflow rules, progress).
-Treat those as the source of truth; follow them instead of re-scanning the entire codebase.
-<!-- /safe-code:bridge -->
-```
-
-### `<project-root>/.cursor/rules/safe-code.mdc`
-
-```md
----
-description: safe-code project context entry point
-alwaysApply: true
----
-
-<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
-Project context is maintained by safe-code. Before any task, read `AGENTS.md` at the repo
-root and the files it references under `.safe-code/context/` (project overview, architecture
-incl. the Navigation map, code standards, workflow rules, progress). Treat those as the source
-of truth; do not re-scan the whole codebase for facts already documented there.
-```
-
-### Save-Reminder Hook (opt-in, Claude Code) — `<project-root>/.claude/settings.json`
-
-> Offered once on a first run under Claude Code (SKILL.md, Save-Reminder Hook Offer).
-> Merge into existing `hooks` — never replace the user's settings. Non-git projects:
-> skip the offer and point at `integrations/claude-code/` in the skill source instead.
-
-```json
-{
-  "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "git -C \"$CLAUDE_PROJECT_DIR\" status --porcelain -- .safe-code/ 2>/dev/null | grep -q . && echo '⚠️  safe-code: unsaved session work — run /safe-code --save before ending.' || true"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-### `<project-root>/.clinerules/safe-code.md`
-
-```md
-<!-- safe-code:bridge · written by safe-code v<VERSION> · <DATE> -->
-Project context is maintained by safe-code. Before any task, read `AGENTS.md` at the repo
-root and the files it references under `.safe-code/context/` (project overview, architecture
-incl. the Navigation map, code standards, workflow rules, progress). Treat those as the source
-of truth; do not re-scan the whole codebase for facts already documented there.
-<!-- /safe-code:bridge -->
-```
-

@@ -16,21 +16,19 @@ Audit a repo for dead code, estimate deletion risk, and remove only high-confide
 - Never delete generated files. Update the generator or generated output flow instead.
 - Never mix pruning with unrelated feature work or refactors.
 - Prefer narrow, reversible slices with verification after each slice.
-- Use code-review graph tools when available. Treat graph output as evidence, not permission to delete.
+- Use the codegraph index when available. Treat graph output as evidence, not permission to delete.
 
 ## Graph-Aware Audit Path
 
-Use this path before manual scanning when graph tools are available:
+Use this path before manual scanning when a codegraph index is available:
 
-1. `get_minimal_context_tool(task="dead code audit")`
-2. `build_or_update_graph_tool()` if the graph is empty or stale
-3. `refactor_tool(mode="dead_code")` for unreferenced functions and classes
-4. `query_graph_tool(pattern="importers_of", target=<file or module>)` for orphaned modules
-5. `query_graph_tool(pattern="callers_of", target=<symbol>)` for functions and methods
-6. `get_impact_radius_tool(detail_level="minimal")` before deleting any shared file
-7. `detect_changes_tool(detail_level="minimal")` after edits
+1. `codegraph sync` (or `$build-graph` when no index exists)
+2. Zero-caller symbols: functions/methods whose `codegraph callers <name>` is empty — no function callers AND no file references (exact loop: the safe-code skill's `references/graph-integration.md`, Dead-code derivation)
+3. Orphan modules: `codegraph node -f <file> --symbols-only` reports "no other indexed file depends on it"
+4. `codegraph impact <symbol>` before deleting anything shared
+5. `codegraph sync` + `codegraph affected <changed files>` after edits, to pick the tests to run
 
-If graph tools are unavailable, empty, or fail, continue with the manual entrypoint and reference graph workflow below. Do not lower deletion confidence because graph data is missing.
+codegraph has no dead-code command, and `callers` resolves by **name** — same-named methods merge, so a dead method can hide behind a live namesake. Confirm every candidate with `rg` plus a positive control. Public API = the package's entry points (manifest `main` / `exports` / `bin`, a published index, a documented CLI/HTTP surface) — Medium at best; an `export` keyword inside a private app is not public API. If codegraph is unavailable, empty, or fails, continue with the manual entrypoint and reference graph workflow below. Do not lower deletion confidence because graph data is missing.
 
 ## Step 0: Locate Doc Folder
 
@@ -43,8 +41,6 @@ doc folder = <repo-root>/.safe-code/
 No agent detection is needed. Codex, Claude, Cursor, and Windsurf all share the same `.safe-code/` folder so continuity belongs to the repo, not the tool. Create `<repo-root>/.safe-code/` if it does not exist yet.
 
 When flagging candidates that are not auto-deleted, write a note into `.safe-code/safe-refactor-code.md` so future agents do not rediscover the same uncertain candidates from scratch.
-
-`AGENTS.md` at repo root is always updated when significant dead code is found or removed.
 
 When running under safe-code, follow safe-code's Draft-Until-Save timing: draft these notes (and any `AGENTS.md` updates) in `.safe-code/SESSION.md` and let `/safe-code --save` apply them. Direct writes to `safe-refactor-code.md` and `AGENTS.md` are standalone behavior only.
 
@@ -93,7 +89,7 @@ If a file is named in config, treat that as a live reference until proven otherw
 
 Traverse imports, requires, includes, re-exports, and config references from every entrypoint.
 
-When a code-review graph is available, combine its candidates with manual evidence:
+When a codegraph index is available, combine its candidates with manual evidence:
 
 - Graph "no callers" plus no config or dynamic references -> possible High confidence.
 - Graph "no callers" but dynamic dispatch, registry, route loader, reflection, package export, or config mention -> Medium or Low.
@@ -159,7 +155,7 @@ Express removals as small, ordered slices. Each slice must include:
 - touched files
 - preserved invariant
 - verification command
-- rollback action
+- rollback action (from the slice's own backup, or `git show HEAD:<path> > <path>` for a file that was clean before the slice)
 
 Preferred order:
 
@@ -178,9 +174,9 @@ Do not combine multiple risky categories into one slice.
 
 Before deleting a slice, verify:
 
-- the worktree state is understood
+- the worktree state is understood: each path in the slice is clean (`git status --porcelain -- <path>` empty) or was changed only by this task — never delete or restore over another session's uncommitted edits
 - the candidate was scanned against the full relevant graph
-- graph callers/importers/impact were checked when graph tools are available
+- codegraph callers/dependents/impact were checked when an index is available
 - generated references were refreshed if needed
 - the candidate is not part of a package export, plugin registry, deploy script, or runtime registration path
 
@@ -208,7 +204,7 @@ If verification fails and the issue is not immediately repairable, roll back tha
 
 Return:
 
-- active agent detected and doc folder used
+- doc folder used
 - files scanned and entrypoints mapped
 - candidates found by category and confidence
 - removals completed
@@ -244,13 +240,13 @@ Slice 1 - Remove commented-out blocks in src/utils/date.ts
   Files: src/utils/date.ts
   Invariant: no behavior change
   Verification: npm run lint
-  Rollback: restore touched file from VCS or local backup
+  Rollback: restore touched file from local backup or git show HEAD:<path>
 
 Slice 2 - Remove orphaned module src/adapters/old-client.ts
   Files: src/adapters/old-client.ts
   Invariant: no live caller exists
   Verification: import scan + npm run lint
-  Rollback: restore touched file from VCS or local backup
+  Rollback: restore touched file from local backup or git show HEAD:<path>
 
 Flagged for manual review:
   src/handlers/webhook-v1.ts:handleEvent - dynamic dispatch risk
@@ -267,7 +263,6 @@ Slice 2 complete: removed src/adapters/old-client.ts
   Verification: lint passed, import scan clean
 
 Summary:
-  Agent: docs saved to .safe-code/
   Removed: 1 file, 1 function, 5 commented blocks
   Flagged: 1 candidate (noted in .safe-code/safe-refactor-code.md)
 ```
@@ -280,6 +275,8 @@ Summary:
 - Never delete code named by CI, Docker, cron, deploy scripts, or runtime config without checking those references directly.
 - Never continue past a failing verification.
 - Never assume "unused today" means safe to remove; check runtime wiring and recent intent where relevant.
+- Deleting files: follow the safe-code skill's Safety Invariants (one shell command, one purpose; tracked -> `git rm`, untracked -> backups or trash, never `rm`).
+- No destructive git in a checkout that may be shared: the safe-code skill's `references/multi-session.md` (Shared-checkout rules).
 
 ## Escalation
 

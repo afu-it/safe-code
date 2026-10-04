@@ -1,8 +1,8 @@
 ---
 name: safe-refactor-code
-description: "Refactor code safely in small verified slices while keeping repo continuity docs in sync. Uses code-review graph tools for rename previews, impact radius, affected flows, and post-change review when available. Use when an agent is asked to refactor, restructure, clean up, remove or replace code, modernize modules, or do follow-up hygiene in a repo."
+description: "Refactor code safely in small verified slices while keeping repo continuity docs in sync. Uses the codegraph index for callers, impact radius, and affected tests when available. Use when an agent is asked to refactor, restructure, clean up, remove or replace code, modernize modules, or do follow-up hygiene in a repo."
 metadata:
-  version: "4.0"
+  version: "4.1"
 ---
 
 # Safe Refactor Code
@@ -14,22 +14,19 @@ Refactor code in small verified slices, then update the repo's continuity files 
 - Treat `AGENTS.md` at repo root as the main long-term repo memory. Preserve existing content and update it carefully instead of rewriting blindly.
 - Keep agent-local `MEMORY.md` short. It is a working summary for the repo, not a replacement for any shared or tool-managed memory system.
 - Keep `safe-refactor-code.md` focused on the repo's refactor rules, guardrails, and recurring cleanup workflow.
-- Update `.safe-code/CHANGELOG.md` on real code changes using today's section: `## [YYYY-MM-DD]`.
+- `.safe-code/CHANGELOG.md`: under safe-code, only releasable changes, in safe-code's Keep-a-Changelog template (`## [Unreleased]` + typed subsections; the file is created on the first releasable change). Standalone, use today's dated section (`## [YYYY-MM-DD]`, below).
 - Prefer additive or scoped edits to docs. Do not wipe user-written history unless the user explicitly asks.
 - After refactors, scan for obvious dead code, unused imports, stale helpers, and outdated doc references before finishing.
-- Use code-review graph tools when available. Fall back to direct source search and verification when graph tools are unavailable or empty.
+- Use the codegraph index when available. Fall back to direct source search and verification when it is unavailable or empty.
 
 ## Graph-Aware Refactor Rules
 
-- Start graph-assisted refactors with `get_minimal_context_tool(task="<refactor goal>")`.
-- Update stale graphs with `build_or_update_graph_tool()` before broad refactors.
-- For symbol renames, use `refactor_tool(mode="rename", old_name=<old>, new_name=<new>)` and inspect the preview before applying.
-- Apply graph rename edits only with `apply_refactor_tool(refactor_id=<id>)` after preview review.
-- For broad or shared-code changes, run `get_impact_radius_tool(detail_level="minimal")` before editing.
-- For runtime path risk, run `get_affected_flows_tool()` before editing.
-- For decomposition candidates, use `find_large_functions_tool()` or `refactor_tool(mode="suggest")`.
-- For dead code exposed by the refactor, use `refactor_tool(mode="dead_code")`; delete only High-confidence candidates after config and dynamic-reference checks.
-- Before final summary, run `detect_changes_tool(detail_level="minimal")` when graph tools are available.
+- Start graph-assisted refactors with `codegraph explore "<refactor goal>"` (or `codegraph_explore`).
+- Run `codegraph sync` before broad refactors (`$build-graph` when no index exists).
+- Symbol renames have no graph preview: list `codegraph callers <old>` and `codegraph impact <old>` first, edit, then confirm with `rg "<old>"` -> 0 hits (plus a positive control on the new name).
+- For broad or shared-code changes, run `codegraph impact <symbol>` before editing.
+- For dead code exposed by the refactor, `codegraph callers <symbol>` empty is a candidate only (it resolves by name); delete only High-confidence candidates after `rg`, config, and dynamic-reference checks.
+- Before final summary, run `codegraph sync` + `codegraph affected <changed files>` and run the tests it lists.
 
 ## Agent Compatibility
 
@@ -59,7 +56,7 @@ Doc file locations:
 
 ## Step 0.5: Assess and Write AGENTS.md
 
-This step is **mandatory**. Run it before reading or touching any code.
+This step is **mandatory**. Run it before reading or touching any code — except under `/safe-code`: when that run already reconciled `AGENTS.md` (Step 3d: created, populated, reconciled, or audited `unchanged`), that reconciliation satisfies this step; do not repeat it.
 
 > **Canonical authoring rules:** When running under `safe-code`, the single source of truth for how to write `AGENTS.md` is the safe-code skill's `references/agents-md-authoring.md` (decision test, investigation order, what to extract/exclude, minimum quality bar). Follow it instead of improvising. The compact rules below are the standalone fallback when that reference is not available.
 
@@ -86,7 +83,7 @@ if AGENTS.md has existing agent-written or human-written state sections
 
 ### Write AGENTS.md — no skipping allowed
 
-Regardless of `fresh` value, always update `AGENTS.md` before touching any code. This is not optional.
+Regardless of `fresh` value, always update `AGENTS.md` before touching any code. This is not optional — standalone. Under `/safe-code`, the AGENTS.md reconciliation that run already did satisfies it (see above).
 
 **If `fresh = true`**, scan the project and write a full orientation snapshot:
 
@@ -125,13 +122,12 @@ Fallback for missing `AGENTS.md`:
 
 Use this order:
 
-1. `get_minimal_context_tool(task="<refactor goal>")`
-2. `build_or_update_graph_tool()` if the graph is empty or stale
-3. `get_impact_radius_tool(detail_level="minimal")` for files or symbols likely to affect callers
-4. `get_affected_flows_tool()` for changes that can affect runtime paths
-5. `refactor_tool(mode="rename")`, `mode="suggest"`, or `mode="dead_code"` only when the operation matches the refactor goal
+1. `codegraph explore "<refactor goal>"`
+2. `codegraph sync` if the index is stale (`$build-graph` if none exists)
+3. `codegraph impact <symbol>` for files or symbols likely to affect callers
+4. `codegraph callers|callees <symbol>` for changes that can affect runtime paths
 
-If graph tools fail, record the failure briefly and continue with `rg`, imports, manifests, tests, and direct source reads.
+If codegraph fails, record the failure briefly and continue with `rg`, imports, manifests, tests, and direct source reads.
 
 ### 3. Refactor in Safe Slices
 
@@ -140,6 +136,8 @@ If graph tools fail, record the failure briefly and continue with `rg`, imports,
 - Verify each slice with the narrowest useful checks available: lint, type-check, tests, build, or targeted probe.
 - If a refactor exposes dead code, remove obvious leftovers in the same area when confidence is high.
 - If cleanup risk is non-trivial or the repo has many stale modules, map blast radius before deleting and flag low-confidence candidates instead of auto-removing.
+- A refactor claimed to be "faster" or "lighter" needs a before-baseline measured under the same conditions; without one, report the claim as a hypothesis. "Fewer lines" is not performance evidence.
+- Undo a slice by re-editing or from a backup; no destructive git in a checkout that may be shared — follow the safe-code skill's `references/multi-session.md` (Shared-checkout rules).
 
 If widespread dead code is detected beyond the immediate refactor area, invoke the `codebase-pruner` skill for a full repo dead code audit.
 
@@ -147,8 +145,7 @@ If widespread dead code is detected beyond the immediate refactor area, invoke t
 
 Before syncing docs:
 
-- Run `detect_changes_tool(detail_level="minimal")` if graph tools are available.
-- Check `query_graph_tool(pattern="tests_for", target=<changed high-risk symbol>)` when graph risk or blast radius is non-trivial.
+- Run `codegraph sync` + `codegraph affected <changed files>` if an index is available, and run the tests it lists when blast radius is non-trivial.
 - Read changed files directly and remove accidental unused imports or stale exports.
 - Run the narrowest useful verification command.
 
@@ -159,11 +156,11 @@ After real code changes, update the continuity files in `.safe-code/` (and `AGEN
 - `AGENTS.md` (repo root) — current state, key decisions, blockers, handoff notes
 - `safe-refactor-code.md` — repo-specific refactor constraints and recurring cleanup rules
 - `MEMORY.md` — short current snapshot, active caveats, important paths
-- `CHANGELOG.md` — today's dated section with Added, Changed, Fixed, Removed
+- `CHANGELOG.md` — releasable changes only; under safe-code the Keep-a-Changelog template, standalone today's dated section
 
 ### 6. Keep Changelog Shape Stable
 
-Use this structure:
+Under safe-code, follow its Keep-a-Changelog template (the safe-code skill's `references/doc-templates.md`) and add entries only for releasable changes. Standalone, use this dated structure:
 
 ```md
 ## [YYYY-MM-DD]

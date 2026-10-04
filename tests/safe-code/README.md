@@ -5,9 +5,21 @@ Behavioral tests for the `safe-code` skill, following the TDD-for-skills method
 add/keep the rule (GREEN), close loopholes (REFACTOR).** A rule only earns its
 place if a baseline agent *without* it behaves wrong.
 
-There is no automated runner. Each scenario is run by dispatching a subagent
-twice — once with no safe-code context (baseline) and once with the relevant
-SKILL.md excerpt — and comparing the two verdicts.
+> **Current test layout (5.0+).** This folder keeps the historical RED/GREEN
+> notes below. The maintained suites live next to it:
+> - `tests/scripts/run.sh` — deterministic fixture tests for `check.sh`,
+>   `migrate.sh`, `save-reminder.sh` (and the root shims). Runs in CI
+>   (`script-tests` job, ubuntu + macOS `/bin/bash` 3.2): `bash tests/scripts/run.sh`.
+> - `tests/scenarios/` — manual, pre-release agent scenarios on a built fixture
+>   (`build-fixture.sh`, `scenarios.md`, `assert.sh`, optional `run-headless.sh`).
+>   They cost tokens and are not run in CI.
+>
+> The baseline-vs-with-rule method below is still how a *new rule* earns its
+> place; the scenarios check that the shipped rules hold end-to-end.
+
+The rounds below had no automated runner. Each scenario was run by dispatching a
+subagent twice — once with no safe-code context (baseline) and once with the
+relevant SKILL.md excerpt — and comparing the two verdicts.
 
 ## Results — 2026-06-09 (7 invariants, baseline vs with-rule)
 

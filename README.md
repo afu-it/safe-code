@@ -1,395 +1,330 @@
-# safe-code v4.16
+# safe-code v5.0
 
-> **Spec-first repo hygiene.** Project context, session memory, safe cleanup, and clean handoff in three commands.
+> **Project memory that checks itself, for every coding agent.**
 
-[![version](https://img.shields.io/badge/version-4.16-teal?style=flat-square)](./skills/safe-code/SKILL.md)
-[![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#)
-[![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](#)
+[![version](https://img.shields.io/badge/version-5.0-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#host-support)
+[![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
+
+safe-code is an agent skill. It gives your project one `AGENTS.md` entry point and one `.safe-code/` folder that every coding agent reads the same way, so a new chat starts where the last one stopped instead of re-scanning the repo or guessing.
+
+- **Memory that checks itself.** Each important fact in the context files is tagged with the file or command it came from; anything that can't be proven is recorded as an Open Question. After writing the context, a closed-book self-test checks that it can answer the basics a new agent asks. Commands in `AGENTS.md` carry the commit they last ran green at. The brain is stamped with a git commit, checked for drift on every run, and kept within a line budget.
+- **Briefs your agent automatically at session start.** With the optional Claude Code hook, every new session opens with a short brief (what the project is, the next action, open questions, a stale-brain warning), and you see a one-line reminder only when the last session left work unsaved.
+- **Safe with other agents and teammates in the same repo.** It never pushes, never reverts changes another session made, and stages only the paths its own run touched. In a shared repo, the brain is committed and each developer's session files stay local. Every deletion gets a restore pointer in a restore log.
+- **Careful cleanup, when you ask for it.** `/safe-code --audit` runs dead-code audits with evidence, refactors with impact checks, a review that checks your standards and the spec separately, and atomic local commits. A normal run only resumes your work.
 
 ---
 
 ## Install
 
 ```bash
-# Install into your current project
-npx skills add afu-it/safe-code
+npx skills add afu-it/safe-code        # into the current project
+npx skills add afu-it/safe-code -g     # globally (all projects)
+npx skills add afu-it/safe-code --list # preview first
 
-# Install globally (all projects)
-npx skills add afu-it/safe-code -g
-
-# Preview before installing
-npx skills add afu-it/safe-code --list
-
-# Update an existing install (the -g is required for the global copy —
-# without it only project-level skills are touched)
-npx skills update            # project install
-npx skills update -g         # global install
+npx skills update                      # update a project install
+npx skills update -g                   # update a global install (-g is required)
 ```
 
-Works with **Codex, Claude Code, Cursor, Windsurf**, and 40+ other agents.
+Works with Codex, Claude Code, Cursor, Windsurf, and 40+ other agents that load skills. A global install lives in `~/.agents/skills/safe-code/`; a project install goes into your agent's project skills folder (for example `.agents/skills/safe-code/`).
 
 ---
 
-## Why not just a memory bank?
-
-Memory banks (the Cline/Roo/Cursor family), auto-capture layers (claude-mem), and spec-driven kits (spec-kit, OpenSpec) all solve the same pain: *the AI forgets your project*. What none of them does is **verify what they remember** — if the agent hallucinates while writing its memory files, the hallucination becomes permanent "truth" that every future session trusts.
-
-safe-code is the memory bank that doesn't preserve lies:
-
-- **Evidence-only writes** — anything not provable from the repo becomes an Open Question, never a fact.
-- **Closed-book Context Self-Test** — a fresh agent must answer Day-1 questions *citing* the context files; no citation = fail = fix the brain.
-- **Commit-anchored freshness** — the brain is stamped to a git commit and drift-scanned every run, so a new chat never trusts a stale brain.
-- **External-content quarantine** — fetched web/API text never enters auto-loaded files, so one poisoned paste can't recycle into every future session.
-
-One brain, committed to the repo, readable in a `git diff`, shared by every agent you use.
-
----
-
-## Commands
+## Quick start
 
 | Command | What it does |
 |---|---|
-| `/safe-code` | Setup, auto-resume saved work, or run a fresh hygiene pass |
-| `/safe-code --continue` | Explicitly resume saved work |
-| `/safe-code --save` | Finalize context/docs, commit locally, and close session |
-| `/safe-code --explain` | Read-only: explain the project back in plain language (no changes) |
-| `/safe-code --graphify [question]` | Build the project knowledge graph (via graphify, optional) or ask it a question (read-only) |
+| `/safe-code` | First run: set up the brain. Later: a light run that loads the brain, resumes saved work, and does what you ask |
+| `/safe-code --continue` | Resume saved unfinished work explicitly |
+| `/safe-code --audit` | Full hygiene pass: dead-code audit, agent config trust audit, refactor sweep |
+| `/safe-code --save` | Finalize docs, update the six session files, commit locally (never pushes) |
+| `/safe-code --explain` | Read-only: explain the project back in plain language |
+| `/safe-code --codegraph [question]` | Build an optional code graph (codegraph), or ask it a question (read-only). `--graphify` still works as an alias |
 
-If users forget `--continue`, `/safe-code` auto-detects saved unfinished state and resumes. In a project that already has `.safe-code/`, a bare flag (`--save`, `--continue`, `--explain`, `--graphify`) is enough.
-
-### Never lose a session (optional reminder hook)
-
-Forgetting `--save` is the one real failure mode. The skill ships a Stop-hook script that prints a nudge whenever a session ends with unsaved `.safe-code/` work — it never commits, never blocks. Wire it once in Claude Code:
-
-```jsonc
-// ~/.claude/settings.json (global install)  — or .claude/settings.json (project install, path below)
-{ "hooks": { "Stop": [ { "hooks": [ { "type": "command",
-  "command": "bash \"$HOME/.agents/skills/safe-code/scripts/save-reminder.sh\"" } ] } ] } }
-// project install: bash "$CLAUDE_PROJECT_DIR/.claude/skills/safe-code/scripts/save-reminder.sh"
-```
-
-Full example in `integrations/claude-code/hooks.example.json`.
-
-### Verify (optional)
-
-The conventions above are normally maintained by the agent. To check them deterministically — for a human, a CI step, or the agent itself — run the bundled script from anywhere inside the project:
-
-```bash
-bash scripts/check.sh
-```
-
-It verifies `AGENTS.md` and the `.safe-code/` folder (context files + six session docs) exist, checks the provider-bridge pointers (`CLAUDE.md`, `GEMINI.md`, Copilot, Cursor) point at the brain, flags a stale `SESSION.md`, detects legacy layouts to migrate (`.codex/agents`, v3 `.agents/` + root `context/`), warns when `.safe-code/backups/` or `graphify-out/` are tracked, and **fails** (exit 1) if `.safe-code/context/current-issues.md` was accidentally committed. Warnings are advisory; only that hard check fails the run.
-
-Upgrading from an older install? `/safe-code` migrates automatically on its next run, or do it deterministically:
-
-```bash
-bash scripts/migrate.sh           # preview (dry-run)
-bash scripts/migrate.sh --apply   # move files (uses git mv when tracked)
-```
-
-It moves everything into `.safe-code/`, patches old config (`.gitignore` entry, `AGENTS.md` paths) to the new version, never overwrites existing `.safe-code/` files, uses `git mv` to preserve history, and removes the emptied legacy folders afterward — including old `.codex/` folders.
+Forgot `--continue`? `/safe-code` detects saved unfinished work and resumes anyway. Asking for a cleanup, a dead-code hunt, or a refactor sweep in any language ("clean up the repo", "find dead code") starts the same pass as `--audit`; a targeted ask ("fix this bug", "rename X") stays a light run. In a project that already has `.safe-code/`, a bare flag (`--save`, `--continue`, `--audit`, `--explain`, `--codegraph`) is enough.
 
 ---
 
-## How It Works
+## What you'll see
 
-```
-/safe-code
+First run in an existing project:
+
+```text
+you> /safe-code
+[safe-code: no project brain — initializing now]
+
+Project root: my-app/  ·  safe-code folder: .safe-code/
+AGENTS.md: populated  ·  CLAUDE.md bridge: created
+context/: created, populated from repo evidence  ·  current-issues.md: gitignored
+Session files: 6 created  ·  Legacy: none
+Imported: CLAUDE.md, .cursorrules, 3 ADRs linked (11 facts, 2 open questions)  ·  History: 200 commits read
+All paths inside project root. Proceeding.
+
+=== safe-code v5.0 session complete ===
+Run: setup (adopt) · Coverage: ~85% · profile: Audit · mode: C
+Git: repo found | 214 commits | branch: main | Remote: none [Bucket C] | Save: local commit only; no push | Commits: pending — run /safe-code --save
+Brain: 186 lines (budget 300)
+context_selftest: 9/10 pass · 0 weak · 1 open · 0 fail · 4 commands re-verified (read-only), 0 stale, 1 manual (2026-10-04)
+Flagged: 2 dead-code candidates (findings only; nothing removed on a first run)
+Task list: 12/12 · Parked: none · Abandoned: none · Requested: none declared · Out-of-scope touches: none
+Worth asking next: Is the staging deploy target still in use?
+Run /safe-code --save to commit and close this session.
 ```
 
-```
- Step 0  →  Locate project root (single agent-agnostic `.safe-code/` folder)
- Step 1  →  Create/reconcile AGENTS.md + host bridge + .safe-code/ docs; migrate legacy layouts
- Step 2  →  Load context layers + detect saved session (auto-resume)
- Step 3  →  Git rollback safety, commit-identity + push-account guard, run profile, graph readiness, helper routing
- Step 4  →  Audit dead code — zero-hit scans need a positive control (4b: agent-config trust audit)
- Step 5  →  Pre-plan safety check → execution mode A/B/C
- Step 6  →  Execute high-confidence removals slice by slice, verify each; every removal gets a Graveyard entry
- Step 7  →  Refactor when in scope; two-axis review (Standards / Spec) + smoke-verify with coverage; draft doc updates
- Step 8  →  Final summary — every count re-measured, out-of-scope touches and abandoned tasks listed
---save   →  Apply final context/docs, retro into BACKLOG, atomic local commits only, optional Save Bridge append
+A later session (light run), after an earlier one was saved with work still pending:
+
+```text
+you> /safe-code
+[safe-code: brain loaded @ 3f9c2e1]
+Saved safe-code session found; resuming automatically. Say "fresh pass" to ignore saved state.
+Pending: add CSV export to the reports page | Next: add CSV export to the reports page
+
+=== safe-code v5.0 session complete ===
+Run: light · profile: n/a · mode: n/a · hygiene pass skipped (light run; /safe-code --audit runs it)
+Git: repo found | 231 commits | branch: main | unpushed: 2 | Save: local commit only; no push | Commits: pending — run /safe-code --save
+Brain: 192 lines (budget 300) · Team: on (3 authors, 90d)
+Smoke: passed (npm test) · covers: 142 unit tests (known total 142) · env: repo root, node, exit 0
+Task list: 5/5 · Out-of-scope touches: foreign: docs/notes.md (not this run's; never reverted)
+Run /safe-code --save to commit and close this session.
 ```
 
-Every task in the run carries its closing check before work starts (`check: <command> · expect: <token>`) and closes on an observed effect, never on exit code 0. A task that turns out impossible is marked `[!] abandoned` with a reason — never silently dropped.
+An audit run adds the hygiene pass lines, for example `Removed: src/legacy/old-uploader.ts (restore pointer in the Graveyard)` and `Config audit: clean`.
 
-Nothing is pushed. Nothing risky is deleted without rollback evidence.
+The first line of every session tells you whether the agent is working from the brain or improvising. Lines with nothing to report are left out of routine runs.
 
 ---
 
-## Context + Session Docs
+## How it works
 
-Every project's source of truth is `AGENTS.md` + one `.safe-code/` folder. safe-code also writes a thin **provider-bridge pointer** for the host you're running in (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, or `.cursor/rules/safe-code.mdc`) so that host loads the same brain without auto-reading `AGENTS.md`. Other hosts' bridges accrue lazily — each is written the first time you run safe-code under it — so the repo only carries bridges for tools you actually use, with no `.codex/`/`.claude/`/`.agents/` state clutter.
+```mermaid
+flowchart TD
+    run(["/safe-code"]) --> root["Find the project root<br/>move old safe-code layouts into .safe-code/"]
+    aud(["--audit"]) --> root
+    root --> brain{"Brain exists?"}
+    brain -- "no" --> kind{"Existing code or history?"}
+    kind -- "no" --> fresh["Setup, fresh<br/>create AGENTS.md + .safe-code/<br/>fill context from repo evidence, then self-test it"]
+    kind -- "yes" --> adopt["Setup, adopt<br/>same, plus import existing agent notes and git history<br/>originals never changed"]
+    fresh --> findings["Findings-only audit<br/>nothing removed on a first run"]
+    adopt --> findings
+    brain -- "yes" --> load["Load the brain, check it against HEAD<br/>git state, commit identity, other sessions"]
+    load --> which{"--audit or a cleanup ask?"}
+    which -- "no" --> light["Light run (default)<br/>resume saved work or do your request"]
+    which -- "yes" --> audit["Audit run<br/>dead code, agent config trust, refactor sweep"]
+    audit --> plan{"Plan<br/>A auto / B ask / C plan only"}
+    plan -- "A, or B approved" --> remove["Remove one slice at a time, verify each<br/>restore pointer per removal"]
+    plan -- "C" --> banner
+    remove --> verify
+    light --> verify["Review + smoke-verify when code changed<br/>draft doc updates"]
+    verify --> banner
+    findings --> banner["Final banner<br/>re-measured counts, foreign changes, unpushed"]
+    banner -. "when you are done" .-> save
+
+    cont(["--continue"]) --> load
+    save(["--save"]) --> sv["Apply drafts, update all six session files<br/>prune stale facts, re-stamp commands<br/>atomic local commits, never pushed"]
+    explain(["--explain"]) --> ex["Read-only plain-language briefing"]
+    cgr(["--codegraph [question]"]) --> gr["Build the code graph, or query it read-only"]
+```
+
+- **Light by default.** Once a brain exists, `/safe-code` resumes and works on your request. Dead-code audits, the agent config trust audit, and refactor sweeps run only with `--audit` or a cleanup ask. Every safety rule applies in both.
+- **Every task carries its closing check** before work starts (`check: <command> · expect: <token>`) and closes on an observed effect, never on exit code 0. A task that turns out impossible is marked `[!] abandoned` with a reason, never dropped; one waiting on an approval the session cannot get (e.g. a cleanup plan in a headless run) is `[p] parked: needs approval` — still open, counted separately in the banner, and carried into the next session.
+- **Draft until save.** During work, durable doc changes are drafted under `SESSION.md ## Drafts`; `--save` applies them to `AGENTS.md`, `.safe-code/context/`, and all six session files, then runs a short retro into `BACKLOG.md`.
+- **Small prompt.** The entry context is read every session, resume files only when resuming, and the detailed procedures are loaded on demand when a step needs them.
+- **Helpers analyze first.** `/safe-code` routes to seven helper skills (below) and never makes broad changes just because it ran.
+
+---
+
+## Adding safe-code to an existing project
+
+A new project (empty or just started) gets a **fresh** setup. A project with real history (20+ commits or 30+ source files) that never ran safe-code gets an **adopt** setup, which does more on its first run:
+
+- **Reads your existing agent notes.** `CLAUDE.md`, `.cursorrules`, `.cursor/rules/`, `.windsurfrules`, `.github/copilot-instructions.md`, `GEMINI.md`, `memory-bank/`, ADRs and architecture docs under `docs/`, `CONTRIBUTING.md`, and `README.md`. Facts it can confirm in the code go into the brain tagged with the file and line they came from (`[extracted: CLAUDE.md:12]`); anything it cannot confirm becomes an Open Question. Long documents are linked, not copied.
+- **Reads recent history, read-only.** The last 200 commits: the most-changed files, decision-like commits (revert, migrate, replace, deprecate), branches active in the last 30 days, and the number of contributors. The top 10 `TODO` / `FIXME` / `HACK` comments become BACKLOG candidates, not promises.
+- **Never changes your files.** No original is modified, moved, or deleted. The one addition is the marked bridge block appended to `CLAUDE.md` under Claude Code. `CLAUDE.local.md` and `.env` files are never read.
+- **Large repos start small.** Over ~300 source files (or ~50k lines), the first run reads manifests, configs, entry points, the most-changed files, and the top-level layout. The rest is listed under "Not Yet Specified" and read when your work reaches it. The banner shows how much it read: `Run: setup (adopt) · Coverage: ~40%`.
+- **Suggests a branch.** In a team repo, or on the default branch of a repo with a remote, it suggests `git switch -c safe-code/adopt` before the first commit, so you can open a PR. It never pushes. If nobody answers, it creates no branch, and in team mode it commits nothing on the default branch.
+- **Asks about your uncommitted work.** Once: "Are these uncommitted changes your work in progress?" Yes, and they become the active task (still never committed for you). No, and they are left alone.
+
+---
+
+## Safety guarantees
+
+- **Never pushes, never deploys.** `--save` makes local commits only; pushing and deploying stay yours.
+- **Never reverts changes it did not make.** Unexplained changes in the working tree are labelled `foreign` in the banner and left alone; `--save` stages only paths this run touched.
+- **Never rewrites a shared checkout's history or state.** No `git stash`, `reset --hard`, or `checkout -- <file>` where another session may be working; old commits are read with `git show` or a temporary worktree inside the project.
+- **Never deletes without a way back.** Every removal gets an entry in the restore log (the Graveyard, in `.safe-code/safe-refactor-code.md`) with a restore pointer; untracked files get a dated backup before an in-place rewrite. Stale facts pruned from the brain move to `LOG.md`, never silently deleted.
+- **Never cleans up unasked.** Removals happen only in an audit run, one verified slice at a time, and never on a first run.
+- **Stays inside the project root.** Two exceptions, both granted by you: an append-only journal path you declare (Save Bridge), and — only after you say yes to the codegraph install question — wiring codegraph's MCP server into the agent running safe-code (never any other agent).
+- **Never installs tools or changes your global config on its own.** The optional codegraph graph builder is offered once; a yes installs the CLI, wires its MCP server into this agent only, and indexes the project; a no (or a headless run) prints the commands and runs none. Other fixes for your machine are printed, not run.
+- **Keeps secrets and outside content out of the brain.** Secrets, raw logs, and fetched web/API text never land in committed or auto-loaded files.
+
+Every commit safe-code makes ends with a `Safe-Code: <version>` trailer, so the drift check can tell its own commits from yours.
+
+---
+
+## Host support
+
+`AGENTS.md` + `.safe-code/` are the source of truth, and `AGENTS.md` is the default output. A thin **bridge** file (it only points at the brain and holds no state) is written only for the host you run safe-code in, and only when that host does not read `AGENTS.md`. In practice that means Claude Code alone.
+
+| Host | How it loads the brain |
+|---|---|
+| Codex, Cursor, GitHub Copilot, Windsurf, Cline, Zed, Warp, RooCode, Kilo Code, opencode, Amp, Jules, Devin, goose, Factory, Junie, Augment | `AGENTS.md` natively, no bridge (Copilot in VS Code via the `chat.useAgentsMdFile` setting) |
+| Claude Code | `CLAUDE.md` bridge with an `@AGENTS.md` import (appended if the project already has one). Native `AGENTS.md` reading (v2.1.277+) switches off whenever any `CLAUDE.md` exists in the folder or above it, so the bridge is always written under Claude Code |
+| Gemini CLI | no file; a printed snippet for `.gemini/settings.json`: `{"context":{"fileName":["AGENTS.md","GEMINI.md"]}}` (Gemini reads only `GEMINI.md` by default) |
+| Aider | printed config suggestion (`read: AGENTS.md` in `.aider.conf.yml`) |
+
+When safe-code cannot tell which host it runs in, it writes `AGENTS.md` only and names the two exceptions in its report. An existing `CLAUDE.md` is never overwritten: safe-code appends one marked `<!-- safe-code:bridge -->` block instead. Bridges written by older versions (`GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`, `.clinerules/safe-code.md`) are left in place; delete them by hand if you no longer want them.
+
+---
+
+## What it writes in your project
 
 ```text
 your-project/
-├── AGENTS.md                    # canonical entry point + Read First order (source of truth)
-├── CLAUDE.md                    # ┐ provider bridges: thin pointers to AGENTS.md so each
-├── GEMINI.md                    # │ host (Claude, Gemini, Copilot, Cursor) auto-loads the
-├── .github/copilot-instructions.md  # │ same brain — they hold no state, just redirect
-├── .cursor/rules/safe-code.mdc  # ┘
-└── .safe-code/                  # project brain + all session state
-    ├── ACTIVE.md                # ┐
-    ├── SESSION.md               # │
-    ├── LOG.md                   # │ six session files — ALL updated
+├── AGENTS.md                    # canonical entry point: Read First order + verified ## Commands (test line holds the known test total)
+├── CLAUDE.md                    # only under Claude Code: @AGENTS.md bridge (see Host support)
+├── packages/api/AGENTS.md       # monorepo only, optional: package commands + gotchas (≤ 40 lines)
+└── .safe-code/                  # project brain + session state
+    ├── ACTIVE.md                # ┐ resume point + next action
+    ├── SESSION.md               # │ task list + ## Drafts (doc changes waiting for --save)
+    ├── LOG.md                   # │ six session files, all updated
     ├── BACKLOG.md               # │ on every /safe-code --save
     ├── MEMORY.md                # │
-    ├── safe-refactor-code.md    # ┘
-    ├── CHANGELOG.md
-    ├── backups/                 # dated copies of untracked files before an in-place rewrite; gitignored
+    ├── safe-refactor-code.md    # ┘ (also holds the Graveyard restore log)
+    ├── CHANGELOG.md             # created on the first releasable change
+    ├── .last-save               # empty save stamp for the reminder hook; gitignored
+    ├── backups/                 # dated copies before in-place rewrites; gitignored
     └── context/
         ├── project-overview.md
-        ├── architecture.md
+        ├── architecture.md      # includes a "Where Things Live" navigation map
         ├── user-preferences.md
+        ├── user-preferences.local.md  # optional: your git identity + journal path; overrides user-preferences.md; never committed
         ├── code-standards.md
         ├── ai-workflow-rules.md
-        ├── ui-context.md
-        ├── progress-tracker.md
-        ├── current-issues.md    # issue tracker: user + AI; local-only, gitignored
+        ├── ui-context.md        # created when UI work starts
+        ├── progress-tracker.md  # Open Questions + commit freshness stamp + self-test result
+        ├── current-issues.md    # shared issue tracker; local-only, gitignored
         └── feature-specs/
             └── 00-template.md
 ```
 
-- `AGENTS.md` is the canonical entry point — its Read First section points into `.safe-code/`. Because not every host auto-reads `AGENTS.md` (Claude reads `CLAUDE.md`, Gemini `GEMINI.md`, Copilot `.github/copilot-instructions.md`, Cursor `.cursor/rules/`), safe-code writes a thin pointer for the host it is currently running in, so that provider lands on the same brain. The other hosts' pointers are written lazily the first time you run safe-code under each.
-- `.safe-code/context/` is canonical long-term project brain.
-- `.safe-code/context/user-preferences.md` stores explicit durable user preferences, like “SVG icons only, no emoji icons”. Two optional blocks: `## Git Identity` (name + email the Step 3e guard checks before the first commit) and `## Save Bridge` (`diary_path:` — an absolute path outside the repo that every `--save` appends one dated recap block to; append-only, never created, never committed).
-- Agents watch for strong preference language like `I don't want`, `aku taknak`, `I prefer`, `please remove`, `jangan`, `always`, and `never`.
-- `.safe-code/context/feature-specs/` holds AI-written specs (one unit per file), each with a `status:` field — new ideas land as `status: suggested` so they stay referrable history.
-- `.safe-code/context/current-issues.md` is a shared issue tracker (user + AI), local-only and never committed; the agent appends an entry when you report an error and flips it to resolved once fixed.
-- The six session files are runtime/session memory, shared across agents.
+Setup adds three `.gitignore` entries: `/.safe-code/context/current-issues.md`, `/.safe-code/backups/`, and `/.safe-code/.last-save`.
 
----
+- **Committed brain (default).** `.safe-code/` is committed, readable in a `git diff`, and shared by every agent and teammate.
+- **Team mode.** Turns on by itself when the repo has more than one human author in the last 90 days (bots don't count), or set `team: on` / `team: off` in `user-preferences.md`. The shared brain is committed (`AGENTS.md`, `context/`, feature specs, `BACKLOG.md`); each developer's session files (`ACTIVE`, `SESSION`, `LOG`, `MEMORY`, `safe-refactor-code`) stay gitignored. The `team:` switch is read from the shared `user-preferences.md` only. The first team run prints the `.gitignore` lines and asks before adding them. The banner shows `Team: on (N authors, 90d)`.
+- **Local-only brain.** Prefer to keep it out of git? Add `.safe-code/` (or `.safe-code/context/`) to `.gitignore`. safe-code detects either one: `--save` updates the files on disk (backup first, line counts checked after), commits code and scaffold changes only, and the banner's `Brain:` line adds `local-only (gitignored)`. Ignoring only the session files (such as `SESSION.md`) is team mode, not a local-only brain. Already committed it before adding the ignore? Git keeps tracking the files until you run `git rm -r --cached .safe-code`; safe-code prints that command for you and never runs it.
+- **Monorepo.** One brain at the root: the nearest folder holding `.safe-code/`, else the git top level, so running from `packages/api/src/` finds it. A package with its own commands or gotchas can get a short nested `AGENTS.md` (at most ~40 lines), linked from the root `AGENTS.md`.
+- **Verified commands and a brain budget.** Each command in `AGENTS.md ## Commands` reads `verified: <sha> · <date>` once it has run green (tests add `known total: N`), or `unverified`. The context files stay within ~300 lines and `AGENTS.md` within ~120: on `--save`, stale or superseded facts move to `LOG.md` history, never silently deleted. The banner shows `Brain: N lines (budget 300)`.
+- **Feature specs** carry a `status:` (suggested / approved / in-progress / done / rejected / removed). New ideas land as `status: suggested`, so they stay referable; rejected ideas are matched by concept, not keyword, so they are not re-suggested.
+- **Preferences** you state strongly ("I prefer…", "never…", "always…") are drafted and saved to `user-preferences.md`. Personal values (your `## Git Identity` and the Save Bridge `diary_path`) go in `user-preferences.local.md`, which overrides it, is never committed, and is gitignored when created.
+- **`current-issues.md`** may hold secrets and raw logs, so it is never committed and never copied into committed files; a sanitized one-line summary of each fix goes to `LOG.md`.
 
-## Draft Until Save
+### Session brief + save reminder (optional hook)
 
-During work, safe-code drafts persistent documentation changes in `SESSION.md`.
+Forgetting `--save` is the one real failure mode, and a new session should not start blind. The skill ships one hook script for Claude Code that runs at `SessionStart`:
 
-`/safe-code --save` applies final updates to:
+- **Brief.** It adds a short brief (at most 15 lines) to the agent's context: the project one-liner, the next action from the last session, the open questions, and a warning when the brain has drifted from `HEAD`. It reads only those lines, never `current-issues.md` and never draft content.
+- **Save reminder.** You see a one-line message only when the previous session left `.safe-code/` work unsaved. Nothing is shown otherwise.
 
-- `.safe-code/context/*.md`
-- `AGENTS.md`
-- **all six session files, every save** (Six-File Save Rule): `ACTIVE.md`, `SESSION.md` (wiped), `LOG.md` (entry appended), `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md` — files with no new content get a fresh date stamp
-- `.safe-code/CHANGELOG.md` only for releasable changes
-- `BACKLOG.md` also receives `retro:` items — environment improvements the run surfaced (navigation, automated checks, coding standards, AGENTS.md bloat, tool economy, no-ops, information access); a clean run writes none
-- the Save Bridge file, when `diary_path` is declared (one appended block: plain recap, commits, next action)
+It never commits, never blocks, and makes no network calls. `/safe-code` offers to install it on any run under Claude Code until you accept or decline. Accepted, it goes into `.claude/settings.local.json` (personal, not committed). If you already run it from a global hook, say so and safe-code records that and stops offering. When the skill is installed somewhere other than the usual folders, the offer uses the path it was actually loaded from. To cover every project, add it once yourself:
 
-Exceptions written before save:
-
-- missing scaffold files/folders
-- `/.safe-code/context/current-issues.md` and `/.safe-code/backups/` gitignore rules
-- active feature specs in `.safe-code/context/feature-specs/`
-- code changes required by user task
-
----
-
-## Existing Projects and Old Method Migration
-
-safe-code works for blank, in-progress, finished, and old safe-code projects.
-
-For existing projects:
-
-- reads repo evidence first: README, manifests, routes, schemas, tests, configs
-- backfills context files only from proven facts
-- on the first run, writes AGENTS.md + evidence-derived context files immediately (not deferred to `--save`) so agents have real context right away
-- places unknown facts in `.safe-code/context/progress-tracker.md` Open Questions
-- creates feature specs for upcoming work, bugs, refactors, or missing docs, and logs new feature ideas as `status: suggested` specs
-
-For old safe-code projects, every command (`/safe-code`, `--continue`, `--save`) detects old setup config and updates it to the new version:
-
-- moves session docs from `.codex/agents/` (pre-v3) or `.agents/` (v3) into `.safe-code/`
-- moves v3 root `context/` and `CHANGELOG.md` into `.safe-code/`
-- patches old config: `.gitignore` entry and `AGENTS.md` path references
-- removes the emptied legacy folders — your repo ends up with just `AGENTS.md` + `.safe-code/`
-- never overwrites existing files; conflicts are reported for manual merge
-
----
-
-## Feature Specs
-
-Feature specs are written by AI from user intent + context + repo evidence.
-
-Example:
-
-```text
-.safe-code/context/feature-specs/
-├── 01-design-system.md
-├── 02-editor.md
-└── 03-auth.md
+```jsonc
+// ~/.claude/settings.json (global install, every project) — or .claude/settings.local.json (one project, not committed)
+{"hooks":{"SessionStart":[{"matcher":"startup|resume","hooks":[{"type":"command","command":"f=\"$HOME/.agents/skills/safe-code/scripts/save-reminder.sh\"; [ -f \"$f\" ] && bash \"$f\" || true"}]}]}}
+// project install: f="$CLAUDE_PROJECT_DIR/.claude/skills/safe-code/scripts/save-reminder.sh"; [ -f "$f" ] && bash "$f" || true
 ```
 
-Each spec includes:
+The command checks the script exists first, so removing the skill never breaks your session start. Want the reminder without the brief? Append `--no-brief` to the script call (`bash "$f" --no-brief`). On a host without a JSON hook contract, `--plain` prints plain text. Upgrading from 4.x? An old `Stop` entry is silent now; safe-code spots it on any run and offers to replace it with the `SessionStart` one. Full example: [`integrations/claude-code/`](./integrations/claude-code/).
 
-- `status:` (suggested / approved / in-progress / done / rejected / removed) + created date
-- goal
-- open questions (`[NEEDS CLARIFICATION]` markers block approval until answered)
-- scope and out-of-scope
-- design/behavior
-- implementation notes as durable contracts — interfaces, type names, signatures, config shapes; never file paths or line numbers, because the code moves while the spec waits
-- dependencies (verified on their registry before approval)
-- verification checklist
+### Verify and migrate (optional)
 
-Every new feature idea is captured as a `status: suggested` spec — referrable history you can later approve, build, or reject. Before writing one, safe-code checks the codebase for an existing implementation and scans rejected/removed specs **by concept, not keyword** ("night theme" matches a dark-mode rejection) so a decision is surfaced instead of re-litigated. safe-code should not implement feature work without an active spec unless the user asks for a tiny direct edit.
+The scripts ship inside the skill. Run them from inside your project; the path depends on where you installed safe-code:
 
----
+```bash
+S=~/.agents/skills/safe-code/scripts     # global install
+# S=.agents/skills/safe-code/scripts     # project install (your agent's project skills folder)
 
-## Current Issues
-
-`.safe-code/context/current-issues.md` is a shared issue tracker. The user pastes raw context, and the agent appends an entry whenever you report a problem — triggers like "fix this", "failed", "got error", or a pasted stack trace — then flips it to resolved (with root cause + fix) once solved.
-
-It stays gitignored:
-
-```gitignore
-/.safe-code/context/current-issues.md
+bash "$S/check.sh"                 # check safe-code conventions in this project (advisory warnings)
+bash "$S/migrate.sh"               # preview a legacy-layout migration (dry-run)
+bash "$S/migrate.sh" --apply       # move files into .safe-code/ (uses git mv when tracked)
 ```
 
-Because it can hold secrets and raw logs, the agent never copies its content into any committed file. A sanitized one-line summary of each fixed bug goes to `LOG.md` instead — that is the committed history.
-
-Agents do not read this file during normal work — only on an issue trigger or when you reference it.
+`check.sh` verifies `AGENTS.md` and `.safe-code/` exist, that bridges point at the brain, reports the brain size against its budget and the team-mode state, flags a stale `SESSION.md`, and **fails** (exit 1) only if `.safe-code/context/current-issues.md` was committed. `migrate.sh` moves only safe-code's own files from older layouts (`.codex/agents/`, v3 `.agents/` + root `context/`), never overwrites existing files, and leaves your real subagents and skills (`.claude/agents/`, `.agents/skills/`) where they are. `/safe-code` runs the same migration automatically.
 
 ---
 
-## Helper Skills
+## Requirements & privacy
 
-Users normally call only `/safe-code`.
+- **An agent that loads skills.** No API key, account, or sign-up for safe-code itself.
+- **bash** for the bundled scripts and the session hook: macOS and Linux out of the box, Windows through Git Bash or WSL.
+- **git is optional.** Without git there is no rollback, so safe-code sets up the brain and runs plan-only: findings and drafts, no cleanup unless you approve it, and no commits.
+- **Any chat language.** Talk to your agent in the language you like; issue reports and cleanup asks are recognised in any language.
+- **codegraph is optional** (Node for `npm i -g @colbymchenry/codegraph`, or its official installer). Say yes once (under Claude Code this also auto-allows codegraph's read-only tools) and safe-code runs `npm i -g @colbymchenry/codegraph`, `codegraph install --target <this agent> --location global --yes`, and `codegraph init`. With the MCP server wired, the graph re-syncs on every file change; without it, safe-code runs `codegraph sync` at the start of every run.
+- **No network calls from safe-code.** Its scripts and the session hook run offline and send nothing anywhere; the brief is built from a few lines of your own files. The only optional tool, codegraph, sends anonymous usage stats; turn them off with `codegraph telemetry off` or `DO_NOT_TRACK=1`. When codegraph or the GitHub CLI is installed, safe-code may run their read-only checks (`codegraph upgrade --check`, `gh auth status`), which contact those services.
+
+---
+
+## Helper skills
+
+You normally call only `/safe-code`; it routes to these when needed.
 
 | Skill | Role | Called by safe-code? |
 |---|---|---|
 | `senior-dev` | Task lists, adversarial strategy, clean repo discipline | Yes |
-| `build-graph` | Graph build/update when available | Yes |
+| `build-graph` | codegraph index build/sync when available | Yes |
 | `explore-codebase` | Repo orientation and facts | Yes |
-| `codebase-pruner` | Dead-code analysis and scoped cleanup | When in scope |
-| `safe-refactor-code` | Refactor with impact checks | When in scope |
-| `review-changes` | Two-axis review: Standards (repo rules + Fowler smell baseline) and Spec (missing / creep / wrong), never merged | After edits/risk |
-| `debug-issue` | Red-capable repro → minimise → ranked falsifiable hypotheses → tagged probes → regression test at the correct seam → cleanup gate | On failures/bugs |
+| `codebase-pruner` | Dead-code analysis and scoped cleanup | Setup and audit runs |
+| `safe-refactor-code` | Refactor with impact checks | Audit runs, or a refactor you ask for |
+| `review-changes` | Two-axis review: Standards (repo rules + code-smell baseline) and Spec (missing / creep / wrong), never merged | After edits / risk |
+| `debug-issue` | Reproduce first, minimise, rank falsifiable hypotheses, probe, regression test at the right seam, clean up | On failures / bugs |
 
-Helper skills analyze first and never make broad changes merely because `/safe-code` ran.
+## Run and execution modes
 
----
+| Run mode | When | What runs |
+|---|---|---|
+| **setup-fresh** | No brain yet, new or nearly empty repo | Create and fill the brain, self-test it, then a findings-only audit |
+| **setup-adopt** | No brain yet, existing project (20+ commits or 30+ source files) | The same, plus importing your existing agent notes and recent git history, without changing them |
+| **light** (default) | `/safe-code` or `--continue` on a project with a brain | Resume saved work or do your request; no audit, no sweep |
+| **audit** | `--audit`, or a cleanup / dead-code / refactor ask | Everything in light, plus the hygiene pass |
 
-## Execution Modes
+Inside a setup or audit run, the execution mode decides what may change:
 
 | Mode | When | What happens |
 |---|---|---|
-| **A — Auto** | Git clean, high-confidence, reversible | Runs scoped plan |
-| **B — Ask** | Dirty worktree, borderline, broad scope | Shows plan, waits |
-| **C — Plan only** | No rollback, orientation/audit, or requested | Findings only |
+| **A — Auto** | Git clean, high confidence, reversible | Runs the scoped plan |
+| **B — Ask** | Dirty worktree, borderline, broad scope | Shows the plan, waits |
+| **C — Plan only** | No rollback, orientation/audit, first run, or requested | Findings only |
+
+---
+
+## Uninstall
+
+Remove the skill, then whatever it wrote into your projects. Nothing here is required for safety: the session hook goes silent once the script is gone.
+
+| What | Where | How to remove |
+|---|---|---|
+| The skill | `~/.agents/skills/` (global) or your agent's project skills folder | `npx skills remove safe-code` (add `-g` for a global install). Remove any helper skills you installed with it the same way, e.g. `npx skills remove senior-dev build-graph explore-codebase codebase-pruner safe-refactor-code review-changes debug-issue` |
+| Session hook | `.claude/settings.local.json` (project) or `~/.claude/settings.json` (global) | Delete the `SessionStart` entry whose command names `save-reminder.sh`, and any old `Stop` entry naming it |
+| Project brain | `.safe-code/` | `git rm -r .safe-code` when committed (it stays in git history), otherwise move the folder to the trash |
+| Entry point | `AGENTS.md` (and nested package `AGENTS.md` files in a monorepo) | Delete them if safe-code created them; if you had your own, remove only the sections safe-code added |
+| Claude Code bridge | `CLAUDE.md` (root, and next to any nested `AGENTS.md`) | Delete the block between `<!-- safe-code:bridge … -->` and `<!-- /safe-code:bridge -->`, or the whole file if safe-code created it |
+| `.gitignore` lines | `.gitignore` | Remove `/.safe-code/context/current-issues.md`, `/.safe-code/backups/`, `/.safe-code/.last-save`, any team-mode lines under `/.safe-code/`, and `.safe-code/` if you added it for a local-only brain |
+| Code graph (optional) | `.codegraph/`, plus the MCP entry in your agent's global config when you said yes | `codegraph uninit` in the project; `codegraph uninstall` removes the MCP wiring; `npm uninstall -g @colbymchenry/codegraph` removes the CLI |
+| Old bridges (older versions) | `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`, `.clinerules/safe-code.md` | Delete them if you no longer want them |
 
 ---
 
 ## What's New
 
-**v4.16** — verification gates, a real debugger, a two-axis reviewer, and a slimmer core. Ideas adapted from [mattpocock/skills](https://github.com/mattpocock/skills) and [Leonxlnx/unlazy](https://github.com/Leonxlnx/unlazy), folded in as *verification obligations* (never extra files, never blocking hooks, never more ceremony). Tasks now carry `check:` / `expect:` before work starts and close on observed effects; impossible tasks are `[!] abandoned`, never dropped; a `## Requested` inventory maps every part of the user's ask to the task that observes it; zero-hit scans need a positive control before they justify a deletion; three cycles without state change is a stall, not effort; and every count in the banner is re-measured at report time. `$debug-issue` is rewritten around a red-capable feedback loop -> minimised repro -> 3–5 ranked falsifiable hypotheses -> tagged probes -> regression test at the correct seam -> cleanup gate. `$review-changes` reviews on two axes, Standards (with a Fowler smell baseline) and Spec (missing / creep / wrong), never merged. Specs are durable (no paths, no line numbers) and deduped against rejections by concept; `--save` runs a seven-category retro into `BACKLOG.md`; `progress-tracker.md` gains a *Not Yet Specified* fog-of-war section; test anti-patterns land in the `code-standards.md` template. Slimming: Step 3e, Step 4b rules, and the Provider Bridge table moved behind Layer 3 triggers into `references/`.
+**v5.0** — light by default, briefed at session start, ready for teams. `/safe-code` on a project with a brain now only resumes; the hygiene pass moved to `/safe-code --audit` (or a cleanup ask). The optional session hook briefs the agent at session start and reminds you only when work is unsaved. Team mode commits the shared brain and keeps each developer's session files local; monorepos get one root brain plus optional package `AGENTS.md` files. Commands in `AGENTS.md` carry `verified:` stamps, the brain has a line budget, and `AGENTS.md` is the only default root output. Adding safe-code to an existing project now imports your existing agent notes and recent git history, read-only, and suggests a `safe-code/adopt` branch for the first commit. Upgrading from 4.x: see [CHANGELOG.md](./CHANGELOG.md).
 
-**v4.15** — eleven field lessons folded into the rules (mined from one maintainer's incident log across other projects; each one cost real time once). Highlights: a zero-hit reference scan counts as deletion evidence only if the search provably ran (quoted globs, checked exit status, empty results re-run — zsh aborts a whole command on an unmatched glob and `2>/dev/null` hides it); `smoke-verify` must state what it *covered*, long runs go detached-and-polled with `timed out` as its own outcome, and tasks close on observed effects, not exit codes; a fresh-clone completeness check flags source that only exists on one machine (migrations, seeds); no template placeholder survives a `--save`; work-artifact dirs are gitignored at creation and secret-bearing files are inspected by shape, never by value; untracked/ignored files get a dated backup before an in-place rewrite (Graveyard for things `git revert` can't reach); `$debug-issue` asks "is another tool on this?" before any code hypothesis; and the Step 8 banner lists every file the run touched that no task claims — the agent's own tooling first.
+**v4.16** — verification gates, a rewritten `debug-issue`, a two-axis `review-changes`, and a slimmer core.
 
-**v4.14** — identity guard, save bridge, and the save reminder made easy to wire. *Step 3e* checks the commit identity before the first commit (against an optional `## Git Identity` block in `user-preferences.md`; flags `user@Machine.local` leaks) and, on GitHub, reports when the active `gh` account is not the remote owner — with the switch-or-push-once fix printed for the user, never run. *Save Bridge*: declare `diary_path` in `user-preferences.md` and every `--save` appends one dated block (plain recap, commits, next action) to that personal journal — append-only, the one declared write outside the repo. Install docs now show `npx skills update -g`, and the save-reminder script now ships inside the skill (`skills/safe-code/scripts/save-reminder.sh`, so `npx skills add` installs it); `integrations/claude-code/hooks.example.json` shows the one-entry global wiring that covers every project.
-
-**v4.13** — graphify health check. A `graphify` on PATH used to be taken at face value; a stale copy from an old installer could shadow the current one and every `--graphify` build and auto-refresh would silently run the old tool. Now, before driving the CLI, safe-code detects the OS (macOS / Linux / Windows), counts the copies on PATH, reads their versions and installers (uv / pipx / pip / venv), compares with the latest PyPI release when online, and reports one `Graphify:` line. When something is stale or duplicated it prints the exact upgrade or cleanup command for that OS and installer — and stops there. Reporting only: safe-code still never installs, upgrades, or uninstalls a tool for the user.
-
-**v4.12** — Graveyard Rule: every removal leaves a way back. Each executed deletion (dead code, dead file, retired feature) gets a permanent entry in `safe-refactor-code.md ## Graveyard` — what, why, evidence, and a `restore: git revert <hash>` pointer filled with the real commit hash at `--save`. Retired shipped features also flip their spec to `status: removed` (file kept). Nothing safe-code deletes is ever more than one pointer away from coming back.
-
-**v4.11** — flag-only shorthand. In a project with `.safe-code/`, a bare `--save` / `--continue` / `--explain` / `--graphify` message is recognized as the matching safe-code mode — no need to type the full command. Bare *words* (`save` alone) are deliberately NOT claimed, so they stay free for other assistants' save/memory systems on the same machine.
-
-**v4.10** — graph auto-refresh. The first `--graphify` build stays a deliberate user call; after that, every `/safe-code` run keeps the graph current automatically — when the Context Freshness Check sees code drift, an incremental `graphify update .` runs (AST-only, no LLM, seconds). Refresh failure never blocks a run and never installs anything.
-
-**v4.9** — `/safe-code --graphify`: map the project into a queryable knowledge graph (via the external [graphify](https://github.com/Graphify-Labs/graphify) pipeline) and feed it back into the brain.
-
-- **Build mode** (`--graphify`) runs the pipeline and harvests it: god nodes + communities refresh `architecture.md`'s Navigation map, surprising connections become Open Question candidates, and the self-test seeds questions from the most-connected concepts.
-- **Query mode** (`--graphify "<question>"`) is read-only like `--explain` — ask the graph instead of grepping; the agent may use graphify's `path`/`explain` internally.
-- **Optional by design** — detection order `$graphify` skill → CLI → offer `uv tool install graphifyy` once (supply-chain decision, answer recorded) → continue without. `graphify-out/` self-gitignores; graphify's EXTRACTED/INFERRED edge labels map directly onto v4.8's Evidence Tags. The existing `code-review-graph` keeps its refactor-impact job — two graphs, two roles.
-
-**v4.8** — a self-auditing brain, ideas adapted from a study of [Graphify](https://github.com/Graphify-Labs/graphify)'s confidence-tagged knowledge graphs (design spec + the v4.9 `--graphify` orchestration plan: `docs/superpowers/specs/2026-07-26-v4.8-graphify-mode-design.md`).
-
-- **Evidence Tags** — load-bearing claims in `.safe-code/context/*.md` carry `[extracted: <path|command>]` (read directly from the repo — re-verifiable by running the pointer) or `[inferred: <basis>]` (deduction, with its basis named). A technical claim that can't be tagged `[extracted]` is an Open Question, not a fact; the Context Self-Test grades `[inferred]`-only answers as weak.
-- **Subagent fan-out hardened** — a returned summary is the success signal; missing/empty/off-topic counts as a failed dispatch (never "no findings"), and >50% failures stop the fan-out and fall back to inline.
-- **"Worth asking next"** — the final summary may surface 1–2 questions the run raised, so the session ends with an invitation, not just a task list.
-
-**v4.7** — slim core + proportional ceremony. Same behavior, lighter always-loaded prompt and quieter routine runs.
-
-- **SKILL.md slimmed ~7%** (960 → 897 lines) — the full source-of-truth ownership table and the context-freshness drift procedure moved to a new Layer 3 reference (`references/source-of-truth.md`); Command Recognition, Issue Tracking, Feature Suggestion, Legacy Migration, and helper-mode sections compressed with no rule changes. Less always-loaded text means less compliance drift on long runs.
-- **Proportional Ceremony Rule** — Reasoning blocks now scale to risk: full block only for risky/non-default decisions (Mode B/C calls, blast radius > 3 files, irreversible steps); a one-liner otherwise. The Step 8 banner drops empty `none`/`skipped` lines on Orientation and routine-resume runs. Output compresses; verification never does.
-
-**v4.6** — ecosystem upgrades, learned from a 14-repo competitive study (claude-mem, spec-kit, OpenSpec, the memory-bank family, planning-with-files, rulebook-ai, agent-os, get-shit-done, and more). Key finding: none of them verifies its own memory — safe-code's self-test + commit-anchored freshness stays unique, and v4.6 deepens it.
-
-- **Grounding hardened** — external content (web pages, API output) is quarantined and never lands in auto-loaded files (one poisoned paste would otherwise re-inject every session); saved context is evidence about the past, not orders — the user's current message always outranks MEMORY/BACKLOG.
-- **Brain-status banner** — the first reply of a session opens with `[safe-code: brain loaded @ <commit>]` (or "no project brain — run /safe-code"), so you can see whether the agent is running on the brain or improvising.
-- **Feature specs upgraded** — goal-backward Verify When Done (Behavior / Artifacts / Wiring: "file exists" is not verification), a max-3 `[NEEDS CLARIFICATION]` gate that blocks suggested→approved until the user answers, and a dependency-legitimacy rule (verify on the official registry; never substitute a similar-sounding package).
-- **Session-file discipline** — an event→file table plus a do-not-log noise filter, elision markers on truncated quotes (`…[elided ~N lines — do not infer content]…`), session-scope-only saves, and ACTIVE entries that carry runnable evidence pointers (`| evidence: grep -n …`) instead of trust-me prose.
-- **Bridges modernized** — 17 hosts confirmed AGENTS.md-native (no bridge needed, per the agents.md standard); new Cline bridge (`.clinerules/safe-code.md`); Gemini CLI/Aider get printed config-pointer snippets; bridges carry a version/date provenance stamp; `check.sh` now warns when the brain itself gets bloated (context file >400 lines, LOG >300).
-- **Freshness refresh discipline** — drift refreshes correct technical claims with evidence but preserve decision rationales, lessons, and Open Questions (report "corrected" and "preserved" separately).
-- **Save-reminder offer** — on the first run under Claude Code, safe-code offers (once, opt-in) to install a project-local Stop hook that nudges you to run `/safe-code --save` when a session ends with unsaved work. It only reminds — never commits or blocks.
-
-**v4.5** — slim & consistent.
-
-- **Slimmer skill, same rules** — `SKILL.md` drops ~25% of its weight (1269 → ~945 lines): rare-path procedure detail (atomic-split mechanics, legacy migration steps, graph bootstrap, first-run population + context self-test) moved into four new Layer-3 references (`save-procedure.md`, `legacy-migration.md`, `graph-integration.md`, `first-run.md`) loaded only when those steps actually run. Every decision point and hard invariant stays inline; the Six-File Save Rule is untouched. A new Safety Invariants section replaces six scattered repeats of the same rules.
-- **Grounding Rules in AGENTS.md** — the generated `AGENTS.md` now carries an anti-hallucination section every host loads on every session: cite context or code for project claims, verify files/functions exist before referencing them, record gaps as Open Questions instead of guessing, and trust repo evidence over docs.
-- **Contradictions fixed** — worked examples caught up to v4.2+ behavior (atomic commits, agent-written issue entries), the README step map matches SKILL.md again, and the "deprecated command forms" section (which conflicted with Command Recognition) is gone.
-- **Helper timing harmonized** — `codebase-pruner` and `safe-refactor-code` now explicitly follow safe-code's Draft-Until-Save when orchestrated; direct doc writes are standalone-only behavior.
-- **check-version.sh** now also asserts the `examples.md` close-out banner, so worked examples can't silently go stale again.
-
-**v4.4** — per-host provider bridges. safe-code now writes only the bridge for the host you're running in; other hosts' bridges accrue lazily when you run it under them. `AGENTS.md` is still always written, and an undetectable host falls back to writing all four (v4.3 parity). Keeps repos free of unused `GEMINI.md`/Copilot/Cursor files for single-tool users.
-
-**v4.3** — vibe-coder companion.
-
-- **`/safe-code --explain`** — a read-only command (also triggers on "explain my project") that reads the project brain back in plain language: what the app does, the stack in plain terms, current state, what's in progress, and open questions. No edits, no commits — for when you forget what your own project does.
-- **Smoke-verify after changes** — when code changed, safe-code runs the project's *documented* build/test command as a smoke check before the summary (routing failures to debugging); if none is known it says so. It never invents a command or drives the app.
-- **Plain-language LOG recap** — every `--save` LOG entry now carries a `plain:` one-line recap a non-coder can read, so the committed history is legible.
-- **Never-lose-context reminder (opt-in)** — an optional Claude Code hook (`integrations/claude-code/`) that nudges you to run `/safe-code --save` when a session ends with unsaved work. It only reminds — never commits.
-
-**v4.2** — atomic commits on save.
-
-- **Atomic Commit Split** — `/safe-code --save` now splits one session into several atomic conventional commits grouped by logical change (code/behavior tasks first, then one final `docs:` bookkeeping commit for the `.safe-code/` session files), instead of one mixed commit. Tasks are annotated at completion with their touched paths + commit type so each maps cleanly to one commit. The commit gate is unchanged — still local-only, never pushed — and the split degrades safely to the old single-commit behavior when changes cannot be cleanly separated (logged as `atomic split skipped: <reason>`).
-
-**v4.1** — portable project brain: proactive context, cross-provider bridges, issue tracking, idea history, freshness checks, and a context self-test.
-
-- **First-Run Population** — the first `/safe-code` run now writes `AGENTS.md` and evidence-derived context files (`project-overview`, `architecture`, `code-standards`, `progress-tracker`) immediately instead of deferring to `--save`, so any agent has real project context from the start and stops hallucinating. Conversation-only files (`user-preferences`) and UI files stay template until there is evidence.
-- **Provider Bridge** — `AGENTS.md` is not auto-read by every host, so safe-code now writes thin pointer files for each major provider (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/safe-code.mdc`) that redirect to `AGENTS.md` + `.safe-code/context/`. A fresh chat in Claude, Gemini, Copilot, or Cursor loads the same project brain without invoking the skill. Pointers hold no state and never overwrite an existing host file.
-- **Navigation map** — `architecture.md` now carries a "Where Things Live" map (entry points, routes, data, config, tests, where to add a feature) so a fresh agent jumps straight to the right file instead of re-scanning the whole codebase.
-- **Context Freshness Check** — `progress-tracker.md` stamps `last_synced_commit`; on each run safe-code drift-scans signal files (deps, folders, scripts, config) since that commit and refreshes stale context, so a new chat never reads an outdated brain.
-- **Issue Tracking Rule** — when you report a problem ("fix this", "failed", "got error", a pasted stack trace), the agent appends an entry to the local-only `current-issues.md` and flips it to resolved once fixed. The file stays gitignored; a sanitized summary of each fix lands in `LOG.md` as committed history.
-- **Feature Suggestion Rule** — every new feature idea is captured as a `status: suggested` feature-spec (status: suggested/approved/in-progress/done/rejected). Ideas become referrable history; rejected specs are kept so the same idea is not re-suggested.
-- **Context Self-Test** — after writing context, safe-code runs a closed-book quiz: a fresh context-only subagent answers Day-1 questions citing the context section as evidence, and a second subagent tries to refute. Gaps are filled from the code or raised as Open Questions, so the brain is *proven* sufficient, not just present.
-
-**v4.0** — one universal `.safe-code/` folder (breaking change).
-
-- **Breaking:** everything safe-code manages now lives in a single `.safe-code/` folder at the project root — the six session files, `CHANGELOG.md`, and `context/` all inside it. Only `AGENTS.md` stays at root as the universal entry point every AI host auto-reads. `/safe-code` creates exactly two root artifacts and nothing else — no more `.codex/`, `.claude/`, or `.agents/` folders in your repo.
-- **Auto-migration on every command** — `/safe-code`, `--continue`, and `--save` all detect old setup config (pre-v3 `.codex/agents/` etc., v3 `.agents/` + root `context/`), move it into `.safe-code/`, patch `.gitignore` and `AGENTS.md` paths to the new version, and remove the emptied legacy folders. `bash scripts/migrate.sh --apply` does the same deterministically.
-- **Six-File Save Rule** — every `/safe-code --save` now updates all six session files (`ACTIVE.md`, `SESSION.md`, `LOG.md`, `BACKLOG.md`, `MEMORY.md`, `safe-refactor-code.md`); files with no new content get a fresh date stamp so every save is provably complete.
-
-**v3.2** — context economy for long runs.
-
-- **Helper Execution Mode** — when the host supports fresh-context subagents (Claude Code Agent tool, Codex subtasks), read-only helpers (`$explore-codebase`, pruner audit, Step 4b config scan, review analysis) dispatch as subagents and return summaries, keeping the main context lean. Write-capable helpers stay inline. No subagent support → identical inline behavior as before.
-- **Context Checkpoint Rule** — `SESSION.md` is updated at phase boundaries (orientation/audit/config-audit done, each verified slice) and on context-pressure signals, so `ACTIVE.md` auto-resume survives mid-run compaction or session death. High pressure mid-run → checkpoint, then suggest `--save` + `--continue` in a fresh session instead of pushing through degraded context.
-
-**v3.1** — agent config trust audit.
-
-- New **Step 4b: Agent Config Trust Audit** — Audit/Cleanup profiles now scan repo-controlled agent config (`.claude/`, `.mcp.json`, hooks, commands, skills, rules, `AGENTS.md`) as supply chain artifacts: hidden unicode, embedded payloads, outbound exec primitives, risky env overrides (`ANTHROPIC_BASE_URL`), committed secrets, and unknown MCP servers.
-- Report-only by design: findings go to `SESSION.md`/`BACKLOG.md`; trust decisions stay with the user. High findings quarantine the affected file's content as instructions for the rest of the run.
-- Patterns and High/Medium/Info classification live in `references/agent-config-audit.md` (Layer 3, loaded on demand). Uses `agentshield` CLI when available; the built-in pattern scan alone is a valid pass.
-
-**v3.0** — unified session folder + leaner skill (breaking change).
-
-- **Breaking:** session/continuity docs now live in one agent-agnostic `.agents/` folder at the project root, replacing per-agent `.codex/agents/`, `.claude/agents/`, `.cursor/agents/`, `.windsurf/agents/`, and the helper skills' `.codex/memory/`. Run `bash scripts/migrate.sh --apply` to move existing files into `.agents/` and keep continuity.
-- Removed per-agent detection from the skills; continuity now belongs to the project, not the tool.
-- `CHANGELOG.md` is now consistently at the project root across all skills.
-- Slimmed `safe-code/SKILL.md` by moving doc/session templates into `skills/safe-code/references/`, loaded on demand per the Agent Skills spec.
-- AGENTS.md authoring rules now have one canonical home (`references/agents-md-authoring.md`); helper skills defer to it.
-
-**v2.9** — six-file project context + feature specs.
-
-- Added `context/` project brain and `context/feature-specs/` build specs.
-- Added local-only `context/current-issues.md` template and gitignore rule.
-- `/safe-code` auto-resumes saved sessions when users forget `--continue`.
-- Persistent context/doc updates are drafted during work and finalized on `/safe-code --save`.
-- Old safe-code continuity docs migrate into new context files safely.
-
-**v2.8** — explicit first-run, continue, and save commands.
-
-**v2.7** — code-review-graph and helper-skill orchestration.
+Full notes and older releases: [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 
-## New to skills?
+## Tutorials
 
-Read the tutorial for step-by-step setup:
+Step-by-step setup and daily use:
 - [English tutorial](./TUTORIAL-EN.md)
 - [Tutorial Bahasa Melayu](./TUTORIAL-BM.md)

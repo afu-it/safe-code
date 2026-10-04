@@ -29,13 +29,17 @@ Reasoning:
 What the run does:
 
 - Creates `AGENTS.md` and the single `.safe-code/` folder: six session files,
-  `CHANGELOG.md`, `context/*.md`, and `context/feature-specs/` inside it.
-- Adds `/.safe-code/context/current-issues.md` to `.gitignore`.
+  `context/*.md`, and `context/feature-specs/` inside it (`CHANGELOG.md` and
+  `ui-context.md` wait for the first releasable change / first UI work).
+- Adds `/.safe-code/context/current-issues.md`, `/.safe-code/backups/`, and
+  `/.safe-code/.last-save` to `.gitignore`.
 - Reads README, manifests, configs — First-Run Population: writes evidence-derivable
   facts straight into `AGENTS.md` + the empty context scaffolds (`project-overview`,
   `architecture` + Navigation map, `code-standards`, `progress-tracker`), and drafts
   everything else in `SESSION.md`.
 - Puts anything unverifiable into `progress-tracker.md` Open Questions.
+- Being a setup run, still runs the findings-only dead-code scan (Step 4) and config
+  trust audit (Step 4b): candidates are reported, nothing is removed.
 - Removes/refactors nothing. Execution mode is **C — Plan only**.
 
 Good `SESSION.md` task list at this point:
@@ -100,8 +104,10 @@ auto-promoted**, because it fails the auto-promotion test (not provably dead).
 
 ## Example 3 — Cleanup profile (clean repo, slice-by-slice)
 
-**Situation:** git is clean, commits exist (rollback available), `AGENTS.md` is
-reconciled, and there are HIGH-confidence dead-code candidates.
+**Situation:** the user ran `/safe-code --audit` (or asked to "clean up the repo"), so this is
+an **audit run**; git is clean, commits exist (rollback available), `AGENTS.md` was
+reconciled in an earlier run, and there are HIGH-confidence dead-code candidates. A plain
+`/safe-code` on this repo would be a light run and never reach this step.
 
 **Correct behavior:** execute one reversible slice at a time, verify each.
 
@@ -150,28 +156,41 @@ that slice**, marks the task `[~]`, records the failure, and routes to
 What `--save` does, in order:
 
 ```
-1. Review SESSION.md draft updates
+0. Legacy setup config found -> run Legacy Layout Migration first
+1. Review SESSION.md drafts (## Drafts)
 2. Apply approved updates to .safe-code/context/*.md and AGENTS.md
-3. Update progress-tracker.md (safe summary only)
-4. Update ALL SIX session files in .safe-code/ (Six-File Save Rule):
-   ACTIVE.md, SESSION.md (wiped), LOG.md (entry appended),
+3. progress-tracker.md: safe summary; last_synced_commit = HEAD,
+   context_synced_at = today
+4. Update ALL SIX session files in .safe-code/ (Six-File Save Rule) —
+   untracked or local-only brain -> back up each first:
+   ACTIVE.md, SESSION.md (wiped), LOG.md (entry + plain: recap),
    BACKLOG.md, MEMORY.md, safe-refactor-code.md
-   — files with no new content get a fresh date stamp
+   — files with no new content get a fresh date stamp;
+   then touch .safe-code/.last-save (gitignored save stamp)
 5. Update .safe-code/CHANGELOG.md ONLY for releasable changes
-6. Ensure a local git repo exists
-7. Split the session into atomic LOCAL commits (Atomic Commit Split Rule):
-   code/behavior tasks first, then ONE final `docs:` commit for the
-   .safe-code/ session files — degrade to a single commit if the
-   changes cannot be cleanly separated
-8. Verify all six session files appear in the final docs commit diff
-9. Report commit hashes + types + local-only status + next action
+   (created on the first one)
+6. Ensure a local git repo exists when allowed by current repo state
+7. Split the session into atomic LOCAL commits (Atomic Commit Split Rule),
+   staging only paths this run touched, each ending with the
+   `Safe-Code: <version>` trailer: code/behavior tasks first, root
+   scaffold as its own chore:/docs: group, then ONE final `docs:` commit
+   for the .safe-code/ session files (none when the brain is local-only)
+   — degrade to a single commit of this run's paths if the changes
+   cannot be cleanly separated; verify all six session files are in the
+   docs commit diff (local-only brain: fresh stamp on disk)
+8. Retro -> `retro:` items in BACKLOG.md (nothing found, nothing written)
+9. Save Bridge: diary_path declared and the file exists -> append one block
+10. Report commit hashes + types + local-only status + paths left
+    uncommitted (not this run's) + next action
 ```
 
 Sample close-out:
 
 ```
-=== safe-code v4.16 session complete ===
+=== safe-code v5.0 session complete ===
+Run: audit · profile: Cleanup · mode: A
 Save: local commits only; no push
+Brain: 214 lines (budget 300)
 Commits: 2 atomic — refactor: remove dead legacyDate + old-uploader · docs: sync .safe-code session files
 Six-file save: ACTIVE ✓ SESSION ✓ LOG ✓ BACKLOG ✓ MEMORY ✓ safe-refactor-code ✓
 LOG entry plain: "Removed 2 unused files/functions; all tests pass."
@@ -197,6 +216,37 @@ it > Saved safe-code session found; resuming automatically.
 
 ---
 
+## Example 5 — Light resume (`/safe-code` on a project with a brain)
+
+**Situation:** the brain exists, the last save left `status: saved` with one pending item, and
+the user types `/safe-code` with no sweep asked.
+
+**Correct behavior:** a **light run** — resume and do the work; no dead-code audit, config
+audit, or refactor sweep.
+
+What the run does:
+
+- Loads Layer 1, then Layer 2 (saved state), runs `codegraph sync` only if `.codegraph/`
+  exists, and the Context Freshness Check (stamp vs `HEAD`).
+- Probes the pending item (`git log` for its commit) — still open, so it stays.
+- Writes the **Light checklist** into `SESSION.md`, then works `next_action`.
+- Smoke-verifies with the `AGENTS.md ## Commands` test line and compares the count with its
+  `known total`.
+
+```
+=== safe-code v5.0 session complete ===
+Run: light · profile: n/a · mode: n/a   (hygiene pass skipped (light run; /safe-code --audit runs it))
+Git: repo found | Remote: <URL> [Bucket A] | Save: local commit only; no push | Commits: pending — run /safe-code --save
+Brain: 214 lines (budget 300)
+Task list: 6/7 · Parked: none · Abandoned: none · Requested: 1/1 · Out-of-scope touches: none
+Run /safe-code --save to commit and close this session.
+```
+
+The discipline: a light run skips the sweep, never the safety rules — git state, other
+sessions, the identity guard before a commit, and verification of the user's work all run.
+
+---
+
 ## Anti-patterns (do NOT do these)
 
 - Marking a task `[x]` before its verification ran. Done means *verified*.
@@ -206,9 +256,13 @@ it > Saved safe-code session found; resuming automatically.
   drafting in `SESSION.md` and applying on `--save` (exception: First-Run
   Population seeding empty scaffolds).
 - Creating `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/` session-state
-  folders — continuity lives in `.safe-code/` only (provider-bridge pointers like
-  `.cursor/rules/safe-code.mdc` are redirects, not state).
+  folders — continuity lives in `.safe-code/` only (a provider-bridge pointer such as
+  `CLAUDE.md` is a redirect, not state).
 - Saving without touching all six session files — an untouched file means an
   incomplete save.
 - Pushing to a remote. safe-code never pushes.
+- Staging with `git add -A` / `git add .` at save time — another session's dirty files
+  end up in your commit. Stage only the paths this run touched.
+- Reverting or stashing a change you cannot explain. Label it `foreign`, leave it, and
+  ask only if it blocks a task.
 - Copying secrets, raw logs, or `current-issues.md` content into persistent docs.

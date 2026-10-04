@@ -1,20 +1,24 @@
 {
-  "//": "safe-code — optional 'never lose context' reminder. OPT-IN: copy the Stop block",
-  "//2": "into your Claude Code settings.json (~/.claude/settings.json or .claude/settings.json).",
-  "//3": "It only prints a nudge when a session has unsaved safe-code work; it never commits.",
-  "//4": "The script ships inside the skill: <install>/safe-code/scripts/save-reminder.sh.",
-  "//5": "Project install -> keep the path below (.claude/skills/safe-code/...).",
-  "//6": "Global install (npx skills add ... -g)? Use ONE entry in ~/.claude/settings.json instead:",
-  "//7": "  bash \"$HOME/.agents/skills/safe-code/scripts/save-reminder.sh\"",
-  "//8": "The script finds the project from the git toplevel, so it covers every project.",
+  "//": "safe-code — optional session brief + never-lose-context reminder. OPT-IN: copy the SessionStart block",
+  "//2": "into your Claude Code settings (~/.claude/settings.json, or .claude/settings.local.json for one project).",
+  "//3": "At session start it adds a <=15-line brief of the .safe-code/ brain to Claude's context",
+  "//4": "(hookSpecificOutput.additionalContext) and, only when the previous session left work unsaved,",
+  "//4a": "shows you a one-line notice (systemMessage). Never commits, never blocks. Brief off: add --no-brief.",
+  "//5": "The script ships inside the skill: <install>/safe-code/scripts/save-reminder.sh.",
+  "//6": "The command below is for a global install (npx skills add ... -g): ONE entry in",
+  "//7": "~/.claude/settings.json covers every project (the script finds the nearest .safe-code/ or the git toplevel).",
+  "//8": "Project install? Swap the path, keep the guard:",
+  "//9": "  f=\"$CLAUDE_PROJECT_DIR/.claude/skills/safe-code/scripts/save-reminder.sh\"; [ -f \"$f\" ] && bash \"$f\" || true",
+  "//10": "Installed anywhere else? Use the directory the skill loads from: f=\"<skill-dir>/scripts/save-reminder.sh\"",
+  "//11": "The [ -f ] guard and || true keep the hook at exit 0 even after the skill is removed.",
   "hooks": {
-    "Stop": [
+    "SessionStart": [
       {
-        "matcher": "",
+        "matcher": "startup|resume",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/skills/safe-code/scripts/save-reminder.sh\""
+            "command": "f=\"$HOME/.agents/skills/safe-code/scripts/save-reminder.sh\"; [ -f \"$f\" ] && bash \"$f\" || true"
           }
         ]
       }

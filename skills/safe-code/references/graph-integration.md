@@ -1,109 +1,109 @@
-# safe-code reference: graph integration (Step 3f + --graphify detail)
+# safe-code reference: graph integration (codegraph — Step 3f, Step 4, `--codegraph`)
 
-> Loaded on demand by Step 3f and by `/safe-code --graphify` (Layer 3). The binding rules
-> — accelerator never overrides safety, project-local `.mcp.json` only, graceful manual
-> fallback, graphify only on its explicit flag — live inline in SKILL.md; this file holds
-> the detection orders, bootstrap block, call sequences, and the graphify harvest mapping.
+> Loaded on demand by Step 3f, Step 4 (dead-code derivation), and `/safe-code --codegraph`
+> (Layer 3). The binding rules — accelerator never overrides safety, ask before installing,
+> never edit agent config outside the root, graceful manual fallback — live inline in
+> SKILL.md; this file holds the commands.
 
-## Detection and bootstrap
+The one graph tool is **codegraph** (`github.com/colbymchenry/codegraph`, MIT, npm
+`@colbymchenry/codegraph`, CLI `codegraph`). Its index lives in `<project-root>/.codegraph/`,
+which carries its own `.gitignore` (`*` + `!.gitignore`). Only that one file is meant to be committed
+(so collaborators' `git status` stays clean); the index itself never is. `--save` adds
+`.codegraph/.gitignore` to the `chore` scaffold commit the first time it appears, nothing else under `.codegraph/`.
+Check `codegraph --help` once per session; a subcommand missing from it -> skip that step and
+continue manually, never invent flags.
 
-1. Detect graph access:
-   - MCP graph tools already available
-   - `code-review-graph` command available
-   - `uvx` command available
-   - existing `<project-root>/.mcp.json`
-2. If MCP graph tools are missing but `uvx` exists, auto-create or update project-local `.mcp.json`:
+## Detection and install
 
-   ```json
-   {
-     "mcpServers": {
-       "code-review-graph": {
-         "command": "uvx",
-         "args": ["code-review-graph", "serve"]
-       }
-     }
-   }
-   ```
+1. Host already exposes the MCP tools (`codegraph_explore`, `codegraph_node`, `codegraph_callers`, …) -> use them for reads; use the CLI for `init` / `sync` / `status`.
+2. `codegraph` on PATH -> run the **Health check** once per session, then drive the CLI.
+3. Missing -> ask ONCE (supply-chain decision): "Install codegraph? It installs the CLI, wires its MCP server into this agent only (global agent config), and indexes this project." **Yes** -> run, in order:
+   1. `npm i -g @colbymchenry/codegraph` (Node present). No Node -> print the official installer for the user to run — never pipe it to a shell yourself — and stop here until they have:
+      - macOS / Linux: `curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh`
+      - Windows (PowerShell): `irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex`
+   2. `codegraph install --target <id> --location global --yes` — wires the MCP server + auto-sync watcher into **only** the agent running safe-code. `<id>` = the running host mapped through the target list in `codegraph install --help` (e.g. `claude-code`, `cursor`, `codex`). Host unknown or not listed -> skip this step and print the command for the user. Never `--target all` or `auto`. This is the one sanctioned write outside the project root besides the Save Bridge (SKILL.md Scope Rule), allowed only by that explicit yes.
+      Under Claude Code, `--yes` also writes codegraph's auto-allow list for its own read-only MCP tools; say so in the install question ("also lets the agent use codegraph's read-only tools without prompting"). Add `--no-permissions` if the user wants prompts kept.
+   3. `codegraph init` in the project root (writes only `.codegraph/`).
 
-   Preserve existing MCP servers when updating `.mcp.json`.
-3. If `code-review-graph` is installed locally but MCP tools are not exposed, record `Graph: command available` and continue with manual scans for this run — no CLI call sequence is defined for this skill, so do not invent one. The bootstrapped `.mcp.json` exposes the MCP tools in the next session.
-4. Do not run `pipx install`, edit global MCP files, or write outside the project root automatically.
+   Record the answer in `user-preferences.md` (a recorded decline is durable: print the commands instead of re-offering). **Declined, or cannot ask (non-interactive)** -> run none of them; print the three commands; non-interactive records nothing.
+4. None -> `Graph: unavailable`, continue with manual scans.
 
-## Build sequence (when MCP graph tools are available)
+On suggest, install, or first use in a session, print once: "codegraph sends anonymous usage stats; turn off with `codegraph telemetry off` or `DO_NOT_TRACK=1`." Never set either for the user.
 
-Automatically run `$build-graph`:
+**Never run `codegraph install` without that yes** (and never `codegraph uninstall`): it edits agent config outside the project. Already installed CLI, user now wants the MCP server -> the same yes question for step 2 alone.
 
-- `get_minimal_context_tool(task="safe-code hygiene pass")`
-- `build_or_update_graph_tool()` if the graph is stale or empty
-- `list_graph_stats_tool()` to confirm files, nodes, edges, and languages
+**Sync.** MCP wired -> its watcher re-syncs the graph on every file change. Not wired -> safe-code runs `codegraph sync` at the start of every run (and after code edits, before graph-based checks).
 
-## Fallback and partial coverage
+## Health check (report only)
 
-- If graph tools are unavailable, empty, or fail, record `Graph: unavailable` and continue with manual scans.
-- If graph coverage is partial, use graph findings only for covered languages and keep manual entrypoint/config checks.
+1. `codegraph --version`.
+2. Copies on PATH: `which -a codegraph` (de-duplicate) · Windows `where codegraph`. More than one distinct path -> report each with `<path> --version`; the first on PATH wins.
+3. Online -> `codegraph upgrade --check`. Never run `codegraph upgrade`.
+4. One line: `Codegraph: <version> (<path>)` plus ` — latest <v>` / ` — <n> copies on PATH` when relevant. Never blocks the run.
 
----
+## Build / freshness (Step 3f)
 
-## Graphify Pipeline (`/safe-code --graphify` detail)
+- No `.codegraph/` (after consent) -> `codegraph init -y` from the project root (writes only `.codegraph/`). Who may init (SKILL.md Step 3f): `--codegraph`, and audit runs / targeted refactors with graph evidence in scope and the CLI installed — never a setup run unless the user asked for `--codegraph`.
+- `.codegraph/` exists -> `codegraph sync` (incremental, sub-second). After code edits in a run, `codegraph sync` again before any graph-based check.
+- `codegraph status` -> files, nodes, edges, languages for the Reasoning block and the Step 8 `Graph:` line. "Index is locked" from a crashed run -> `codegraph unlock`, then retry once.
+- Empty or failed -> `Graph: unavailable`; partial language coverage -> `Graph: partial`, graph findings for covered languages only, manual checks kept. Statuses use the Step 8 `Graph:` vocabulary (`ready | stale | unavailable | partial`; `references/final-banner.md`) everywhere.
+- Legacy graph dirs (`.code-review-graph/`, `graphify-out/`) -> leave them, mention once that they are unused now; never delete.
 
-### Detection order (first hit wins)
+## Command map
 
-1. `$graphify` skill available on the host -> dispatch it as a helper with the project root (build) or the question (query); it manages its own pipeline and outputs. **Identity check first**: only dispatch if the skill's own description matches the knowledge-graph purpose (maps input into a queryable knowledge graph); a same-named skill that describes something else is a name collision — skip to branch 2.
-2. `graphify` CLI on PATH (`command -v graphify`) -> run the **Health check** below once per session (OS-aware; report + suggest only), then drive the CLI directly.
-3. `uv` available but no graphify -> offer ONCE: `uv tool install graphifyy` (yes, two y's — that is the real PyPI name; do not "correct" it to a different package). The `--graphify` flag is user intent, but installing a PyPI package is a supply-chain decision — ask before the first install and record accept/decline in `user-preferences.md` (a recorded decline is durable: suggest manual install instead of re-offering). **Cannot ask this session (autonomous/non-interactive)** -> treat as declined *for this run only*: do NOT install, do NOT record anything in `user-preferences.md`, fall through to branch 4.
-4. None of the above -> record `Graphify: unavailable`, print the install hint, and continue the run without it.
+| Need | CLI (MCP twin) |
+|---|---|
+| Orientation / "how does X work" | `codegraph explore "<query>"` (`codegraph_explore`) · `codegraph context "<task>"` |
+| One symbol or file + dependents | `codegraph node <name>` · `codegraph node -f <file> --symbols-only` (`codegraph_node`) |
+| Callers / callees | `codegraph callers <symbol>` · `codegraph callees <symbol>` |
+| Blast radius before editing shared code | `codegraph impact <symbol>` |
+| Tests to run for a change | `codegraph affected <changed files…>` — over-reports (the safe side); run what it lists |
+| Find a symbol | `codegraph query "<search>"` (`-k function|method|class`) |
+| File tree from the index | `codegraph files` |
 
-### Build sequence (CLI path)
+Renames have no graph preview: list `callers` + `impact` first, then edit and confirm with `rg`.
 
-The **full** pipeline (semantic extraction of docs/PDFs/images) lives in the `$graphify` skill, not the CLI — the CLI has no full-build subcommand (`graphify .` is NOT a valid command). On the CLI-only branch, build the deterministic code graph:
+## Dead-code derivation (Step 4)
 
-1. Ensure `graphify-out/.gitignore` exists containing `*` (create if missing — same self-gitignore pattern as `.code-review-graph/`).
-2. Run `graphify update .` from the project root — the no-LLM AST extractor; needs no API key, never prompt for one. Note in output that docs/PDFs were not semantically extracted (that needs the `$graphify` skill).
-3. Verify `graphify-out/graph.json` exists (a `GRAPH_REPORT.md` may or may not be produced on this path). Missing or errored -> record `Graphify: failed (<reason>)` and continue; a failed build never blocks the run.
-4. A standalone `--graphify` run has no Step 8 banner: end with one summary line — `Graphify: built — <files> files, <nodes> nodes, <edges> edges, <communities> communities`. The Step 8 `Graph:` line applies only when a full pass runs in the same session.
+codegraph has no dead-code command; derive candidates from the project root after `codegraph sync`:
 
-### Health check (CLI path, before build / refresh)
+```sh
+# 1. functions/methods with 0 callers AND 0 file references
+for k in function method; do codegraph query "" -k "$k" -l 5000; done |
+  awk '/^(function|method) /{n=$2; getline; print n "\t" $1}' | sort -u |
+  while IFS="$(printf '\t')" read -r name loc; do
+    codegraph callers "$name" | grep -q 'No callers found' && printf '%s\t%s\n' "$name" "$loc"
+  done
+# 2. orphan modules
+codegraph files --format flat --no-metadata | sed -n 's/^  //p' | while read -r f; do
+  codegraph node -f "$f" --symbols-only | grep -q 'no other indexed file depends on it' && echo "ORPHAN $f"
+done
+```
 
-A `graphify` on PATH is not proof it is the right one: a stale copy from an old installer can shadow a newer one (seen in practice: pip 0.9.37 in `/opt/homebrew/bin` shadowing uv 0.9.50 in `~/.local/bin`). Before branch 2 drives the CLI, run this check once per session. It **reports and suggests only** — safe-code never installs, upgrades, or uninstalls a tool on the user's behalf.
+Reading the output — candidates only, never a deletion list:
 
-1. **Detect the OS** — `uname -s`: `Darwin` -> macOS · `Linux` -> Linux · `MINGW*`/`MSYS*`/`CYGWIN*`, or `uname` missing with `$OS = Windows_NT` -> Windows. Every command below is chosen by this result; never print a macOS/Linux command to a Windows user or vice versa.
-2. **Count copies** — macOS/Linux: `which -a graphify` (de-duplicate paths; the same path listed twice means `$PATH` repeats a directory, not two installs). Windows: `where graphify` (cmd) or `Get-Command graphify -All` (PowerShell). More than one distinct path -> the first one wins on PATH; report all with their versions.
-3. **Read the installed version** — `graphify --version`. Per extra copy: `<path> --version`.
-4. **Identify the installer** per copy — `uv tool list` names `graphifyy` -> uv · `pipx list` names it -> pipx · path is a Homebrew python `bin/` (`/opt/homebrew/…`, `/usr/local/…`), `/usr/bin`, or a Windows `Scripts\` folder -> pip · a venv path -> venv. Unknown -> say so.
-5. **Compare with the latest release** (skip silently when offline): `curl -fsSL https://pypi.org/pypi/graphifyy/json` (macOS/Linux) or `Invoke-RestMethod https://pypi.org/pypi/graphifyy/json` (Windows) -> `info.version`.
-6. **Report one line, then continue**: `Graphify: <installed> (<installer>, <path>)` plus, when relevant, ` — latest <version>` or ` — <n> copies on PATH`. Then continue the run with whatever is first on PATH; a stale or duplicated tool never blocks the run.
-7. **Suggest, never run** — when the copy is stale or duplicated, print the fix as a command for the user, matched to OS and installer:
+- `callers` resolves by **name**: same-named methods merge, so a dead method can hide behind a live namesake. Every candidate (and every method you care about) is confirmed by `rg` with a positive control, excluding `.safe-code/**`, `AGENTS.md`, and `.codegraph/**` (`references/verification.md`, Scan Proof).
+- Drop from the orphan list: entry points (`main`, bin scripts, `index.*` roots, framework routes/pages), test files, config files. **Public API = the package's entry points** — manifest `main` / `exports` / `bin`, a published index, a documented CLI/HTTP surface — Medium at best. An `export` keyword inside a private app (`"private": true`, never published) is not public API: an exported symbol nothing imports is an ordinary candidate.
+- Dynamic dispatch, registries, reflection, config strings -> Medium/Low per `$codebase-pruner`. Never auto-delete.
+- Cost: about 0.1s per symbol — fine for an audit, too slow for every run.
 
-   | Installer | macOS / Linux | Windows |
-   |---|---|---|
-   | uv | `uv tool upgrade graphifyy` | `uv tool upgrade graphifyy` |
-   | pipx | `pipx upgrade graphifyy` | `pipx upgrade graphifyy` |
-   | pip (system python) | `python3 -m pip install -U graphifyy` — Homebrew/Debian pythons refuse without `--break-system-packages`; tell the user to add it themselves, do not add it for them | `py -m pip install -U graphifyy` |
-   | stale duplicate that shadows the good copy | `python3 -m pip uninstall graphifyy` (pip) / `uv tool uninstall graphifyy` (uv) / `pipx uninstall graphifyy` (pipx), aimed at the **stale** copy only | same, with `py -m pip` |
+## `/safe-code --codegraph` (build + query)
 
-   Recommend uv (`uv tool install graphifyy`) as the single home when the user asks which to keep — one copy, one upgrade path. Uninstalling anything is the user's call: name the exact copy and path, then stop.
-
-### Auto-refresh sequence (graph already exists)
-
-Trigger: any `/safe-code` or `--continue` run where `graphify-out/graph.json` exists AND the Context Freshness Check found drift. Then: CLI on PATH -> `graphify update .` (incremental, AST-only, no LLM, no key) · `$graphify` skill (identity-checked) -> its update/incremental mode · neither available anymore -> `Graphify: stale (tool no longer available)` and continue. Never install anything on this path, never run a full semantic rebuild automatically, never block the run on a refresh failure. Report one line: `Graphify: refreshed (<nodes> nodes, <edges> edges)` or the stale note.
-
-### Query sequence (CLI path)
-
-`graphify query "<question>"` — read-only, no build, no edits. When the question implies it, the agent may internally use `graphify path "<A>" "<B>"` (how two things connect) or `graphify explain "<node>"` (one concept); the user-facing surface remains the single question form.
+- **Build** (`--codegraph`): detect/install as above -> `init -y` or `sync` -> `status`. Standalone run ends with one line: `Codegraph: built — <files> files, <nodes> nodes, <edges> edges`.
+- **Query** (`--codegraph "<question>"`): read-only — `codegraph explore "<question>"` (or `codegraph_explore`); relay in plain language. The agent may use `node` / `callers` / `impact` internally. No index yet -> say so and offer build mode.
+- **Auto-refresh**: once `.codegraph/` exists, every `/safe-code` / `--continue` run runs `codegraph sync` (redundant but harmless when the MCP watcher is wired); failure -> `Graph: stale (sync failed)`, continue. Never installs on this path.
 
 ### Harvest mapping (build mode; all draft-until-save)
 
-| graphify output | Goes to |
+| codegraph output | Goes to |
 |---|---|
-| God nodes + communities (`GRAPH_REPORT.md`) | `architecture.md` Navigation map refresh |
-| Surprising connections + suggested questions | `progress-tracker.md` Open Questions candidates |
-| Files/nodes/edges/communities stats | Step 8 banner `Graph:` line |
-| God-node list | Context Self-Test seed questions (`references/first-run.md`) |
+| `status` files/nodes/edges/languages | Step 8 `Graph:` line |
+| `files --format grouped` + `explore` on entry points | `architecture.md` Navigation map refresh |
+| Orphan modules seen while exploring | `progress-tracker.md` Open Questions candidates |
+| Most-depended-on files (`node -f <file> --symbols-only` "used by N files") | Context Self-Test seed questions (`references/first-run.md`) |
 
-Evidence-tag discipline: only graphify edges tagged `EXTRACTED` may back an `[extracted: graphify-out/graph.json]` claim; `INFERRED`/`AMBIGUOUS` edges harvest as `[inferred: graphify <relation>]` or become Open Questions — graphify's own confidence labels map directly onto safe-code's Evidence Tags.
-
-Harvest only what is real: skip any output section that is empty or placeholder (no god nodes, unnamed `Community N` groups with no listed members — common on small corpora). Never write placeholder community labels into `architecture.md`; an empty harvest is a valid outcome (`Graphify: built, nothing worth harvesting`).
+Evidence tags: a claim read from codegraph output is `[extracted: codegraph <subcommand> <arg>]` — the pointer is the re-runnable command. Harvest only what is real; an empty harvest is valid (`Codegraph: built, nothing worth harvesting`).
 
 ### Corpus exclusions
 
-Never feed graphify: `.safe-code/context/current-issues.md` (may hold secrets/raw logs), `graphify-out/` itself, and anything already gitignored as sensitive. Enforcement is per-branch: the CLI code-graph path ignores markdown anyway; on the `$graphify` skill path, pass the exclusion explicitly in the dispatch instructions, and never paste `current-issues.md` content into any prompt.
+Never paste `.safe-code/context/current-issues.md` (may hold secrets/raw logs) into any prompt or query. codegraph indexes source code only; it does not send file content to an LLM.

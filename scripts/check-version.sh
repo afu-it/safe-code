@@ -8,7 +8,8 @@
 # matches it. Run it before tagging/releasing or wire it into CI.
 #
 # This is a REPO-MAINTAINER check (it inspects the skill source). It is NOT the
-# same as scripts/check.sh, which verifies conventions inside a CONSUMER project.
+# same as check.sh (skills/safe-code/scripts/check.sh; root shim scripts/check.sh),
+# which verifies conventions inside a CONSUMER project.
 #
 # Exit codes:
 #   0  all version mentions agree
@@ -76,6 +77,9 @@ if [ -f "$README" ]; then
 	check "README.md badge" "$BADGE"
 	H1="$(grep -m1 -E '^# safe-code v[0-9]+\.[0-9]+' "$README" | sed -E 's/^# safe-code v//; s/[[:space:]].*$//')"
 	check "README.md H1 title" "$H1"
+	while IFS= read -r RBAN; do
+		check "README.md sample banner" "$RBAN"
+	done < <(grep -oE 'safe-code v[0-9]+\.[0-9]+(\.[0-9]+)? session (complete|ended)' "$README" | sed -E 's/^safe-code v//; s/ session (complete|ended)$//')
 else
 	info "README.md: not found (skipped)"
 fi
@@ -84,6 +88,10 @@ fi
 BANNER="$(grep -oE 'safe-code v[0-9]+\.[0-9]+(\.[0-9]+)? session complete' "$SKILL" | head -1 | sed -E 's/^safe-code v//; s/ session complete$//')"
 check "SKILL.md Step 8 banner" "$BANNER"
 
+# ---- Step 8 earned-header variant: === safe-code vX.Y session ended · … === --
+ENDED="$(grep -oE 'safe-code v[0-9]+\.[0-9]+(\.[0-9]+)? session ended' "$SKILL" | head -1 | sed -E 's/^safe-code v//; s/ session ended$//')"
+check "SKILL.md Step 8 'session ended' banner" "$ENDED"
+
 # ---- examples.md close-out banner(s): same pattern as Step 8 -----------------
 EXAMPLES="$ROOT/skills/safe-code/references/examples.md"
 if [ -f "$EXAMPLES" ]; then
@@ -91,7 +99,7 @@ if [ -f "$EXAMPLES" ]; then
 	while IFS= read -r EBAN; do
 		FOUND_ANY=1
 		check "examples.md banner" "$EBAN"
-	done < <(grep -oE 'safe-code v[0-9]+\.[0-9]+(\.[0-9]+)? session complete' "$EXAMPLES" | sed -E 's/^safe-code v//; s/ session complete$//')
+	done < <(grep -oE 'safe-code v[0-9]+\.[0-9]+(\.[0-9]+)? session (complete|ended)' "$EXAMPLES" | sed -E 's/^safe-code v//; s/ session (complete|ended)$//')
 	[ "$FOUND_ANY" -eq 0 ] && info "examples.md banner: not present (skipped)"
 else
 	info "examples.md: not found (skipped)"

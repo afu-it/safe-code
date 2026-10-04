@@ -1,28 +1,25 @@
 ---
 name: explore-codebase
-description: Navigate and understand codebase structure using the code-review graph. Use for repo orientation, AGENTS.md authoring, architecture mapping, or finding relevant code.
+description: Navigate and understand codebase structure using the codegraph index. Use for repo orientation, AGENTS.md authoring, architecture mapping, or finding relevant code.
 ---
 
 # Explore Codebase
 
-Use the code-review graph to understand the repository before editing.
+Use the codegraph index to understand the repository before editing.
 
 ## Core Rules
 
-- Always start with `get_minimal_context_tool(task="<your task>")`.
-- Use `detail_level="minimal"` unless more detail is needed.
-- Prefer graph results for architecture, communities, flows, hubs, bridges, and impact paths.
-- If graph tools are unavailable or empty, continue with `rg`, manifests, README files, and config inspection.
+- Prefer the host's MCP tools when exposed (`codegraph_explore`, `codegraph_node`); otherwise the same output comes from the CLI (`codegraph explore`, `codegraph node`).
+- Prefer graph results for entry points, call paths, dependents, and impact; confirm anything load-bearing by reading the source it points at.
+- If the index is missing or stale, run `$build-graph` first. If codegraph is unavailable or empty, continue with `rg`, manifests, README files, and config inspection.
 
 ## Workflow
 
-1. Get compact context with `get_minimal_context_tool`.
-2. Build or update the graph if it is empty or stale.
-3. Use `get_architecture_overview_tool()` for major boundaries.
-4. Use `list_communities_tool(detail_level="minimal")` to identify modules.
-5. Use `list_flows_tool(detail_level="minimal")` for execution paths.
-6. Use `get_hub_nodes_tool()` and `get_bridge_nodes_tool()` for risky chokepoints.
-7. Use `semantic_search_nodes_tool()` or `query_graph_tool()` to narrow to specific symbols.
+1. Build or sync the index if it is empty or stale (`$build-graph`).
+2. `codegraph files --format grouped` for the module layout.
+3. `codegraph explore "<task or area>"` for the relevant symbols' source plus call paths in one shot; `codegraph context "<task>"` for a task-shaped bundle.
+4. `codegraph node -f <file> --symbols-only` for a file's symbols and who depends on it (hubs = files "used by" many others).
+5. `codegraph callers|callees <symbol>` and `codegraph impact <symbol>` to narrow to specific symbols and risky chokepoints.
 
 ## AGENTS.md Use
 
@@ -30,10 +27,10 @@ When helping safe-code write or reconcile `AGENTS.md`, follow the canonical auth
 
 Prefer graph-backed facts:
 
-- major communities and files
-- entry points and flows
-- hub or bridge files that need caution
-- languages detected by the graph
-- missing tests or untested hotspots from knowledge-gap tools
+- major modules and files
+- entry points and call paths
+- hub files that many others depend on (need caution)
+- languages detected by the index
+- untested hotspots (source files `codegraph affected` maps to no test)
 
 Do not copy raw graph dumps into docs. Convert them into compact handoff facts.

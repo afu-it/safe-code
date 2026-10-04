@@ -7,9 +7,12 @@ description: Systematically debug a symptom with a red-capable feedback loop, a 
 
 Reproduce first, theorise second. A hypothesis formed before a failing command exists is a guess dressed as a plan.
 
-## Phase 0: Contention check
+## Phase 0: Contention and real state
 
-Before any code hypothesis: is another process, agent, worktree, or the user's other tool touching the same branch, database, port, or session? (`git worktree list`, `lsof -i :<port>`, ask "is another tool on this?"). Rule it out first — flaky behaviour under contention looks exactly like a code bug.
+Before any code hypothesis: is another process, agent, worktree, or the user's other tool touching the same branch, database, port, session, or shared credential/token store? (`git worktree list`, `lsof -i :<port>`, ask "is another tool on this?"). Rule it out first — flaky behaviour under contention looks exactly like a code bug, and two clients refreshing the same rotating token invalidate each other.
+
+- When you have read access, look at the real failing record, user, or job state (read-only) before hypothesising — it often names the cause outright.
+- Never blind-retry a side-effecting call (POST, send, payment, migration) that failed part-way: read the remote state first, because the first attempt may have half-succeeded.
 
 ## Phase 1: Build a red-capable loop
 
@@ -27,13 +30,13 @@ Shrink to the smallest scenario that still goes red: cut inputs, callers, config
 
 ## Phase 3: Ranked, falsifiable hypotheses
 
-Generate 3–5 hypotheses before testing any — one hypothesis anchors on the first plausible idea. Each must state a prediction: "If X is the cause, then changing Y makes the bug disappear / changing Z makes it worse." No stateable prediction means it is a vibe: sharpen or discard. Show the ranked list to the user before probing (they re-rank instantly with domain knowledge); do not block on the answer if they are away.
+Generate 3–5 hypotheses before testing any — one hypothesis anchors on the first plausible idea. For a once-only failure with fixed inputs, rank "what varies between runs" high: clock ties, unordered reads (an `ORDER BY` that does not end on a unique column), concurrency, cache or retry state. Each must state a prediction: "If X is the cause, then changing Y makes the bug disappear / changing Z makes it worse." No stateable prediction means it is a vibe: sharpen or discard. Show the ranked list to the user before probing (they re-rank instantly with domain knowledge); do not block on the answer if they are away.
 
-Graph accelerators (optional, when `code-review-graph` tools are ready): `get_minimal_context_tool(task=<symptom>)`, `query_graph_tool(pattern="callers_of"|"callees_of")`, `get_affected_flows_tool()`, `detect_changes_tool()` for regressions, `get_impact_radius_tool()` before touching shared code. Without them: `rg`, tests, logs, runtime probes.
+Graph accelerators (optional, when a codegraph index is ready): `codegraph explore "<symptom>"` (or `codegraph_explore`), `codegraph callers|callees <symbol>`, `codegraph affected <recently changed files>` for regressions, `codegraph impact <symbol>` before touching shared code. Without them: `rg`, tests, logs, runtime probes.
 
 ## Phase 4: Probe one variable at a time
 
-Each probe maps to one Phase 3 prediction. Tag every temporary log with a unique prefix, e.g. `[DEBUG-a4f2]`, so cleanup is one grep. Prefer a debugger or REPL breakpoint over ten logs; never "log everything and grep".
+Each probe maps to one Phase 3 prediction. Record each falsified hypothesis and each failed fix as one line in `MEMORY.md` (drafted in `SESSION.md` under safe-code) so no one re-runs them. Tag every temporary log with a unique prefix, e.g. `[DEBUG-a4f2]`, so cleanup is one grep. Prefer a debugger or REPL breakpoint over ten logs; never "log everything and grep".
 
 ## Phase 5: Fix at the correct seam
 
@@ -42,8 +45,9 @@ Write the regression test **before** the fix, at a seam where the test exercises
 ## Cleanup gate (before declaring done)
 
 - [ ] the original repro no longer reproduces (run it, do not assume);
-- [ ] the regression test passes, or the absence of a seam is documented;
+- [ ] the regression test was seen failing without the fix (bypass the fix in place -> red -> restore; no destructive git in a shared checkout — the safe-code skill's `references/multi-session.md`, Shared-checkout rules) and passes with it, or the absence of a seam is documented — a test never seen red proves nothing;
 - [ ] `grep -rn "\[DEBUG-" <src>` is empty and throwaway harnesses are deleted;
+- [ ] cleanup closes only the windows, tabs, daemons, and locks this task opened — never the user's; a stale lock is removed only after proving no live process owns it;
 - [ ] the winning hypothesis is stated in the commit message so the next debugger learns.
 
 ## Output

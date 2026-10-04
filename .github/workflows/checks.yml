@@ -13,3 +13,25 @@ jobs:
       - uses: actions/checkout@v4
       - name: Assert version agrees across SKILL.md + README + examples
         run: bash scripts/check-version.sh
+
+  privacy-lint:
+    name: check-privacy (shipped files stay generic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No personal paths, emails, or token shapes in shipped files
+        run: bash scripts/check-privacy.sh
+
+  script-tests:
+    name: script fixtures (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: check.sh / migrate.sh / save-reminder.sh fixture tests
+        # macOS runs the stock /bin/bash (3.2), the floor the scripts support
+        run: |
+          if [ "$RUNNER_OS" = macOS ]; then /bin/bash tests/scripts/run.sh -v; else bash tests/scripts/run.sh -v; fi
