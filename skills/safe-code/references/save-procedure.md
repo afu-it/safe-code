@@ -150,6 +150,7 @@ During work, draft updates in `SESSION.md`. Apply them to persistent docs only o
 | `.safe-code/context/project-overview.md` | Evidence-backed product/project facts | Yes |
 | `.safe-code/context/architecture.md` | Evidence-backed stack, boundaries, invariants | Yes |
 | `.safe-code/context/user-preferences.md` | User-approved preferences, hard dislikes, recurring instructions | Yes |
+| `.safe-code/context/modules/<module>.md` | Module notes: new note for a module worked in without one; refresh + `synced: <HEAD>` re-stamp for every module this run edited (`references/deep-read.md`, Keeping notes true) | Draft during work; write on save (setup: written immediately) |
 | `.safe-code/context/user-preferences.local.md` | Personal `## Git Identity` / `diary_path` (team mode: never the shared file) | Yes — on disk only, gitignored, never committed |
 | `.safe-code/context/code-standards.md` | Verified conventions | Yes |
 | `.safe-code/context/ai-workflow-rules.md` | Workflow rules discovered from repo/team docs | Yes |

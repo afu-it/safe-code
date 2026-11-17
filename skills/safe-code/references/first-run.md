@@ -27,6 +27,7 @@ Rules:
 - Foreign dirty paths (`git status --porcelain` entries no task explains — another session's or the user's uncommitted work): read the committed version (`git show HEAD:<path>`), or tag a claim drawn from the working copy `[inferred: uncommitted foreign change]`. Never present someone's half-done edit as an established fact.
 - Still draft *this session's* ongoing changes in `SESSION.md`; First-Run Population is about seeding empty context, not about live edits.
 - A codegraph index built this run (Step 3f) is a source, not a shortcut: draw the Navigation map and entry points from `codegraph files` / `explore`, tag them `[extracted: codegraph <subcommand> <arg>]`, and still open the files a claim rests on.
+- Module notes are part of setup: after the files above, write `.safe-code/context/modules/<module>.md` for the most depended-on modules within the cap, and one Navigation-map line per module (`references/deep-read.md`, Part 2). Unread modules are listed `not read yet`, never described from their names.
 - After populating, run the **Context Self-Test** to verify the brain is sufficient; fill or flag any gaps it finds.
 
 ### Setup-adopt: what differs

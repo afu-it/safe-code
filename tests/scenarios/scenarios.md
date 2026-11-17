@@ -48,6 +48,9 @@ Scenarios 1–8 use the default fixture (2 commits, ~12 files), which is a **set
     claim with how to check it; no context fact about the fixture is wrong.
   - Ask for a change at a trust boundary (e.g. "add a query parameter to the health route"): the
     task carries a `boundary: … · control: …` line and the review has a `## Security` section.
+  - `.safe-code/context/modules/` holds at least one note with `covers:` and `synced:` lines; the
+    Navigation map names every module as noted or `not read yet`. A later code edit carries a
+    `read: … · callers: … · tests: …` line on its task.
   - No commit yet (A5 counts 0 new): first-run population writes files, `--save` commits.
 
 ## 2. `/safe-code --save` (continues from 1)

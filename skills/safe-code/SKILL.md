@@ -65,7 +65,8 @@ A stamp never covers an unfilled template placeholder (fill, delete, or make it 
         invariants, Navigation map) · user-preferences.md · code-standards.md ·
         ai-workflow-rules.md · ui-context.md (created on first UI work) · progress-tracker.md (phase,
         goal, decisions) · current-issues.md (issue tracker; local-only, gitignored) ·
-        feature-specs/00-template.md (+ <NN>-<name>.md specs with a status: field)
+        feature-specs/00-template.md (+ <NN>-<name>.md specs with a status: field) ·
+        modules/<module>.md (deep note per module; read on demand)
 ```
 
 `AGENTS.md` + `.safe-code/` are the single source of truth for every agent: continuity belongs to the project, not the tool. Never store session/context docs in `.codex/`, `.claude/`, `.cursor/`, `.windsurf/`, or `.agents/`; such a folder is legacy **only when it holds safe-code session files** — `.agents/skills/`, real subagents in `.claude/agents/`, and bridge pointers are the user's and never moved.
@@ -106,6 +107,10 @@ The session's **first** reply starts with one banner line: `[safe-code: brain lo
 **Verify-First Rule (never guess; every run mode).** A claim an edit, a decision, or the user's next step depends on rests on something checked **this session**: the code read, a `codegraph` / `rg` result seen, a command run, or — outside the repo (library or API behaviour, versions, service limits) — the installed source or the official docs. The brain, a filename, and memory of similar projects are leads: they say where to look; the code says what is true. Cannot check -> say `unverified: <claim> — <how to check>`, ask or park (`[p]`); never fill the gap with a plausible value or build on an `unverified:` item.
 
 > **Layer 3 Trigger:** Before relying on a claim about something outside the repo, read `references/verification.md` (Verify-First).
+
+**Read-Before-Touch Rule (every run mode).** Before editing a file, read all of it, the callers of each symbol being changed (`codegraph callers` / `impact`, confirmed with `rg`), the tests that cover it, and its module note (`.safe-code/context/modules/`); record `read: <files> · callers: <n> · tests: <which>` on the task. Notes are written at setup, and written or refreshed at `--save` for modules this run worked in.
+
+> **Layer 3 Trigger:** Before the first code edit of a run, and when writing or refreshing module notes (setup, `--save`), read `references/deep-read.md`.
 
 ## Command Recognition (Read Before Parsing Any Command)
 
@@ -185,9 +190,7 @@ Stage **only paths this run touched** — every `files:` annotation in `SESSION.
 
 > **Layer 3 Trigger:** Before staging anything while another session may share the checkout, read `references/multi-session.md` (Staging only this run's paths).
 
-**Local-Only Brain.** `git check-ignore -q --no-index .safe-code/` or `git check-ignore -q --no-index .safe-code/context/` succeeds -> the brain is **local-only** (the second form catches `.safe-code/*`; `--no-index` catches an ignored-but-tracked brain). Ignoring only per-developer session files (e.g. `SESSION.md`) is team mode. Still tracked (`git ls-files .safe-code` non-empty) -> print `git rm -r --cached .safe-code` (never run it). `--save` on a local-only brain writes all six files on disk, commits code and scaffold only, and the `Brain:` line adds `local-only (gitignored)`. Whenever `.safe-code/` is untracked or ignored, `--save` backs up each session file to `.safe-code/backups/` and re-counts lines: a file that shrank by more than half with no task explaining it -> stop, restore, report. This paragraph is the one home of the detection; `save-reminder.sh` and `check.sh` implement it.
-
-**Retro Rule.** At `--save`, each thing that made *the agent* slower or wronger (navigation, checks, standards, AGENTS.md bloat, tool economy, no-ops, information access) becomes one `retro: <category> — <one line>` in `BACKLOG.md`; a clean run writes nothing.
+**Local-Only Brain.** `git check-ignore -q --no-index .safe-code/` or `git check-ignore -q --no-index .safe-code/context/` succeeds -> the brain is **local-only** (the second form catches `.safe-code/*`; `--no-index` catches an ignored-but-tracked brain). Ignoring only per-developer session files (e.g. `SESSION.md`) is team mode. Still tracked (`git ls-files .safe-code` non-empty) -> print `git rm -r --cached .safe-code` (never run it). `--save` on a local-only brain writes all six files on disk, commits code and scaffold only, and the `Brain:` line adds `local-only (gitignored)`. Whenever `.safe-code/` is untracked or ignored, `--save` backs up each session file to `.safe-code/backups/` and re-counts lines: a file that shrank by more than half with no task explaining it -> stop, restore, report.
 
 **Save Bridge Rule.** `## Save Bridge` with `diary_path: <absolute path>` in `user-preferences.md` (or `.local.md`, which wins) -> after the commits, append **one** dated block (project, `plain:` recap, hashes, `next_action`). Never create (absent -> `Save bridge: skipped (file not found)`), read, or commit it; no secrets or raw output; outside the Six-File rule.
 
@@ -282,7 +285,7 @@ Create only the scaffold needed for safe operation before reading the codebase; 
 - **First run** (empty scaffold): populate evidence-derivable files immediately (First-Run Population); later runs draft in `SESSION.md`.
 - **Existing Project Backfill.** The repo is the source of truth: backfill context from evidence only, unverifiable facts to Open Questions, specs only for upcoming work, active bugs, refactors, or missing docs (new ideas `status: suggested`); never fake historical specs.
 
-**Team mode.** A git project whose brain is not local-only, with more than one person in the last 90 days (people, not addresses: `.mailmap`, shared name/email/GitHub login merge identities; minor one-off identities ignored — rule in `references/team-mode.md`, computed by `scripts/check.sh`) or `team: on|off` in `user-preferences.md` -> banner `Team: on (N authors, 90d)`. All six files are still written every save; only what is committed changes. Personal values (`## Git Identity`, `diary_path`) go in the gitignored `.safe-code/context/user-preferences.local.md`, which overrides `user-preferences.md`.
+**Team mode.** A git project whose brain is not local-only, with more than one person in the last 90 days (people, not addresses — rule in `references/team-mode.md`, computed by `scripts/check.sh`) or `team: on|off` in `user-preferences.md` -> banner `Team: on (N authors, 90d)`. All six files are still written every save; only what is committed changes. Personal values (`## Git Identity`, `diary_path`) go in the gitignored `.safe-code/context/user-preferences.local.md`, which overrides `user-preferences.md`.
 
 > **Layer 3 Trigger:** When team mode is on, differs from the `.gitignore` state, or `user-preferences.md` sets `team:`, read `references/team-mode.md`.
 
@@ -328,7 +331,7 @@ status = "completed"        -> Layer 1 only; light: report status, do the user's
 status = "none" or no block -> Layer 1 only; start setup/orientation
 ```
 
-`fresh pass` / `fresh setup` / `ignore saved state` -> no auto-continue; record it in `SESSION.md`.
+Fresh-pass phrases -> no auto-continue; record it in `SESSION.md`.
 
 **2c. Create or Update Task List** before Step 3, from the run mode's checklist (Light or Default above). Fresh run -> that list. Auto-continue or `--continue` -> merge in `ACTIVE.md Last Session.pending` **and** any work `SESSION.md` still holds from an unsaved session (`--continue`) — never overwrite it. `--save` -> unfinished items to `ACTIVE.md pending`, `next_action` = first unfinished task.
 
@@ -438,7 +441,7 @@ Helpers never make broad changes because `/safe-code` ran: findings feed `SESSIO
 
 ## Step 4: Audit Dead Code (setup and audit runs)
 
-> **Layer 3 Trigger:** Load `MEMORY.md` now if not already loaded — skip if it was scaffolded this session (still an empty template).
+> **Layer 3 Trigger:** Load `MEMORY.md` now (skip an empty template scaffolded this session).
 
 `$codebase-pruner` in `Audit` mode, per Profile Effects (findings-only on a setup run). Nothing is deleted or modified here.
 
@@ -495,7 +498,7 @@ Mode B approval unobtainable this session (autonomous or non-interactive) -> do 
 
 > **Layer 3 Trigger:** Before running Smoke-Verify, read `references/verification.md` (Smoke-Verify, Test Runs, Exit Status).
 
-Verification fails or a regression appears -> `$debug-issue` on the symptom before asking the user. First triage is environmental: another process, agent, worktree, or tool on the same branch, database, port, or session? A fresh worktree with red tests -> check the gitignored env files `AGENTS.md` lists first.
+Verification fails or a regression appears -> `$debug-issue` on the symptom before asking the user. A fresh worktree with red tests -> check the gitignored env files `AGENTS.md` lists first.
 
 ## Step 8: Final Summary
 

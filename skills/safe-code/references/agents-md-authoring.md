@@ -166,7 +166,7 @@ Native hosts run listed commands as a contract, so every line carries its proof:
 ## Brain Budget
 
 The brain is read every session: `AGENTS.md` ≤ ~120 lines; `.safe-code/context/*.md` ≤ ~300
-lines in total (`current-issues.md`, `user-preferences.local.md`, `feature-specs/` excluded); a
+lines in total (`current-issues.md`, `user-preferences.local.md`, `feature-specs/`, `modules/` excluded); a
 nested package `AGENTS.md` ≤ ~40 lines (`references/monorepo.md`).
 
 - One fact per line, so a fact can be pruned or merged without touching its neighbours.
