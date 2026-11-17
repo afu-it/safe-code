@@ -46,6 +46,8 @@ lean on long runs.
 - **Subagent-eligible:** `$explore-codebase`, `$codebase-pruner` Audit mode, the Step 4b
   config scan, the Context Self-Test, `$review-changes` analysis, and on setup-adopt the
   memory-import read and the history mining (`references/adopt.md`; findings return as drafts).
+- **Bulk reads** (also subagent-eligible): the module-note reads at setup and on `--audit`
+  (`references/deep-read.md`), one subagent per module.
 - **Inline-only** (writes or session state): `$safe-refactor-code`, `$codebase-pruner`
   Execute mode, `$debug-issue` fixes, all doc/session updates.
 
@@ -64,3 +66,28 @@ Rules:
    inline.
 6. No subagent support -> run helpers inline exactly as before — outcomes must not depend on
    subagent availability.
+
+### Model tiers (bulk reads only)
+
+Reading many files to summarise them is high-volume, low-judgement work. When the host lets the
+agent choose a model per subagent, bulk reads run on a cheaper, faster tier and the main model
+keeps the judgement.
+
+1. **Which model.** `user-preferences.md` may name it: `- bulk-read-model: <model name or alias
+   as this host spells it>` (per-developer values go in `user-preferences.local.md`). Not set ->
+   use the host's own "smaller / faster" tier when it exposes one by a stable alias; never guess
+   a model name, never pick one from memory of a provider's line-up. No way to choose, or the
+   host or user pins subagent models -> subagents inherit the session model; say so once
+   (`Bulk reads: session model (host does not offer a tier)`).
+2. **What may go down a tier.** Only read-and-summarise work: module-note reads, the adopt
+   memory-import read, history mining, `$explore-codebase` orientation. Never the Context
+   Self-Test grading, `$review-changes` (incl. the Security axis), dead-code classification,
+   debugging, a security audit, or any write.
+3. **The main model checks the result.** For each returned note: every technical line has an
+   evidence tag; open at least three cited `path:line` pointers per note (all of them when the
+   note has fewer) and confirm they say what the note claims. One wrong pointer -> that note is
+   rejected and re-read on the session model. More than a third of a batch rejected -> stop
+   using the cheaper tier for this run.
+4. **Stamp it.** A note read on another tier records it: `read: full · by: <model>`. A lower-tier
+   note is a lead like any other; Read-Before-Touch still reads the real code before any edit.
+5. Report one line: `Bulk reads: <n> on <model> · <n> re-read on session model`.

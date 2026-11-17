@@ -48,6 +48,7 @@ Parked:    <none | each `[p]` task with what approval it waits for — open, not
 Abandoned: <none | each `[!]` task with its reason — a run with one is never "complete">
 Requested: <n/n rows observed | none declared>
 Modules:   <n> noted · <n> stale · <n> not read yet   (omit when the project has no module notes)
+Bulk reads: <n> on <model> · <n> re-read on session model | session model (<why>)   (omit when no bulk read ran)
 Unverified: <none | each `unverified:` claim with how to check it — nothing was built on these>
 Out-of-scope touches: <none | this run's unclaimed files — config, hooks, skill or agent files first | foreign: <paths> (not this run's; never reverted)>
 Follow-up saved for next `/safe-code --continue`: <list>

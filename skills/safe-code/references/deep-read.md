@@ -49,7 +49,7 @@ Shape (≤ ~40 lines, one fact per line):
 ```md
 # <module>
 covers: <paths or globs>
-synced: <short-sha> · <date> · read: <full | partial (<what was not read>)>
+synced: <short-sha> · <date> · read: <full | partial (<what was not read>)> [· by: <model>]
 
 ## Purpose
 <one or two lines: what it is for, who calls into it>
@@ -87,6 +87,9 @@ knows is an Open Question until they answer it (`[user-confirmed: <date>]`).
 - **Later runs**: a task that works in a module with no note has just read it (Part 1) — draft
   its note in `SESSION.md ## Drafts`, written on `--save`. Coverage grows where the work is.
 - `read: partial` is allowed and honest; a note never claims more than was read.
+- Reading for notes is bulk work: with subagent support, one read-only subagent per module, on
+  the host's cheaper tier when it offers one (`references/audit-checks.md`, Model tiers). The
+  main model checks each returned note against the code before it is written.
 
 ### Keeping notes true
 
