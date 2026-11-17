@@ -4,14 +4,76 @@
 
 [![version](https://img.shields.io/badge/version-5.1-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#host-support)
+[![pushes](https://img.shields.io/badge/pushes-never-orange?style=flat-square)](#safety-guarantees)
+[![network calls](https://img.shields.io/badge/network%20calls-none-lightgrey?style=flat-square)](#requirements--privacy)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
 
-safe-code is an agent skill. It gives your project one `AGENTS.md` entry point and one `.safe-code/` folder that every coding agent reads the same way, so a new chat starts where the last one stopped instead of re-scanning the repo or guessing.
+Every new chat, a coding agent starts from zero. It scans the repo again, fills the gaps with a plausible guess, and edits a file it has only half read.
 
-- **Memory that checks itself.** Each important fact in the context files is tagged with the file or command it came from; anything that can't be proven is recorded as an Open Question. After writing the context, a closed-book self-test checks that it can answer the basics a new agent asks. Commands in `AGENTS.md` carry the commit they last ran green at. The brain is stamped with a git commit, checked for drift on every run, and kept within a line budget.
-- **Briefs your agent automatically at session start.** With the optional Claude Code hook, every new session opens with a short brief (what the project is, the next action, open questions, a stale-brain warning), and you see a one-line reminder only when the last session left work unsaved.
-- **Safe with other agents and teammates in the same repo.** It never pushes, never reverts changes another session made, and stages only the paths its own run touched. In a shared repo, the brain is committed and each developer's session files stay local. Every deletion gets a restore pointer in a restore log.
-- **Careful cleanup, when you ask for it.** `/safe-code --audit` runs dead-code audits with evidence, refactors with impact checks, a review that checks your standards and the spec separately, and atomic local commits. A normal run only resumes your work.
+safe-code is an agent skill that stops that. It gives your project one `AGENTS.md` and one `.safe-code/` folder that every agent reads the same way, so a new chat starts where the last one stopped.
+
+```bash
+npx skills add afu-it/safe-code
+```
+
+Then type `/safe-code` in your agent. That is the whole setup.
+
+| Without safe-code | With safe-code |
+|---|---|
+| Every new chat re-scans the repo | Starts from a written brain, checked against the current commit |
+| Gaps are filled with a plausible guess | Reported as `unverified:` with how to check it; nothing is built on it |
+| A file is edited after reading part of it | The whole file, its callers, and its tests are read first |
+| Security is looked at later, if at all | The check that stops misuse is named before the code is written |
+| Cleanup deletes and hopes | Every removal has a restore pointer, and nothing is ever pushed |
+
+**Contents:** [About](#about) · [Install](#install) · [Quick start](#quick-start) · [What you'll see](#what-youll-see) · [How it works](#how-it-works) · [Safety](#safety-guarantees) · [Host support](#host-support) · [What it writes](#what-it-writes-in-your-project) · [What's New](#whats-new) · [Tutorials](#tutorials)
+
+---
+
+## About
+
+safe-code is one orchestrator skill plus seven small helper skills. It is plain text and three bash scripts: no service, no account, no API key, and no network calls of its own. It works in any project and with any agent that loads skills.
+
+It is built for people who work with coding agents every day and are tired of two things: explaining the project again in every chat, and finding out later that the agent guessed.
+
+What it does, in the order you will notice it:
+
+- **Remembers the project.** One brain that every agent reads. Each fact is tagged with the file or command it came from; what cannot be proven is recorded as an Open Question. After writing the brain, a closed-book self-test checks it can answer what a new agent asks.
+- **Knows the code, area by area.** With the optional code graph, the first run maps the project and writes a short note per module: entry points, how it works, what must stay true, which tests cover it. Each note is stamped with the commit it was read at and marked stale when the code moves.
+- **Never guesses.** A claim that an edit or your next step depends on must be checked in this session: code read, search result seen, command run. What cannot be checked is listed as `unverified:` with the way to check it.
+- **Reads before it touches.** Before an edit: the whole file, the callers of what changes, and the tests that cover it, recorded on the task.
+- **Builds security in.** Safe defaults before code touches outside input, a Security axis in review, and an optional hand-over to Cloudflare's `security-audit` skill when you ask for a full audit.
+- **Stays out of your way.** It never pushes, never reverts changes it did not make, and cleans up only when you ask (`--audit`), one verified slice at a time.
+
+<details>
+<summary><b>What a module note looks like</b> (from a test run on a small sample API)</summary>
+
+```md
+# server
+covers: src/index.ts, src/server.ts
+synced: af2de46 · 2026-11-17 · read: full
+
+## Entry points
+- src/server.ts:startServer — called once by src/index.ts with the port [extracted: src/index.ts:4]
+
+## How it works
+- exact `/health` -> healthRoute; prefix `/users` -> usersRoute; else 404 [extracted: src/server.ts:6-11]
+
+## Must stay true
+- `/health` is matched exactly, so `/health?x=1` falls through to 404 [extracted: src/server.ts:7]
+
+## Tests
+- none found — no test imports these files [extracted: codegraph affected src/server.ts]
+
+## Open questions
+- HTTP method is never checked (any method on `/users` gets the list) — intended?
+```
+
+</details>
+
+**Honest limits.** It does not memorise every line: the notes say where to look, and the code read in the session says what is true. No method makes code free of security mistakes; this one makes the common ones hard to write and says plainly what was not checked. The first setup is slower than in 5.0, because it builds the code graph and writes the module notes (about 60% longer in one test run on a small sample project).
+
+Maintained by [afu-it](https://github.com/afu-it). MIT licensed. Issues and ideas are welcome in [GitHub Issues](https://github.com/afu-it/safe-code/issues).
 
 ---
 
@@ -63,7 +125,10 @@ All paths inside project root. Proceeding.
 === safe-code v5.1 session complete ===
 Run: setup (adopt) · Coverage: ~85% · profile: Audit · mode: C
 Git: repo found | 214 commits | branch: main | Remote: none [Bucket C] | Save: local commit only; no push | Commits: pending — run /safe-code --save
+Graph: codegraph ready | files: 212 | nodes: 1840 | edges: 3105
 Brain: 186 lines (budget 300)
+Modules: 9 noted · 0 stale · 3 not read yet
+Unverified: none
 context_selftest: 9/10 pass · 0 weak · 1 open · 0 fail · 4 commands re-verified (read-only), 0 stale, 1 manual (2026-10-04)
 Flagged: 2 dead-code candidates (findings only; nothing removed on a first run)
 Task list: 12/12 · Parked: none · Abandoned: none · Requested: none declared · Out-of-scope touches: none
@@ -84,6 +149,8 @@ Run: light · profile: n/a · mode: n/a · hygiene pass skipped (light run; /saf
 Git: repo found | 231 commits | branch: main | unpushed: 2 | Save: local commit only; no push | Commits: pending — run /safe-code --save
 Brain: 192 lines (budget 300) · Team: on (3 authors, 90d)
 Smoke: passed (npm test) · covers: 142 unit tests (known total 142) · env: repo root, node, exit 0
+Modules: 9 noted · 1 stale · 3 not read yet
+Unverified: export of 50k+ rows — check: run it against a full-size dataset
 Task list: 5/5 · Out-of-scope touches: foreign: docs/notes.md (not this run's; never reverted)
 Run /safe-code --save to commit and close this session.
 ```
@@ -102,7 +169,7 @@ flowchart TD
     aud(["--audit"]) --> root
     root --> brain{"Brain exists?"}
     brain -- "no" --> kind{"Existing code or history?"}
-    kind -- "no" --> fresh["Setup, fresh<br/>create AGENTS.md + .safe-code/<br/>fill context from repo evidence, then self-test it"]
+    kind -- "no" --> fresh["Setup, fresh<br/>create AGENTS.md + .safe-code/<br/>build the code graph, fill context from repo evidence<br/>write module notes, then self-test it"]
     kind -- "yes" --> adopt["Setup, adopt<br/>same, plus import existing agent notes and git history<br/>originals never changed"]
     fresh --> findings["Findings-only audit<br/>nothing removed on a first run"]
     adopt --> findings
@@ -114,7 +181,7 @@ flowchart TD
     plan -- "A, or B approved" --> remove["Remove one slice at a time, verify each<br/>restore pointer per removal"]
     plan -- "C" --> banner
     remove --> verify
-    light --> verify["Review + smoke-verify when code changed<br/>draft doc updates"]
+    light --> verify["Read before each edit: file, callers, tests<br/>review + smoke-verify when code changed<br/>draft doc updates"]
     verify --> banner
     findings --> banner["Final banner<br/>re-measured counts, foreign changes, unpushed"]
     banner -. "when you are done" .-> save
@@ -203,11 +270,16 @@ your-project/
         ├── ui-context.md        # created when UI work starts
         ├── progress-tracker.md  # Open Questions + commit freshness stamp + self-test result
         ├── current-issues.md    # shared issue tracker; local-only, gitignored
+        ├── modules/             # one deep note per module, stamped with the commit it was read at
+        │   └── <module>.md
         └── feature-specs/
             └── 00-template.md
 ```
 
-Setup adds three `.gitignore` entries: `/.safe-code/context/current-issues.md`, `/.safe-code/backups/`, and `/.safe-code/.last-save`.
+Setup adds three `.gitignore` entries: `/.safe-code/context/current-issues.md`, `/.safe-code/backups/`, and `/.safe-code/.last-save`. A full security audit, when you ask for one, adds a fourth: `/.safe-code/security/`, where its reports stay (never committed).
+
+<details>
+<summary><b>Details: committed brain, team mode, local-only brain, monorepo, budgets</b></summary>
 
 - **Committed brain (default).** `.safe-code/` is committed, readable in a `git diff`, and shared by every agent and teammate.
 - **Team mode.** Turns on by itself when the repo has more than one person in the last 90 days (bots don't count; several addresses of one developer count once; one-off identities are ignored), or set `team: on` / `team: off` in `user-preferences.md`. The shared brain is committed (`AGENTS.md`, `context/`, feature specs, `BACKLOG.md`); each developer's session files (`ACTIVE`, `SESSION`, `LOG`, `MEMORY`, `safe-refactor-code`) stay gitignored. The `team:` switch is read from the shared `user-preferences.md` only. The first team run prints the `.gitignore` lines and asks before adding them. The banner shows `Team: on (N authors, 90d)`.
@@ -217,6 +289,8 @@ Setup adds three `.gitignore` entries: `/.safe-code/context/current-issues.md`, 
 - **Feature specs** carry a `status:` (suggested / approved / in-progress / done / rejected / removed). New ideas land as `status: suggested`, so they stay referable; rejected ideas are matched by concept, not keyword, so they are not re-suggested.
 - **Preferences** you state strongly ("I prefer…", "never…", "always…") are drafted and saved to `user-preferences.md`. Personal values (your `## Git Identity` and the Save Bridge `diary_path`) go in `user-preferences.local.md`, which overrides it, is never committed, and is gitignored when created.
 - **`current-issues.md`** may hold secrets and raw logs, so it is never committed and never copied into committed files; a sanitized one-line summary of each fix goes to `LOG.md`.
+
+</details>
 
 ### Session brief + save reminder (optional hook)
 
@@ -248,7 +322,7 @@ bash "$S/migrate.sh"               # preview a legacy-layout migration (dry-run)
 bash "$S/migrate.sh" --apply       # move files into .safe-code/ (uses git mv when tracked)
 ```
 
-`check.sh` verifies `AGENTS.md` and `.safe-code/` exist, that bridges point at the brain, reports the brain size against its budget and the team-mode state, flags a stale `SESSION.md`, and **fails** (exit 1) only if `.safe-code/context/current-issues.md` was committed. `migrate.sh` moves only safe-code's own files from older layouts (`.codex/agents/`, v3 `.agents/` + root `context/`), never overwrites existing files, and leaves your real subagents and skills (`.claude/agents/`, `.agents/skills/`) where they are. `/safe-code` runs the same migration automatically.
+`check.sh` verifies `AGENTS.md` and `.safe-code/` exist, that bridges point at the brain, reports the brain size against its budget and the team-mode state, flags a stale `SESSION.md`, and **fails** (exit 1) only if `.safe-code/context/current-issues.md` or anything under `.safe-code/security/` was committed. `migrate.sh` moves only safe-code's own files from older layouts (`.codex/agents/`, v3 `.agents/` + root `context/`), never overwrites existing files, and leaves your real subagents and skills (`.claude/agents/`, `.agents/skills/`) where they are. `/safe-code` runs the same migration automatically.
 
 ---
 
