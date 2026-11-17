@@ -293,6 +293,10 @@ Map your whole project into a queryable code graph (powered by the external [cod
 
 If codegraph is not installed, safe-code asks once and remembers your answer. Say yes (under Claude Code this also auto-allows codegraph's read-only tools) and it runs, in order: `npm i -g @colbymchenry/codegraph` (no Node -> it prints the official installer for you), `codegraph install --target <this agent> --location global --yes` (wires the MCP server into only the agent you are using — a write outside your project, made only with your yes; an unknown agent gets the command printed instead), and `codegraph init`. Say no, or run headless, and it prints those commands and continues without the graph — an optional accelerator, never a requirement. The index lives in `.codegraph/` and is never committed. codegraph sends anonymous usage stats; turn them off with `codegraph telemetry off` or `DO_NOT_TRACK=1`. The old `--graphify` flag still works as an alias.
 
+When codegraph is already installed, you don't need to ask: the first `/safe-code` on a project builds the graph before it writes the brain, so the project summary starts from the real code map. (A project that already has a brain: run `/safe-code --codegraph` once.)
+
+safe-code also never guesses. Before it edits or tells you something you will act on, it checks in the current session: reads the code, looks it up in the graph, runs the command, or reads the official docs for anything outside your project. What it cannot check, it reports as `unverified:` with how to check it, and asks you.
+
 Build it once — after that it stays current: with the MCP server wired, the graph re-syncs on every file change; without it, every `/safe-code` run starts with `codegraph sync` (under a second). No manual rebuilds. The same graph powers dead-code audits, impact checks, and picking which tests to run.
 
 ## 11. Helper Skills

@@ -43,7 +43,7 @@ On suggest, install, or first use in a session, print once: "codegraph sends ano
 
 ## Build / freshness (Step 3f)
 
-- No `.codegraph/` (after consent) -> `codegraph init -y` from the project root (writes only `.codegraph/`). Who may init (SKILL.md Step 3f): `--codegraph`, and audit runs / targeted refactors with graph evidence in scope and the CLI installed — never a setup run unless the user asked for `--codegraph`.
+- No `.codegraph/` (after consent) -> `codegraph init -y` from the project root (writes only `.codegraph/`). Who may init (SKILL.md Step 3f): `--codegraph`; every setup run with the CLI installed (before First-Run Population, so the Navigation map and the self-test seeds come from the graph); audit runs / targeted refactors with graph evidence in scope. A light run with no graph evidence in scope never inits. A setup run with the CLI missing asks the one-time install question (interactive only); init failing or running long never blocks setup -> `Graph: unavailable`, manual scans.
 - `.codegraph/` exists -> `codegraph sync` (incremental, sub-second). After code edits in a run, `codegraph sync` again before any graph-based check.
 - `codegraph status` -> files, nodes, edges, languages for the Reasoning block and the Step 8 `Graph:` line. "Index is locked" from a crashed run -> `codegraph unlock`, then retry once.
 - Empty or failed -> `Graph: unavailable`; partial language coverage -> `Graph: partial`, graph findings for covered languages only, manual checks kept. Statuses use the Step 8 `Graph:` vocabulary (`ready | stale | unavailable | partial`; `references/final-banner.md`) everywhere.

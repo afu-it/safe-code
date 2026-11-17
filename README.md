@@ -1,8 +1,8 @@
-# safe-code v5.0
+# safe-code v5.1
 
 > **Project memory that checks itself, for every coding agent.**
 
-[![version](https://img.shields.io/badge/version-5.0-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-5.1-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#host-support)
 [![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
 
@@ -60,7 +60,7 @@ Session files: 6 created  ·  Legacy: none
 Imported: CLAUDE.md, .cursorrules, 3 ADRs linked (11 facts, 2 open questions)  ·  History: 200 commits read
 All paths inside project root. Proceeding.
 
-=== safe-code v5.0 session complete ===
+=== safe-code v5.1 session complete ===
 Run: setup (adopt) · Coverage: ~85% · profile: Audit · mode: C
 Git: repo found | 214 commits | branch: main | Remote: none [Bucket C] | Save: local commit only; no push | Commits: pending — run /safe-code --save
 Brain: 186 lines (budget 300)
@@ -79,7 +79,7 @@ you> /safe-code
 Saved safe-code session found; resuming automatically. Say "fresh pass" to ignore saved state.
 Pending: add CSV export to the reports page | Next: add CSV export to the reports page
 
-=== safe-code v5.0 session complete ===
+=== safe-code v5.1 session complete ===
 Run: light · profile: n/a · mode: n/a · hygiene pass skipped (light run; /safe-code --audit runs it)
 Git: repo found | 231 commits | branch: main | unpushed: 2 | Save: local commit only; no push | Commits: pending — run /safe-code --save
 Brain: 192 lines (budget 300) · Team: on (3 authors, 90d)
@@ -258,7 +258,7 @@ bash "$S/migrate.sh" --apply       # move files into .safe-code/ (uses git mv wh
 - **bash** for the bundled scripts and the session hook: macOS and Linux out of the box, Windows through Git Bash or WSL.
 - **git is optional.** Without git there is no rollback, so safe-code sets up the brain and runs plan-only: findings and drafts, no cleanup unless you approve it, and no commits.
 - **Any chat language.** Talk to your agent in the language you like; issue reports and cleanup asks are recognised in any language.
-- **codegraph is optional** (Node for `npm i -g @colbymchenry/codegraph`, or its official installer). Say yes once (under Claude Code this also auto-allows codegraph's read-only tools) and safe-code runs `npm i -g @colbymchenry/codegraph`, `codegraph install --target <this agent> --location global --yes`, and `codegraph init`. With the MCP server wired, the graph re-syncs on every file change; without it, safe-code runs `codegraph sync` at the start of every run.
+- **codegraph is optional** (Node for `npm i -g @colbymchenry/codegraph`, or its official installer). Say yes once (under Claude Code this also auto-allows codegraph's read-only tools) and safe-code runs `npm i -g @colbymchenry/codegraph`, `codegraph install --target <this agent> --location global --yes`, and `codegraph init`. With the MCP server wired, the graph re-syncs on every file change; without it, safe-code runs `codegraph sync` at the start of every run. When the CLI is already installed, the first `/safe-code` on a project builds the graph before it writes the brain.
 - **No network calls from safe-code.** Its scripts and the session hook run offline and send nothing anywhere; the brief is built from a few lines of your own files. The only optional tool, codegraph, sends anonymous usage stats; turn them off with `codegraph telemetry off` or `DO_NOT_TRACK=1`. When codegraph or the GitHub CLI is installed, safe-code may run their read-only checks (`codegraph upgrade --check`, `gh auth status`), which contact those services.
 
 ---
@@ -314,6 +314,8 @@ Remove the skill, then whatever it wrote into your projects. Nothing here is req
 ---
 
 ## What's New
+
+**v5.1** — the brain starts from the code graph, and nothing is guessed. When codegraph is installed, the first `/safe-code` on a project builds the graph before writing the brain (not installed -> it asks once, as before). New Verify-First Rule: a claim an edit or your next step depends on must be checked in this session (code read, graph or search result seen, command run, official docs for anything outside the repo); what cannot be checked is reported as `unverified:` with how to check it, never filled in.
 
 **v5.0** — light by default, briefed at session start, ready for teams. `/safe-code` on a project with a brain now only resumes; the hygiene pass moved to `/safe-code --audit` (or a cleanup ask). The optional session hook briefs the agent at session start and reminds you only when work is unsaved. Team mode commits the shared brain and keeps each developer's session files local; monorepos get one root brain plus optional package `AGENTS.md` files. Commands in `AGENTS.md` carry `verified:` stamps, the brain has a line budget, and `AGENTS.md` is the only default root output. Adding safe-code to an existing project now imports your existing agent notes and recent git history, read-only, and suggests a `safe-code/adopt` branch for the first commit. Upgrading from 4.x: see [CHANGELOG.md](./CHANGELOG.md).
 

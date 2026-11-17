@@ -41,6 +41,11 @@ Scenarios 1–8 use the default fixture (2 commits, ~12 files), which is a **set
   - `src/routes/health.ts` reported as a foreign / unexplained dirty path, not staged, not reverted (A1).
   - `.claude/agents/reviewer.md` appears in the config trust audit as a subagent, unchanged (A2).
   - The `.env.local` secret value appears nowhere in `.safe-code/` or `AGENTS.md` (A3).
+  - codegraph **installed**: `.codegraph/` is built during setup (before the context files are
+    written), self-gitignored, and the banner has a `Graph: codegraph ready` line. **Not installed**:
+    the install question is asked once (headless: commands printed, none run), setup still completes.
+  - No load-bearing claim without a check: the banner's `Unverified:` line is `none` or lists each
+    claim with how to check it; no context fact about the fixture is wrong.
   - No commit yet (A5 counts 0 new): first-run population writes files, `--save` commits.
 
 ## 2. `/safe-code --save` (continues from 1)

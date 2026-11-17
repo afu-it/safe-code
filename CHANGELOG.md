@@ -2,6 +2,16 @@
 
 Release history for the `safe-code` skill. The README's "What's New" shows only the latest releases; this file keeps them all.
 
+**v5.1** — the brain starts from the code graph, and nothing is guessed.
+
+- **Code graph at setup** — a setup run (fresh or adopt) with the codegraph CLI installed now runs `codegraph init -y` before First-Run Population, so the Navigation map, entry points, and self-test seed questions come from the graph as well as the files. CLI missing -> the one-time install question is asked on the setup run (interactive only; a recorded decline is never re-asked; headless prints the commands and runs none). Init failing or running long never blocks setup (`Graph: unavailable`, manual scans). Light runs still only `codegraph sync`; they never build an index unless graph evidence is in scope.
+- **Verify-First Rule (never guess)** — in every run mode, a claim an edit, a decision, or the user's next step depends on must rest on something checked in the current session: the code read, a `codegraph` / `rg` result seen, a command run, or — for anything outside the repo (library or API behaviour, versions, service limits) — the installed source or the official docs. The brain, a filename, and memory of similar projects are leads, not evidence. A claim that cannot be checked is reported as `unverified: <claim> — <how to check>`, asked or parked, and nothing is built on it. The final banner gains an `Unverified:` line. Detail and the per-claim table: `references/verification.md` (Verify-First).
+- **Also** — `SKILL.md` stays inside its 55,000-byte budget (repeated wording removed; no rule dropped).
+
+**Upgrading from 5.0**
+
+- A project that already has a brain is unaffected: the graph is built at setup only. Run `/safe-code --codegraph` once to build it for an existing project.
+
 **v5.0** — light by default, briefed at session start, ready for teams. Also the public-hardening release: fixes found in field use, written as generic rules for any project.
 
 - **Light runs by default; `--audit` for the hygiene pass** — `/safe-code` now has three run modes: **setup** (no brain yet: scaffold, fill the context from repo evidence, self-test it, then a findings-only audit; fresh or adopt, below), **light** (the default once a brain exists: load the brain, resume saved work or do the user's request — no dead-code audit, no config trust audit, no refactor sweep), and **audit** (`/safe-code --audit`, or a cleanup / dead-code / refactor / hygiene ask recognised in any language: everything in light plus the full pass). A targeted ask ("fix this bug", "rename X") stays light. Six commands: `/safe-code`, `--continue`, `--save`, `--explain`, `--audit`, `--codegraph` (`--graphify` is an alias). The final banner opens with `Run: <setup (fresh) | setup (adopt) · Coverage: ~N% | light | audit> · profile: … · mode: …`.

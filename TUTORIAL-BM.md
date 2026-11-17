@@ -293,6 +293,10 @@ Petakan seluruh projek anda jadi code graph yang boleh ditanya (dikuasakan oleh 
 
 Kalau codegraph tak dipasang, safe-code tanya sekali dan ingat jawapan anda. Kalau anda kata ya (dalam Claude Code ini juga benarkan tool read-only codegraph tanpa prompt), ia jalankan ikut turutan: `npm i -g @colbymchenry/codegraph` (tiada Node -> ia cetak installer rasmi untuk anda), `codegraph install --target <agent ini> --location global --yes` (sambung MCP server ke agent yang anda guna je — tulisan di luar projek, dibuat hanya dengan ya anda; agent yang tak dikenali dapat arahan dicetak je), dan `codegraph init`. Kalau anda kata tak nak, atau run headless, ia cetak arahan-arahan tu dan teruskan tanpa graph — ia pemecut pilihan, bukan keperluan. Index duduk dalam `.codegraph/` dan tidak pernah di-commit. codegraph hantar statistik penggunaan tanpa nama; matikan dengan `codegraph telemetry off` atau `DO_NOT_TRACK=1`. Flag lama `--graphify` masih jalan sebagai alias.
 
+Kalau codegraph dah dipasang, anda tak payah minta: `/safe-code` yang pertama pada sesuatu projek bina graph dulu sebelum tulis otak projek, jadi ringkasan projek bermula dari peta kod sebenar. (Projek yang dah ada otak: jalankan `/safe-code --codegraph` sekali.)
+
+safe-code juga tak pernah meneka. Sebelum ia ubah kod atau beritahu sesuatu yang anda akan ikut, ia semak dalam sesi semasa: baca kod, cari dalam graph, jalankan arahan, atau baca dokumen rasmi untuk benda di luar projek anda. Apa yang ia tak dapat semak, ia lapor sebagai `unverified:` bersama cara nak semak, dan tanya anda.
+
 Bina sekali sahaja — lepas tu ia sentiasa terkini: kalau MCP server dah disambung, graph sync semula setiap kali fail berubah; kalau tak, setiap run `/safe-code` mula dengan `codegraph sync` (bawah satu saat). Tak payah rebuild manual. Graph yang sama juga dipakai untuk audit dead code, semak impak, dan pilih test mana nak dijalankan.
 
 ## 11. Helper Skills

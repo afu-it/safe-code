@@ -2,7 +2,8 @@
 
 > Loaded on demand (Layer 3) when writing task check annotations, when closing a task on
 > test, scan, or smoke evidence, when running Smoke-Verify (Step 7), and before declaring a
-> previously working procedure broken. The binding rules — every task carries its check
+> previously working procedure broken, and before relying on a claim about something outside
+> the repo (Verify-First). The binding rules — every task carries its check
 > before work starts, a task closes on an observed effect, a timed-out or inconclusive run
 > never passes, a zero-hit scan counts only if it provably ran — live inline in SKILL.md;
 > this file holds the formats, the verdict rules, and the procedures.
@@ -78,6 +79,31 @@ as recorded** — same command, working directory, shell, and environment — be
 declared broken. Verifier artefacts are verifier findings, not product failures: a
 verifier's own timeout, a strict text match against output that changed wording, or a
 draft/sandbox path that reads different config than the real one.
+
+## Verify-First (what counts as checked)
+
+The rule (SKILL.md, Verify-First Rule): a claim an edit, a decision, or the user's next step
+depends on was checked this session. What counts, by kind of claim:
+
+| Claim | Counts as checked | Does not count |
+|---|---|---|
+| What this code does, where something lives | the file read this session; `codegraph` / `rg` output seen, then the hit opened | the brain alone, a filename, a similar project |
+| Who calls it, what breaks if it changes | `codegraph callers` / `impact`, confirmed with `rg` | "probably only used here" |
+| A command works | it ran this session with its exit status seen (or `verified:` in `AGENTS.md ## Commands` at the current `HEAD`) | it is in the README |
+| Library or API behaviour, a version, a limit | the installed source (`node_modules`, site-packages, vendored code) or the lockfile for versions; else the official docs fetched this session | training memory, a blog post, the newest version you remember |
+| Live state (what is deployed, production data, a remote setting) | a read-only probe the user allowed | anything inferred from the repo |
+| What the user wants or decided | the user's words this session, or `[user-confirmed: <date>]` in the brain | a guess at intent |
+
+- Order of work: read the brain for where to look, look, then act. Research comes before the
+  edit, never after a failed attempt.
+- Outside claims keep their source: URL + read depth (`full read`, `partial (sections …)`,
+  `keyword search (N lines)`); a keyword search alone is `[inferred]` (`references/source-of-truth.md`,
+  Evidence Rules). No network or no docs -> the claim is `unverified:`.
+- An `unverified:` line names the claim and the cheapest way to settle it. It goes in
+  `SESSION.md`, is asked or parked (`[p]`), and is listed on the Step 8 `Unverified:` line. Work
+  that would rest on it waits.
+- Proportion: this governs load-bearing claims, not every sentence. A typo fix needs the file
+  read, not a research pass.
 
 ## Scan Proof (zero-hit reference scans)
 

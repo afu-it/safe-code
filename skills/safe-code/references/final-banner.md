@@ -47,6 +47,7 @@ Task list: <done>/<total> complete; unfinished moved to <ACTIVE.md|BACKLOG.md|no
 Parked:    <none | each `[p]` task with what approval it waits for — open, not abandoned>
 Abandoned: <none | each `[!]` task with its reason — a run with one is never "complete">
 Requested: <n/n rows observed | none declared>
+Unverified: <none | each `unverified:` claim with how to check it — nothing was built on these>
 Out-of-scope touches: <none | this run's unclaimed files — config, hooks, skill or agent files first | foreign: <paths> (not this run's; never reverted)>
 Follow-up saved for next `/safe-code --continue`: <list>
 Worth asking next: <1–2 questions from Open Questions or audit findings — omit if none>

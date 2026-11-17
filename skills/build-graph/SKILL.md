@@ -18,7 +18,7 @@ Build or incrementally update the persistent code index (codegraph, `.codegraph/
 
 ## Workflow
 
-1. No `.codegraph/` -> `codegraph init -y` from the project root (full build) — only when invoked to build (`/safe-code --codegraph`, or Step 3f with graph evidence in scope); an existing index is synced, never re-initialised.
+1. No `.codegraph/` -> `codegraph init -y` from the project root (full build) — only when invoked to build (`/safe-code --codegraph`, a setup run, or Step 3f with graph evidence in scope); an existing index is synced, never re-initialised.
 2. `.codegraph/` exists -> `codegraph sync` (incremental). `full` argument, branch switch, or obviously wrong results -> `codegraph index` (full rebuild).
 3. "Index is locked" from a crashed run -> `codegraph unlock`, retry once.
 4. Verify with `codegraph status`: files, nodes, edges, languages, "Index is up to date".
