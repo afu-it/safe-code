@@ -105,6 +105,18 @@ else
 	info "examples.md: not found (skipped)"
 fi
 
+# ---- SKILL.md size budget (loaded on every run; CLAUDE.md, Architecture) ------
+MAX_BYTES=55000
+MAX_LINES=540
+BYTES="$(wc -c <"$SKILL" | tr -d ' ')"
+LINES_N="$(wc -l <"$SKILL" | tr -d ' ')"
+if [ "$BYTES" -le "$MAX_BYTES" ] && [ "$LINES_N" -le "$MAX_LINES" ]; then
+	pass "SKILL.md size: $BYTES bytes (max $MAX_BYTES), $LINES_N lines (max $MAX_LINES)"
+else
+	fail "SKILL.md size: $BYTES bytes (max $MAX_BYTES), $LINES_N lines (max $MAX_LINES) — move detail into references/"
+	FAILS=$((FAILS + 1))
+fi
+
 echo
 if [ "$FAILS" -eq 0 ]; then
 	printf "%sResult: OK%s — all version mentions agree on %s\n" "$C_OK" "$C_RST" "$SRC"

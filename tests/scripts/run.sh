@@ -278,7 +278,7 @@ commit
 run "$CHECK"
 t "check: complete brain -> exit 0" same "$RC" 0
 t "check: complete brain -> Result: OK" has "$LAST_OUT" '^Result: OK'
-t "check: hard checks counted in summary" has "$LAST_OUT" 'Summary: 1 hard check\(s\) passed'
+t "check: hard checks counted in summary" has "$LAST_OUT" 'Summary: 2 hard check\(s\) passed'
 
 # C2: committed current-issues.md -> exit 1
 printf '# issues\n' >.safe-code/context/current-issues.md
@@ -289,6 +289,19 @@ t "check: committed current-issues.md -> [FAIL] with git rm --cached hint" has "
 g rm -q --cached .safe-code/context/current-issues.md && g commit -qm untrack
 run "$CHECK"
 t "check: untracked + ignored current-issues.md -> exit 0" same "$RC" 0
+
+# C2b: committed security audit report -> exit 1
+mkdir -p .safe-code/security/run-1
+printf '# report\n' >.safe-code/security/run-1/REPORT.md
+g add -f .safe-code/security/run-1/REPORT.md && g commit -qm report
+run "$CHECK"
+t "check: committed .safe-code/security/ -> exit 1" same "$RC" 1
+t "check: committed .safe-code/security/ -> [FAIL] with git rm hint" has "$LAST_OUT" '\[FAIL\].*\.safe-code/security/ is COMMITTED.*git rm -r --cached'
+g rm -rq --cached .safe-code/security && g commit -qm untrack-report
+run "$CHECK"
+t "check: untracked security report, not ignored -> exit 0 + warn" has "$LAST_OUT" "add '/.safe-code/security/' to .gitignore"
+t "check: untracked security report -> exit 0" same "$RC" 0
+rm -rf .safe-code/security
 
 # C3: local-only paths
 touch .safe-code/.last-save

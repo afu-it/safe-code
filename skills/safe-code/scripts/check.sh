@@ -222,6 +222,16 @@ else
 		warn "add '/.safe-code/context/current-issues.md' to .gitignore"
 	fi
 fi
+# security audit reports must stay local (HARD) — they can describe unfixed holes
+HARD=$((HARD + 1))
+if is_git && [ -n "$(git ls-files .safe-code/security 2>/dev/null | head -n 1)" ]; then
+	fail ".safe-code/security/ is COMMITTED to git — audit reports may describe unfixed vulnerabilities. Run: git rm -r --cached .safe-code/security"
+else
+	[ -d .safe-code/security ] && pass ".safe-code/security/ present and not tracked"
+	if [ -d .safe-code/security ] && ! { [ -f .gitignore ] && grep -qE '(^|/)\.safe-code/security/?' .gitignore; }; then
+		warn "add '/.safe-code/security/' to .gitignore"
+	fi
+fi
 # brain tracking (advisory) — same detection as SKILL.md (Local-Only Brain):
 # .gitignore patterns name .safe-code/ or its context/ (--no-index, so a still-
 # tracked brain counts too; a .safe-code/* pattern catches both); a still-tracked
