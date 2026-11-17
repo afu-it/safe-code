@@ -187,7 +187,7 @@ What `--save` does, in order:
 Sample close-out:
 
 ```
-=== safe-code v5.1 session complete ===
+=== safe-code v5.1.1 session complete ===
 Run: audit · profile: Cleanup · mode: A
 Save: local commits only; no push
 Brain: 214 lines (budget 300)
@@ -234,7 +234,7 @@ What the run does:
   `known total`.
 
 ```
-=== safe-code v5.1 session complete ===
+=== safe-code v5.1.1 session complete ===
 Run: light · profile: n/a · mode: n/a   (hygiene pass skipped (light run; /safe-code --audit runs it))
 Git: repo found | Remote: <URL> [Bucket A] | Save: local commit only; no push | Commits: pending — run /safe-code --save
 Brain: 214 lines (budget 300)

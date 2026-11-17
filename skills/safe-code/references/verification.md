@@ -40,6 +40,48 @@ A task flips `[~]` -> `[x]` on an **observed effect** (file exists, endpoint ans
 named in the output), not on exit code 0 or a tool's own "success" line — tools have
 returned 0 with the job undone.
 
+## Predict, Then Compare
+
+`expect:` says what a pass looks like. A prediction says what the run will **show** — written
+before the command is run, so it cannot be bent to fit the result. A wrong prediction is the
+cheapest signal there is that the picture of the code is wrong, and it arrives before the
+wrong picture is built on.
+
+Before the **first** run of a check on code this task changed (and before running an existing
+suite ahead of an edit, when its result will guide the edit), add to the task:
+
+`predict: <what the output will show> · unchanged: <what must stay as it was>`
+
+- Concrete and falsifiable: "tests 9, fail 0; the 3 new cases named `name filter …` pass;
+  `test/format.test.mjs` untouched", "the new test fails with 200-instead-of-400 before the
+  fix", "`rg -c legacyFormat src` -> 0; `rg -c formatDate src` -> still 4". Never "it should
+  work".
+- Then run, and record `observed: <what it showed>` next to it.
+
+Compare the two:
+
+| Result | Then |
+|---|---|
+| Matches | Carry on. The task still closes on its `check:` / `expect:`, as before |
+| Differs, check failed | `surprise: <predicted> vs <observed>` — ordinary red; debug by `$debug-issue`, starting from the belief the prediction rested on |
+| Differs, check **passed** | `surprise:` all the same, and the more important kind: the change works for a reason that was not understood. Stop before the next edit. Find which belief was wrong (re-read the code it rested on, Read-Before-Touch), and only then continue |
+| Could not predict | Say `predict: none — <what is not understood yet>`. That is a reading gap: close it before the edit, or report it as `unverified:` |
+
+After a `surprise:`:
+
+- Never change the prediction to match, and never patch toward green without naming the wrong
+  belief. One line: `was wrong about: <belief> — true: <what the code does> [extracted: …]`.
+- The correction is a fact about the project: draft it into the module note (`Must stay true`
+  or `How it works`), and into `MEMORY.md` when it is a trap a later agent would walk into.
+- Two surprises on one task -> stop editing; re-read the module in full before a third run
+  (the same threshold family as the stall rule).
+
+Proportion: a docs-only, comment, or typo edit needs no prediction. A setup run with no code
+change needs none. One prediction per check run, not per file.
+
+Report on the Step 8 banner: `Surprises: <none | n — each as predicted vs observed, and what
+was learned>`.
+
 ## New Tests
 
 A new test counts as verification only after it has been **seen failing without the fix**:

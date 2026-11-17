@@ -2,6 +2,18 @@
 
 Release history for the `safe-code` skill. The README's "What's New" shows only the latest releases; this file keeps them all.
 
+**v5.1.1** — a summary anyone can act on, and predictions that catch a wrong picture of the code early.
+
+- **Plain summary first.** Every run now opens its close-out with a few jargon-free sentences in the user's language: what happened, what it means for them, what needs them, and one next step. Bad news is in the first two sentences. The banner follows, unchanged — it stays the exact record. Rules in the new `references/plain-talk.md`: re-tell and never add, simpler not necessarily shorter, every path, command, and number copied exactly, everyday words, the user's language, flat prose. Adapted from the `bro` skill ([luchasarie/bro-skill](https://github.com/luchasarie/bro-skill), MIT); safe-code does not bundle or call it.
+- **`--explain` speaks the same way.** The briefing is short plain paragraphs instead of a labelled form. It still only re-tells the brain; a gap is named as a gap.
+- **Predict, then compare.** Before the first run of a check on changed code, the task records `predict: <what the output will show> · unchanged: <what must stay as it was>`, then `observed:`. A different result is a `surprise:` — including when the check passed for a reason that was not understood. The run stops, names the belief that was wrong (`was wrong about: … — true: …`), and drafts the correction into the module note. The prediction is never edited to fit, and the code is never patched toward green. Two surprises on one task -> re-read the module in full. Banner line: `Surprises:`. Detail in `references/verification.md` (Predict, Then Compare).
+- `SKILL.md` stays under its size cap (54,999 of 55,000 bytes): the additions were paid for by removing repeated wording, no rule dropped.
+
+**Upgrading from 5.1**
+
+- Nothing to migrate. `--explain` output changes shape (prose instead of five labelled lines); anything that parsed those labels should read the brain files instead.
+- Tasks that change code gain a `predict:` / `observed:` pair. Docs-only and setup runs are unaffected.
+
 **v5.1** — the brain starts from the code graph, every area gets a written note, nothing is edited unread, nothing is guessed, and security is checked where it matters.
 
 - **Code graph at setup** — a setup run (fresh or adopt) with the codegraph CLI installed now runs `codegraph init -y` before First-Run Population, so the Navigation map, entry points, and self-test seed questions come from the graph as well as the files. CLI missing -> the one-time install question is asked on the setup run (interactive only; a recorded decline is never re-asked; headless prints the commands and runs none). Init failing or running long never blocks setup (`Graph: unavailable`, manual scans). Light runs still only `codegraph sync`; they never build an index unless graph evidence is in scope.

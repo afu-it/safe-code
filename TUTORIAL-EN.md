@@ -280,7 +280,7 @@ Forgot what your own project does? Ask for a plain-language briefing:
 /safe-code --explain
 ```
 
-Plain phrases like "explain my project" work too. safe-code reads the project brain and tells you, in plain words, what the app does, the stack, where it's at, what's in progress, and any open questions. It makes no changes and no commits.
+Plain phrases like "explain my project" work too. safe-code reads the project brain and tells you, in plain words and short paragraphs (the way a friend would explain it), what the app does, the stack, where it's at, what's in progress, and any open questions. It makes no changes and no commits.
 
 ## 10b. Knowledge Graph (optional)
 

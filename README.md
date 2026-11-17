@@ -1,8 +1,8 @@
-# safe-code v5.1
+# safe-code v5.1.1
 
 > **Project memory that checks itself, for every coding agent.**
 
-[![version](https://img.shields.io/badge/version-5.1-teal?style=flat-square)](./skills/safe-code/SKILL.md)
+[![version](https://img.shields.io/badge/version-5.1.1-teal?style=flat-square)](./skills/safe-code/SKILL.md)
 [![works with](https://img.shields.io/badge/works%20with-Codex%20%7C%20Claude%20%7C%20Cursor%20%7C%20Windsurf-blue?style=flat-square)](#host-support)
 [![pushes](https://img.shields.io/badge/pushes-never-orange?style=flat-square)](#safety-guarantees)
 [![network calls](https://img.shields.io/badge/network%20calls-none-lightgrey?style=flat-square)](#requirements--privacy)
@@ -25,6 +25,7 @@ Then type `/safe-code` in your agent. That is the whole setup.
 | A file is edited after reading part of it | The whole file, its callers, and its tests are read first |
 | Security is looked at later, if at all | The check that stops misuse is named before the code is written |
 | Cleanup deletes and hopes | Every removal has a restore pointer, and nothing is ever pushed |
+| The report is a wall of terms | It opens with a few plain sentences: what happened, what needs you, what to do next |
 
 **Contents:** [About](#about) · [Install](#install) · [Quick start](#quick-start) · [What you'll see](#what-youll-see) · [How it works](#how-it-works) · [Safety](#safety-guarantees) · [Host support](#host-support) · [What it writes](#what-it-writes-in-your-project) · [What's New](#whats-new) · [Tutorials](#tutorials)
 
@@ -42,7 +43,9 @@ What it does, in the order you will notice it:
 - **Knows the code, area by area.** With the optional code graph, the first run maps the project and writes a short note per module: entry points, how it works, what must stay true, which tests cover it. Each note is stamped with the commit it was read at and marked stale when the code moves.
 - **Never guesses.** A claim that an edit or your next step depends on must be checked in this session: code read, search result seen, command run. What cannot be checked is listed as `unverified:` with the way to check it.
 - **Reads before it touches.** Before an edit: the whole file, the callers of what changes, and the tests that cover it, recorded on the task.
+- **Predicts, then compares.** Before running a check on changed code it writes down what the output will show. A different result, even a pass, means its picture of the code was wrong: it stops, finds the wrong belief, and writes the correction into the module note.
 - **Builds security in.** Safe defaults before code touches outside input, a Security axis in review, and an optional hand-over to Cloudflare's `security-audit` skill when you ask for a full audit.
+- **Talks like a person.** Every run opens with a plain summary in your language, and `/safe-code --explain` briefs you the same way. Paths, commands, and numbers stay exact.
 - **Stays out of your way.** It never pushes, never reverts changes it did not make, and cleans up only when you ask (`--audit`), one verified slice at a time.
 
 <details>
@@ -100,7 +103,7 @@ Works with Codex, Claude Code, Cursor, Windsurf, and 40+ other agents that load 
 | `/safe-code --continue` | Resume saved unfinished work explicitly |
 | `/safe-code --audit` | Full hygiene pass: dead-code audit, agent config trust audit, refactor sweep |
 | `/safe-code --save` | Finalize docs, update the six session files, commit locally (never pushes) |
-| `/safe-code --explain` | Read-only: explain the project back in plain language |
+| `/safe-code --explain` | Read-only: explain the project back in plain words, the way a friend would |
 | `/safe-code --codegraph [question]` | Build an optional code graph (codegraph), or ask it a question (read-only). `--graphify` still works as an alias |
 
 Forgot `--continue`? `/safe-code` detects saved unfinished work and resumes anyway. Asking for a cleanup, a dead-code hunt, or a refactor sweep in any language ("clean up the repo", "find dead code") starts the same pass as `--audit`; a targeted ask ("fix this bug", "rename X") stays a light run. In a project that already has `.safe-code/`, a bare flag (`--save`, `--continue`, `--audit`, `--explain`, `--codegraph`) is enough.
@@ -115,6 +118,12 @@ First run in an existing project:
 you> /safe-code
 [safe-code: no project brain — initializing now]
 
+Ok so, your project now has a memory: any coding agent that opens it will read the same
+notes instead of starting from zero. I read your existing CLAUDE.md, .cursorrules and the
+last 200 commits, and changed none of them. I found 2 pieces of code nothing seems to use
+and removed nothing. One thing only you can answer: is the staging deploy target still in
+use? Next: type /safe-code --save to keep all of this.
+
 Project root: my-app/  ·  safe-code folder: .safe-code/
 AGENTS.md: populated  ·  CLAUDE.md bridge: created
 context/: created, populated from repo evidence  ·  current-issues.md: gitignored
@@ -122,7 +131,7 @@ Session files: 6 created  ·  Legacy: none
 Imported: CLAUDE.md, .cursorrules, 3 ADRs linked (11 facts, 2 open questions)  ·  History: 200 commits read
 All paths inside project root. Proceeding.
 
-=== safe-code v5.1 session complete ===
+=== safe-code v5.1.1 session complete ===
 Run: setup (adopt) · Coverage: ~85% · profile: Audit · mode: C
 Git: repo found | 214 commits | branch: main | Remote: none [Bucket C] | Save: local commit only; no push | Commits: pending — run /safe-code --save
 Graph: codegraph ready | files: 212 | nodes: 1840 | edges: 3105
@@ -144,13 +153,14 @@ you> /safe-code
 Saved safe-code session found; resuming automatically. Say "fresh pass" to ignore saved state.
 Pending: add CSV export to the reports page | Next: add CSV export to the reports page
 
-=== safe-code v5.1 session complete ===
+=== safe-code v5.1.1 session complete ===
 Run: light · profile: n/a · mode: n/a · hygiene pass skipped (light run; /safe-code --audit runs it)
 Git: repo found | 231 commits | branch: main | unpushed: 2 | Save: local commit only; no push | Commits: pending — run /safe-code --save
 Brain: 192 lines (budget 300) · Team: on (3 authors, 90d)
 Smoke: passed (npm test) · covers: 142 unit tests (known total 142) · env: repo root, node, exit 0
 Modules: 9 noted · 1 stale · 3 not read yet
 Unverified: export of 50k+ rows — check: run it against a full-size dataset
+Surprises: none
 Task list: 5/5 · Out-of-scope touches: foreign: docs/notes.md (not this run's; never reverted)
 Run /safe-code --save to commit and close this session.
 ```
@@ -389,11 +399,11 @@ Remove the skill, then whatever it wrote into your projects. Nothing here is req
 
 ## What's New
 
+**v5.1.1** — a summary anyone can act on, and predictions that catch a wrong picture early. Every run opens with a few plain sentences in your language (what happened, what needs you, what to do next) above the exact banner, and `--explain` briefs you the same way; the writing rules are adapted from the `bro` skill. Before running a check on changed code, safe-code writes down what the output will show; a different result is a `surprise:` that stops the run until the wrong belief is found and written into the module note.
+
 **v5.1** — the brain starts from the code graph, and nothing is guessed. When codegraph is installed, the first `/safe-code` on a project builds the graph before writing the brain (not installed -> it asks once, as before). Before any edit it reads the whole file, its callers, and its tests (Read-Before-Touch), and it keeps a deep note per module in `.safe-code/context/modules/` that is refreshed as the code changes. Security is built in: safe defaults before code touches a trust boundary, a Security axis in review, and a hand-over to Cloudflare's optional `security-audit` skill for a full audit when you ask for one. New Verify-First Rule: a claim an edit or your next step depends on must be checked in this session (code read, graph or search result seen, command run, official docs for anything outside the repo); what cannot be checked is reported as `unverified:` with how to check it, never filled in.
 
 **v5.0** — light by default, briefed at session start, ready for teams. `/safe-code` on a project with a brain now only resumes; the hygiene pass moved to `/safe-code --audit` (or a cleanup ask). The optional session hook briefs the agent at session start and reminds you only when work is unsaved. Team mode commits the shared brain and keeps each developer's session files local; monorepos get one root brain plus optional package `AGENTS.md` files. Commands in `AGENTS.md` carry `verified:` stamps, the brain has a line budget, and `AGENTS.md` is the only default root output. Adding safe-code to an existing project now imports your existing agent notes and recent git history, read-only, and suggests a `safe-code/adopt` branch for the first commit. Upgrading from 4.x: see [CHANGELOG.md](./CHANGELOG.md).
-
-**v4.16** — verification gates, a rewritten `debug-issue`, a two-axis `review-changes`, and a slimmer core.
 
 Full notes and older releases: [CHANGELOG.md](./CHANGELOG.md).
 

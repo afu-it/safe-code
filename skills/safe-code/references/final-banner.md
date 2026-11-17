@@ -9,6 +9,10 @@ abandoned, `[p]` parked, or `[ ]`/`[~]` open task (except `Save final docs/conte
 `Identity + account guard` on a run with no commit) -> `=== safe-code v<version> session ended ·
 <n> abandoned · <n> parked · <n> open ===`.
 
+**Plain summary first.** Above the banner, in the user's language: what happened, what it means
+for them, what needs them, and one next step — `references/plain-talk.md`. It re-tells the banner
+and never replaces a line of it. Bad news goes in its first two sentences.
+
 **Compression** (Proportional Ceremony): on light, Orientation, and routine-resume runs omit lines
 whose value is `none`, `skipped: not in scope`, `skipped: routine resume`, or `not needed`. Always
 keep the header and the Run, Git/Remote/Save/Commits, Brain, and Task list lines.
@@ -50,6 +54,7 @@ Requested: <n/n rows observed | none declared>
 Modules:   <n> noted · <n> stale · <n> not read yet   (omit when the project has no module notes)
 Bulk reads: <n> on <model> · <n> re-read on session model | session model (<why>)   (omit when no bulk read ran)
 Unverified: <none | each `unverified:` claim with how to check it — nothing was built on these>
+Surprises: <none | n — each as predicted vs observed, and what was learned>   (omit when no prediction was made)
 Out-of-scope touches: <none | this run's unclaimed files — config, hooks, skill or agent files first | foreign: <paths> (not this run's; never reverted)>
 Follow-up saved for next `/safe-code --continue`: <list>
 Worth asking next: <1–2 questions from Open Questions or audit findings — omit if none>

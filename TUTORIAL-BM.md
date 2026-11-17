@@ -280,7 +280,7 @@ Lupa projek sendiri buat apa? Minta penerangan bahasa mudah:
 /safe-code --explain
 ```
 
-Ayat biasa macam "explain my project" atau "apa projek aku" pun jadi. safe-code baca otak projek dan beritahu anda, dalam bahasa mudah, app ni buat apa, stack-nya, status sekarang, apa yang tengah dibuat, dan soalan terbuka. Ia tidak ubah apa-apa dan tidak commit.
+Ayat biasa macam "explain my project" atau "apa projek aku" pun jadi. safe-code baca otak projek dan beritahu anda, dalam bahasa mudah dan perenggan pendek (macam kawan terangkan), app ni buat apa, stack-nya, status sekarang, apa yang tengah dibuat, dan soalan terbuka. Ia tidak ubah apa-apa dan tidak commit.
 
 ## 10b. Knowledge Graph (pilihan)
 

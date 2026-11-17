@@ -1,7 +1,7 @@
 ---
 name: safe-code
 description: "Use when asked to run a full repo hygiene pass, full cleanup, or to maintain a repo in one go — and whenever the user invokes /safe-code or any wrapper of it (/skill:safe-code, /skills safe-code, $safe-code, @safe-code, or bare safe-code), including --continue to resume saved work, --audit for the full hygiene pass, and --save to finalize docs and commit. Also use for first-time project setup, restoring project context or session memory, dead-code audits, or agent-config trust checks."
-version: "5.1"
+version: "5.1.1"
 ---
 
 # Safe Code
@@ -108,9 +108,9 @@ The session's **first** reply starts with one banner line: `[safe-code: brain lo
 
 > **Layer 3 Trigger:** Before relying on a claim about something outside the repo, read `references/verification.md` (Verify-First).
 
-**Read-Before-Touch Rule (every run mode).** Before editing a file, read all of it, the callers of each symbol being changed (`codegraph callers` / `impact`, confirmed with `rg`), the tests that cover it, and its module note (`.safe-code/context/modules/`); record `read: <files> · callers: <n> · tests: <which>` on the task. Notes are written at setup, and written or refreshed at `--save` for modules this run worked in.
+**Read-Before-Touch Rule (every run mode).** Before editing a file, read all of it, the callers of each symbol being changed (`codegraph callers` / `impact`, confirmed with `rg`), the tests that cover it, and its module note (`.safe-code/context/modules/`); record `read: <files> · callers: <n> · tests: <which>` on the task. Before the first check run on changed code, write `predict: <what it will show>`; a different result is a `surprise:` — stop, find the wrong belief, never patch toward green.
 
-> **Layer 3 Trigger:** Before the first code edit of a run, and when writing or refreshing module notes (setup, `--save`), read `references/deep-read.md`.
+> **Layer 3 Trigger:** Before the first code edit of a run, and when writing or refreshing module notes (setup, `--save`), read `references/deep-read.md`; before a `predict:`, `references/verification.md` (Predict, Then Compare).
 
 ## Command Recognition (Read Before Parsing Any Command)
 
@@ -158,9 +158,9 @@ Setup-adopt is read-only toward the user's files (originals never modified; impo
 
 Resume with full context — a light run. Legacy layout -> migrate before loading. Read `AGENTS.md`, Layer 2 in full, the active feature spec when resuming a feature, and `MEMORY.md` / `safe-refactor-code.md` only for audit/refactor/debug resumes.
 
-- **Unsaved work.** `SESSION.md` holds work (an `[~]` item, a done task annotated `files:`, or content under `## Drafts` — the save-reminder's definition) -> print `Unsaved work from the last session found in SESSION.md — merged into this run; /safe-code --save keeps it.` and MERGE its tasks and drafts into this run's list. Never overwrite or wipe it; only `--save` does.
+- **Unsaved work.** `SESSION.md` holds work (an `[~]` item, a done task annotated `files:`, or content under `## Drafts`) -> print `Unsaved work from the last session found in SESSION.md — merged into this run; /safe-code --save keeps it.` and MERGE its tasks and drafts into this run's list. Never overwrite or wipe it; only `--save` does.
 - **Probe pending items** before presenting them: one cheap probe per checkable item (`git log`, merge/PR state, the file it creates); close items already done, noting what closed each.
-- Never guess earlier context; saved state contradicting repo evidence -> trust the repo, record the mismatch in `SESSION.md`.
+- Saved state contradicting repo evidence -> trust the repo, record the mismatch in `SESSION.md`.
 
 ## Command: `/safe-code --save`
 
@@ -198,18 +198,10 @@ Stage **only paths this run touched** — every `files:` annotation in `SESSION.
 
 ## Command: `/safe-code --explain`
 
-Read the brain back in plain language. **Read-only: no edits, commits, save, helpers, Layer 3, or hygiene pass.**
+Read the brain back in plain language. **Read-only: no edits, commits, save, helpers, or hygiene pass; the one Layer 3 file is `references/plain-talk.md` — read it first.**
 
 1. `.safe-code/context/` missing or empty -> say there is no project brain yet, suggest `/safe-code`, stop.
-2. Otherwise load `project-overview.md`, `architecture.md`, `progress-tracker.md`, and `ACTIVE.md ## Last Session`, and brief — no jargon dumps, no raw file contents:
-
-```
-What it does:   <one or two sentences, and who it's for>
-Built with:     <stack in plain terms>
-Where it's at:  <current phase / what works now>
-In progress:    <Last Session pending + next_action when status: saved; else current goal / next up>
-Open questions: <unknowns from progress-tracker, if any>
-```
+2. Otherwise load `project-overview.md`, `architecture.md`, `progress-tracker.md`, and `ACTIVE.md ## Last Session`, and brief in short plain paragraphs (no form, no labels, no raw file contents): what it does and who it is for; what it is built with; where it stands; what is in progress (Last Session pending + next_action when `status: saved`, else the current goal); open questions.
 
 3. Brain conflicts with executable repo evidence -> trust the repo and say so briefly.
 
@@ -226,7 +218,7 @@ Open questions: <unknowns from progress-tracker, if any>
 
 ## Measure Twice, Cut Once Policy
 
-Reason explicitly before every action. Every run keeps a visible checklist in `SESSION.md ## Task List` — the working plan. HARD RULE: every file the run leaves behind is one a task claims and a later agent needs.
+Every run keeps a visible checklist in `SESSION.md ## Task List`. HARD RULE: every file the run leaves behind is one a task claims and a later agent needs.
 
 - Write the checklist before Step 3; update it after every major step. States: `[ ]` todo · `[~]` active · `[x]` done after the action **and** its verification · `[p]` parked · `[!]` abandoned.
 - New work becomes a new task, never invisible work; deferred work is drafted for `BACKLOG.md`. Never claim completion unless checklist, verification output, and summary agree; failed verification keeps `[~]`/`[ ]` with a note.
@@ -335,7 +327,7 @@ Fresh-pass phrases -> no auto-continue; record it in `SESSION.md`.
 
 **2c. Create or Update Task List** before Step 3, from the run mode's checklist (Light or Default above). Fresh run -> that list. Auto-continue or `--continue` -> merge in `ACTIVE.md Last Session.pending` **and** any work `SESSION.md` still holds from an unsaved session (`--continue`) — never overwrite it. `--save` -> unfinished items to `ACTIVE.md pending`, `next_action` = first unfinished task.
 
-**Request inventory.** When the user asked for anything beyond the bare command, list each independently omittable outcome and acceptance-changing constraint as a numbered row in `SESSION.md ## Requested`, mapped to the task that observes it. At Step 8 an unmapped or unobserved row blocks the completion claim. A bare `/safe-code` has no inventory.
+**Request inventory.** When the user asked for anything beyond the bare command, list each independently omittable outcome and acceptance-changing constraint as a numbered row in `SESSION.md ## Requested`, mapped to the task that observes it. At Step 8 an unmapped or unobserved row blocks the completion claim.
 
 ## Context Checkpoint Rule
 
@@ -502,17 +494,17 @@ Verification fails or a regression appears -> `$debug-issue` on the symptom befo
 
 ## Step 8: Final Summary
 
-Re-read the user's original request and re-measure every count at report time (removed, flagged, tasks, self-test score) — never carry a number from mid-run notes; a disagreement with the task list holds the banner until reconciled. Self-diff the run (`git status --porcelain` + untracked edits vs the task list): a changed file no task claims goes on `Out-of-scope touches:` (the agent's own config, hook, skill, or memory files first), and `rg -n '\[DEBUG-' .` must be empty. Changes this run did not make are `foreign` — **never reverted**, never staged; ask only if one blocks a task.
+Re-read the user's original request and re-measure every count at report time (removed, flagged, tasks, self-test score) — never carry a number from mid-run notes; a disagreement with the task list holds the banner until reconciled. Self-diff the run (`git status --porcelain` + untracked edits vs the task list): a changed file no task claims goes on `Out-of-scope touches:`, and `rg -n '\[DEBUG-' .` must be empty. Changes this run did not make are `foreign` — **never reverted**, never staged; ask only if one blocks a task.
 
-`complete` is earned: any `[!]`, `[p]`, `[ ]`, or `[~]` task (except the `Save final docs/context updates…` item, and `Identity + account guard` on a run with no commit) makes the header `=== safe-code v5.1 session ended · <n> abandoned · <n> parked · <n> open ===`. Light, Orientation, and routine-resume runs omit lines whose value is `none` / `skipped: …` / `not needed`.
+`complete` is earned: any `[!]`, `[p]`, `[ ]`, or `[~]` task (except the `Save final docs/context updates…` item, and `Identity + account guard` on a run with no commit) makes the header `=== safe-code v5.1.1 session ended · <n> abandoned · <n> parked · <n> open ===`. **Plain summary first:** above the banner, a few jargon-free sentences in the user's language — what happened, what it means, what needs them, one next step; bad news first.
 
 ```
-=== safe-code v5.1 session complete ===
+=== safe-code v5.1.1 session complete ===
 Run: <setup (fresh) | setup (adopt) · Coverage: ~N% | light | audit> · profile: <Orientation | Audit | Cleanup | n/a> · mode: <A | B | C | n/a>
 Git: <state> | Remote: <URL | none> [Bucket <A|B|C>] | Save: local commit only; no push | Commits: <pending — run /safe-code --save | …>
-Brain: <N> lines (budget 300) [· local-only (gitignored)] · Team: on (N authors, 90d)   (Team only when on)
-Task list: <done>/<total> · Parked: <none | n> · Abandoned: <none | …> · Requested: <n/n | none declared> · Unverified: <none | n> · Out-of-scope touches: <none | …>
+Brain: <N> lines (budget 300) [· local-only (gitignored)] [· Team: on (N authors, 90d)]
+Task list: <done>/<total> · Parked: <none | n> · Abandoned: <none | …> · Requested: <n/n | none declared> · Unverified: <none | n> · Surprises: <none | n> · Out-of-scope touches: <none | …>
 Run /safe-code --save to commit and close this session.
 ```
 
-> **Layer 3 Trigger:** Before printing the banner, read `references/final-banner.md` for the full line set and each line's vocabulary.
+> **Layer 3 Trigger:** Before printing the banner, read `references/final-banner.md` (full line set, vocabulary) and `references/plain-talk.md` (the plain summary).

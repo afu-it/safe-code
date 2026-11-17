@@ -24,6 +24,8 @@ Before the first edit to a file in a run, read:
 
 Then record on the task, before editing:
 `read: <files> · callers: <n> (<where>) · tests: <files | none found>`.
+Before the first run of a check on the changed code, add `predict:` — what the output will
+show and what must stay unchanged (`references/verification.md`, Predict, Then Compare).
 
 - A caller whose behaviour depends on what changes is part of the change: read it too, and
   either update it or say why it is unaffected.
