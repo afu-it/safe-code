@@ -53,8 +53,24 @@ if [ "${1:-}" = "--" ]; then
 	shift
 else
 	set -- --permission-mode acceptEdits \
-		--allowedTools "Read Edit Write Glob Grep Bash(git:*) Bash(bash:*) Bash(ls:*) Bash(grep:*) Bash(find:*) Bash(cat:*) Bash(wc:*)" \
+		--allowedTools "Read Edit Write Glob Grep Agent Task Bash(git:*) Bash(bash:*) Bash(ls:*) Bash(grep:*) Bash(find:*) Bash(cat:*) Bash(wc:*) Bash(codegraph:*) Bash(rg:*)" \
 		--output-format json
+fi
+
+# A user-level safe-code install wins over the copy in the fixture, so the run would
+# silently test the INSTALLED version (seen in practice: banner said the old version).
+# With --install-skill and such an install present, point the agent at the fixture copy
+# and switch the Skill tool off for this run.
+if [ "$INSTALL" -eq 1 ]; then
+	for d in "$HOME/.claude/skills/safe-code" "$HOME/.agents/skills/safe-code"; do
+		if [ -e "$d" ]; then
+			echo "note: installed skill found at $d - forcing the fixture copy (Skill tool off for this run)"
+			PROMPT="Follow the skill file at .claude/skills/safe-code/SKILL.md exactly, as if I had typed: $PROMPT
+Read that file with the Read tool first; its references are in .claude/skills/safe-code/references/ and its helper skills are in .claude/skills/<name>/SKILL.md. Do not use any other copy of safe-code."
+			set -- "$@" --disallowedTools Skill
+			break
+		fi
+	done
 fi
 
 mkdir -p "$BASE/logs"

@@ -25,6 +25,11 @@ bash tests/scenarios/assert.sh "$B" --light
 (excluded from git), so the run tests the unreleased version. The config trust audit
 (`--audit`) will then see those skill files too; that noise is expected.
 
+A safe-code skill installed at user level wins over the fixture copy. When `run-headless.sh
+--install-skill` finds one, it tells the agent to read the fixture copy and switches the Skill
+tool off for that run. **Always check the version in the final banner** before trusting a run:
+it must be the version you are about to release.
+
 ## Notes
 
 - Before any run, `assert.sh` passes most "always" checks on the untouched fixture: they
