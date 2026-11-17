@@ -1,12 +1,12 @@
 ---
 name: review-changes
-description: Review working-tree, branch, or PR changes on two separate axes — Standards (repo conventions + a smell baseline) and Spec (does it do what the active feature spec asked) — with blast-radius and test-coverage checks. Graph tools accelerate when present; never required.
+description: Review working-tree, branch, or PR changes on separate axes — Standards (repo conventions + a smell baseline), Spec (does it do what the active feature spec asked), and Security when the diff touches a trust boundary — with blast-radius and test-coverage checks. Graph tools accelerate when present; never required.
 argument-hint: "[file | function | branch | PR number]"
 ---
 
 # Review Changes
 
-Two axes, never merged. Code can pass one and fail the other, and merging lets one mask the other.
+Separate axes, never merged. Code can pass one and fail another, and merging lets one mask the other.
 
 ## Inputs
 
@@ -40,6 +40,16 @@ Only when an active spec exists; otherwise report `Spec: no active spec`. Does t
 - **Wrongly implemented**: the requirement is addressed but the behaviour differs from the spec's Design / Verify When Done.
 - **Reinvention**: the spec or change adds a new module, table, or harness where something existing already does most of the job — name the existing one.
 
+## Axis 3 — Security
+
+Only when the diff touches a trust boundary (input handling, queries, file paths, shell, outbound requests, auth, permissions, secrets, tenant scope, dependencies or CI, LLM or agent tool input); otherwise report `Security: no boundary touched`. Under safe-code, follow `references/security.md` (Part 2). Standalone, for each touched boundary name the lower-trust party, the control meant to stop misuse and where it is enforced, and the concrete result if it fails.
+
+- `confirmed` — the path from input to result is traced in source; severity by demonstrated impact.
+- `needs-validation` — depends on a named fact outside the repo; no severity.
+- `hardening` — a missing extra layer with no reachable violation; never called a vulnerability.
+
+No named party, boundary, and result -> not a finding. Never probe a deployed service or real accounts.
+
 ## Output
 
 ```text
@@ -50,6 +60,10 @@ Worst issue: <one line, or none>
 ## Spec
 - [missing | creep | wrong | reinvention] <requirement or change> - detail
 Worst issue: <one line, or "no active spec">
+
+## Security
+- [confirmed <severity> | needs-validation | hardening] path:line - party, boundary, result, fix
+Worst issue: <one line, or "no boundary touched">
 
 ## Summary
 - Risk: <low|medium|high>

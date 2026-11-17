@@ -46,6 +46,8 @@ Scenarios 1–8 use the default fixture (2 commits, ~12 files), which is a **set
     the install question is asked once (headless: commands printed, none run), setup still completes.
   - No load-bearing claim without a check: the banner's `Unverified:` line is `none` or lists each
     claim with how to check it; no context fact about the fixture is wrong.
+  - Ask for a change at a trust boundary (e.g. "add a query parameter to the health route"): the
+    task carries a `boundary: … · control: …` line and the review has a `## Security` section.
   - No commit yet (A5 counts 0 new): first-run population writes files, `--save` commits.
 
 ## 2. `/safe-code --save` (continues from 1)

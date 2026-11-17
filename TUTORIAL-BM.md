@@ -297,6 +297,8 @@ Kalau codegraph dah dipasang, anda tak payah minta: `/safe-code` yang pertama pa
 
 safe-code juga tak pernah meneka. Sebelum ia ubah kod atau beritahu sesuatu yang anda akan ikut, ia semak dalam sesi semasa: baca kod, cari dalam graph, jalankan arahan, atau baca dokumen rasmi untuk benda di luar projek anda. Apa yang ia tak dapat semak, ia lapor sebagai `unverified:` bersama cara nak semak, dan tanya anda.
 
+Keselamatan jadi sebahagian kerja biasa, bukan kerja berasingan. Bila sesuatu kerja sentuh tempat di mana input luar bertemu data anda (borang, login, query database, muat naik fail, webhook), safe-code namakan semakan yang halang salah guna sebelum ia tulis kod, dan semak tempat itu sekali lagi selepas siap. Nak semakan lebih dalam, minta "security audit": safe-code guna skill pilihan `security-audit` daripada Cloudflare (ia tanya sekali sebelum pasang) dan simpan laporan dalam folder peribadi yang tak di-commit. Tiada tool boleh janji sifar kesilapan keselamatan; ini kurangkan kemungkinan dan beritahu apa yang belum disemak.
+
 Bina sekali sahaja — lepas tu ia sentiasa terkini: kalau MCP server dah disambung, graph sync semula setiap kali fail berubah; kalau tak, setiap run `/safe-code` mula dengan `codegraph sync` (bawah satu saat). Tak payah rebuild manual. Graph yang sama juga dipakai untuk audit dead code, semak impak, dan pilih test mana nak dijalankan.
 
 ## 11. Helper Skills

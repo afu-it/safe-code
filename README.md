@@ -274,7 +274,7 @@ You normally call only `/safe-code`; it routes to these when needed.
 | `explore-codebase` | Repo orientation and facts | Yes |
 | `codebase-pruner` | Dead-code analysis and scoped cleanup | Setup and audit runs |
 | `safe-refactor-code` | Refactor with impact checks | Audit runs, or a refactor you ask for |
-| `review-changes` | Two-axis review: Standards (repo rules + code-smell baseline) and Spec (missing / creep / wrong), never merged | After edits / risk |
+| `review-changes` | Separate-axis review: Standards (repo rules + code-smell baseline), Spec (missing / creep / wrong), and Security when the diff touches a trust boundary — never merged | After edits / risk |
 | `debug-issue` | Reproduce first, minimise, rank falsifiable hypotheses, probe, regression test at the right seam, clean up | On failures / bugs |
 
 ## Run and execution modes
@@ -315,7 +315,7 @@ Remove the skill, then whatever it wrote into your projects. Nothing here is req
 
 ## What's New
 
-**v5.1** — the brain starts from the code graph, and nothing is guessed. When codegraph is installed, the first `/safe-code` on a project builds the graph before writing the brain (not installed -> it asks once, as before). New Verify-First Rule: a claim an edit or your next step depends on must be checked in this session (code read, graph or search result seen, command run, official docs for anything outside the repo); what cannot be checked is reported as `unverified:` with how to check it, never filled in.
+**v5.1** — the brain starts from the code graph, and nothing is guessed. When codegraph is installed, the first `/safe-code` on a project builds the graph before writing the brain (not installed -> it asks once, as before). Security is built in: safe defaults before code touches a trust boundary, a Security axis in review, and a hand-over to Cloudflare's optional `security-audit` skill for a full audit when you ask for one. New Verify-First Rule: a claim an edit or your next step depends on must be checked in this session (code read, graph or search result seen, command run, official docs for anything outside the repo); what cannot be checked is reported as `unverified:` with how to check it, never filled in.
 
 **v5.0** — light by default, briefed at session start, ready for teams. `/safe-code` on a project with a brain now only resumes; the hygiene pass moved to `/safe-code --audit` (or a cleanup ask). The optional session hook briefs the agent at session start and reminds you only when work is unsaved. Team mode commits the shared brain and keeps each developer's session files local; monorepos get one root brain plus optional package `AGENTS.md` files. Commands in `AGENTS.md` carry `verified:` stamps, the brain has a line budget, and `AGENTS.md` is the only default root output. Adding safe-code to an existing project now imports your existing agent notes and recent git history, read-only, and suggests a `safe-code/adopt` branch for the first commit. Upgrading from 4.x: see [CHANGELOG.md](./CHANGELOG.md).
 

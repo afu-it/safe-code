@@ -297,6 +297,8 @@ When codegraph is already installed, you don't need to ask: the first `/safe-cod
 
 safe-code also never guesses. Before it edits or tells you something you will act on, it checks in the current session: reads the code, looks it up in the graph, runs the command, or reads the official docs for anything outside your project. What it cannot check, it reports as `unverified:` with how to check it, and asks you.
 
+Security is part of normal work, not a separate chore. When a task touches a place where outside input meets your data (a form, a login, a database query, a file upload, a webhook), safe-code names the check that stops misuse before it writes the code, and reviews that spot again afterwards. For a deeper look, ask for a "security audit": safe-code uses Cloudflare's optional `security-audit` skill (it asks once before installing) and keeps the reports in a private, uncommitted folder. No tool can promise zero security mistakes; this lowers the odds and tells you what was not checked.
+
 Build it once — after that it stays current: with the MCP server wired, the graph re-syncs on every file change; without it, every `/safe-code` run starts with `codegraph sync` (under a second). No manual rebuilds. The same graph powers dead-code audits, impact checks, and picking which tests to run.
 
 ## 11. Helper Skills

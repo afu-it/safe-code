@@ -93,7 +93,7 @@ The session's **first** reply starts with one banner line: `[safe-code: brain lo
 
 ## Project Context vs Session State
 
-`.safe-code/context/` is the long-term brain: drafted during work, finalized on `--save`, never secrets or raw logs. Session files are runtime memory: `SESSION.md` written during work, the rest on save, summaries only. `current-issues.md` is local-only and gitignored (the user pastes raw context, the agent appends entries on error triggers); Safety Invariants apply. `user-preferences.md` takes only explicit, durable preferences (clearly stated or repeated), drafted in `SESSION.md`.
+`.safe-code/context/` is the long-term brain: drafted during work, finalized on `--save`, never secrets or raw logs. Session files are runtime memory: `SESSION.md` written during work, the rest on save, summaries only. `user-preferences.md` takes only explicit, durable preferences (clearly stated or repeated), drafted in `SESSION.md`.
 
 **Source-of-Truth Ownership.** Each fact has one canonical home (root rules -> `AGENTS.md`, product -> `project-overview.md`, stack/invariants -> `architecture.md`, conventions -> `code-standards.md`, phase + decisions -> `progress-tracker.md`, feature scope -> `feature-specs/`, resume point -> `ACTIVE.md`, live tasks/drafts -> `SESSION.md`, refactor candidates -> `safe-refactor-code.md`). On disagreement prefer executable repo evidence, then the canonical home, then session notes; record the mismatch in `SESSION.md`, fix the home on `--save`.
 
@@ -272,7 +272,7 @@ Reason explicitly before every action. Every run keeps a visible checklist in `S
 
 ## Step 0: Locate Project Root
 
-Session state lives in `<project-root>/.safe-code/` (create it if missing), shared by every host. HARD RULE: never create a per-tool folder **for session state** (Doc Structure).
+Session state lives in `<project-root>/.safe-code/`, shared by every host. HARD RULE: never create a per-tool folder **for session state** (Doc Structure).
 
 ## Step 1: Initialize Doc Structure
 
@@ -429,6 +429,8 @@ Once per session, before the first commit or any output that mentions pushing: c
 | Refactor sweep in an audit run, or a targeted rename/restructure the user asked for | `$safe-refactor-code` |
 | **Code** edits (any file outside `.safe-code/` and bridges) or non-trivial risk | `$review-changes` before the final summary |
 | A test or verification fails, or the user asks about a bug/regression | `$debug-issue` |
+| Code at a trust boundary (input, queries, paths, auth, secrets, outbound requests, dependencies, LLM/tool input) | `references/security.md`: Part 1 before the edit, `$review-changes` Security axis after |
+| A security audit / pen-test ask (never `--audit` alone) | `references/security.md` (Part 3) |
 
 Helpers never make broad changes because `/safe-code` ran: findings feed `SESSION.md` drafts first; a helper that cannot run -> its fallback inline, noted in the summary. With subagent support, dispatch **read-only** helpers as subagents (writers run inline); a missing, empty, or off-topic summary is a failed dispatch, never "no findings". Outcomes never depend on subagent support.
 
@@ -486,8 +488,6 @@ Mode B approval unobtainable this session (autonomous or non-interactive) -> do 
 **Graveyard Rule (every removal leaves a way back).** Every executed deletion drafts a Graveyard entry in `SESSION.md`, applied to `safe-refactor-code.md ## Graveyard` on `--save` (hash filled then): `- <date> · <path> (<whole file | symbol>) · why: <reason> · evidence: <scan + positive control> · restore: <git revert <hash> | .safe-code/backups/<file>.<stamp>>`. Untracked or gitignored files have no commit to revert: `cp -p` them to `.safe-code/backups/<file>.<YYYYMMDD-HHMM>` before rewriting and point `restore:` there. Entries are **never deleted**. A removed shipped feature also flips its spec to `status: removed (<date>)` with the same pointer.
 
 ## Step 7: Refactor + Draft Docs
-
-> **Layer 3 Trigger:** Load `MEMORY.md`, `BACKLOG.md`, and `.safe-code/CHANGELOG.md` only if their data is needed.
 
 `$safe-refactor-code` only when refactor scope exists (an audit-run sweep, or a targeted refactor the user asked for). codegraph ready: `callers` + `impact <symbol>` before a rename or shared-code edit (confirm with `rg` after); `sync` + `affected <changed files>` before the docs sync. Then `$review-changes` when code changed or impact is Medium/High; skip only for pure docs/session updates.
 
